@@ -16,18 +16,15 @@ import mt.fireworks.timecache.storage.StorageLongKey;
 @AllArgsConstructor
 public class ByteCacheImpl<T> implements Cache<T, byte[], byte[]>{
 
-    SerDes<T, byte[]> serdes;
+//    SerDes<T, byte[]> serdes;
     StorageLongKey storage;
     Index<T>[] indexes;
+    SerDes2<T> serdes2;
 
     @Override
     public boolean add(T val) {
-
-        Function<T, Long> timestampOfT = serdes.getTimestampOfT();
-        long tstamp = timestampOfT.apply(val);
-
-        Function<T, byte[]> marshaller = serdes.getMarshaller();
-        byte[] data = marshaller.apply(val);
+        long tstamp = serdes2.timestampOfT(val);
+        byte[] data = serdes2.marshall(val);
 
         long storageIdx = storage.addEntry(tstamp, data);
         if (storageIdx == 0) {
@@ -58,6 +55,7 @@ public class ByteCacheImpl<T> implements Cache<T, byte[], byte[]>{
             ArrayList<T> ts = new ArrayList<>(strKeys.size());
             result[idx] = ts;
 
+            /*
             strKeys.forEach(strKey -> {
                 byte[] data = storage.getEntry(strKey);
                 if (data == null) {
@@ -69,6 +67,13 @@ public class ByteCacheImpl<T> implements Cache<T, byte[], byte[]>{
                 T t = unmarshaller.apply(data);
                 ts.add(t);
             });
+            */
+
+            strKeys.forEach(strKey -> {
+                T res = storage.getEntry2(strKey, serdes2);
+                if (res != null) ts.add(res);
+            });
+
 
             if (keysForRemoval != null && keysForRemoval.size() > 0) {
                 strKeys.removeAll(keysForRemoval);

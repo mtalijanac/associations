@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import mt.fireworks.timecache.SerDes2;
+
 public class StorageLongKey {
 
     static class Conf {
@@ -103,6 +105,17 @@ public class StorageLongKey {
         Window window = windows.get(winIndex);
         byte[] data = window.store.get(index);
         return data;
+    }
+
+    public <T> T getEntry2(long key, SerDes2<T> serdes) {
+        long tstamp = timeKeys.tstamp(key);
+        long index = timeKeys.index(key);
+
+        int winIndex = windowIndexForTstamp(tstamp);
+        if (winIndex < 0) return null;
+        Window window = windows.get(winIndex);
+        T val = window.store.peek(index, (bucket, pos, len) -> serdes.unmarshall(bucket, pos, len));
+        return val;
     }
 
 

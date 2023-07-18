@@ -71,7 +71,7 @@ public class StorageLongKeyTest {
         StorageLongKey storage = StorageLongKey.init();
         long[] timespan = storage.timespan();
 
-        for (int i = 0; i < 1_000_000; i++) {
+        for (int i = 0; i < 2_000_000; i++) {
             long tstamp = ThreadLocalRandom.current().nextLong(timespan[0], timespan[1]);
             byte[] data = randomData(250, 1500);
             long key = storage.addEntry(tstamp, data);
@@ -87,7 +87,7 @@ public class StorageLongKeyTest {
 
         long[] counter = new long[8];
 
-        for (int i = 0; i < 2_000_000; i++) {
+        for (int i = 0; i < 4_000_000; i++) {
             long tstamp = System.currentTimeMillis();
             byte[] data = randomData(250, 320);
             long key = storage.addEntry(tstamp, data);
@@ -102,6 +102,14 @@ public class StorageLongKeyTest {
         for (Window w: storage.windows) {
             System.out.print(w.store.size.get() + ", ");
         }
+    }
+
+    @Test
+    public void windowAllocationTest() {
+        StorageLongKey storage = StorageLongKey.init();
+        int winSize = storage.windows.size();
+        int expectedWinSize = storage.conf.historyWindowCount + 1 + storage.conf.futureWindowCount;
+        Assert.assertEquals(expectedWinSize, winSize);
     }
 
 }

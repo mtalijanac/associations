@@ -24,45 +24,38 @@ public class ByteCacheImplTest {
         int val;
     }
 
+    SerDes2<TstTrx> serdes2 = new SerDes2<ByteCacheImplTest.TstTrx>() {
 
-    SerDes<TstTrx, byte[]> serdes = new SerDes<ByteCacheImplTest.TstTrx, byte[]>() {
-
-        public Function<TstTrx, byte[]> getMarshaller() {
-            return t -> {
-                ByteBuffer bb = ByteBuffer.allocate(12);
-                bb.putLong(t.tstamp);
-                bb.putInt(t.val);
-                byte[] array = bb.array();
-                return array;
-            };
+        public byte[] marshall(TstTrx t) {
+            ByteBuffer bb = ByteBuffer.allocate(12);
+            bb.putLong(t.tstamp);
+            bb.putInt(t.val);
+            byte[] array = bb.array();
+            return array;
         }
 
-        public Function<byte[], TstTrx> getUnmarshaller() {
-            return t -> {
-                ByteBuffer bb = ByteBuffer.wrap(t);
-                long tstamp = bb.getLong();
-                int val = bb.getInt();
-                return new TstTrx(tstamp, val);
-            };
+        public TstTrx unmarshall(byte[] data, int position, int length) {
+            ByteBuffer bb = ByteBuffer.wrap(data, position, length);
+            long tstamp = bb.getLong();
+            int val = bb.getInt();
+            return new TstTrx(tstamp, val);
         }
 
-        public Function<TstTrx, Long> getTimestampOfT() {
-            return t -> t.tstamp;
+        public long timestampOfT(TstTrx val) {
+            return val.tstamp;
         }
 
-        public Function<byte[], Long> getTimestampOfD() {
-            return t -> {
-                long tstamp = ByteBuffer.wrap(t).getLong();
-                return tstamp;
-            };
+        public long timestampOfD(byte[] data, int position, int length) {
+            long tstamp = ByteBuffer.wrap(data, position, length).getLong();
+            return tstamp;
         }
 
-        public BiFunction<TstTrx, TstTrx, Boolean> getEqualsT() {
-            return (t, u) -> t.equals(u);
+        public boolean equalsT(TstTrx t, TstTrx u) {
+            return t.equals(u);
         }
 
-        public BiFunction<byte[], byte[], Boolean> getEqualsD() {
-            return (t, u) -> Arrays.equals(t, u);
+        public boolean equalsD(byte[] data1, byte[] data2) {
+            return Arrays.equals(data1, data2);
         }
     };
 
@@ -92,7 +85,7 @@ public class ByteCacheImplTest {
         TstTrx t4 = new TstTrx(now + 30, 2);
         TstTrx t5 = new TstTrx(now + 50, 1);
 
-        ByteCacheImpl<TstTrx> cache = new ByteCacheImpl<>(serdes, storage, indexes);
+        ByteCacheImpl<TstTrx> cache = new ByteCacheImpl<>(storage, indexes, serdes2);
         cache.add(t1);
         cache.add(t2);
         cache.add(t3);
