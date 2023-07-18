@@ -30,6 +30,9 @@ public class ByteCacheImpl<T> implements Cache<T, byte[], byte[]>{
         byte[] data = marshaller.apply(val);
 
         long storageIdx = storage.addEntry(tstamp, data);
+        if (storageIdx == 0) {
+            return false;
+        }
 
         for (Index<T> i: indexes) {
             i.put(val, storageIdx);

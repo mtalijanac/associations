@@ -7,11 +7,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class StorageLongKey {
 
     static class Conf {
-        /** num. of leading bits of key encoding window */
-        int winIndexBits = 3;
-
         /** total count of windows */
-        int windowCount = 8;
+        int historyWindowCount = 7;
+        int futureWindowCount = 1;
 
         /** duration of window in ms */
         long windowTimespanMs = TimeUnit.DAYS.toMillis(1);
@@ -34,25 +32,29 @@ public class StorageLongKey {
 
     Conf conf = new Conf();
     ArrayList<Window> windows = new ArrayList<>();
+    Window nowWindow;	// window where events happening at currentTime would enter
     public TimeKeys timeKeys = new TimeKeys();
-
 
     public static StorageLongKey init() {
         StorageLongKey st = new StorageLongKey();
-        final int winCount = 1 << st.conf.winIndexBits;
         final long startDate = (System.currentTimeMillis() / 1000l) * 1000l;
 
-        for (int idx = 0; idx < winCount; idx++) {
+        for (int idx = -1 * st.conf.historyWindowCount; idx <= st.conf.futureWindowCount; idx++) {
             Window win = new Window();
             win.startTstamp = startDate - idx * st.conf.windowTimespanMs;
             win.endTstamp = win.startTstamp + st.conf.windowTimespanMs;
             st.windows.add(win);
+
+            if (idx == 0) {
+                st.nowWindow = win;
+            }
         }
 
         return st;
     }
 
 
+    /** @return address of stored data, or 0 if data is not storable */
     public long addEntry(long tstamp, byte[] data) {
         // find window based on tstamp
             // TODO
@@ -67,6 +69,7 @@ public class StorageLongKey {
         // generate key and return it
 
         int winIndex = windowIndexForTstamp(tstamp);
+        if (winIndex < 0) return 0;
         Window window = windows.get(winIndex);
 
         long storeIndex = window.store.add(data);
@@ -77,12 +80,6 @@ public class StorageLongKey {
 
     /* return index of window to which this tstamp belong */
     int windowIndexForTstamp(long tstamp) {
-        long minTstamp = Long.MAX_VALUE;
-        int minIndex = -1;
-
-        long maxTstamp = Long.MIN_VALUE;
-        int maxIndex = -1;
-
         for (int idx = 0; idx < windows.size(); idx++) {
             Window win = windows.get(idx);
             if (win.closed.get()) {
@@ -92,19 +89,9 @@ public class StorageLongKey {
             if (win.startTstamp <= tstamp && tstamp < win.endTstamp) {
                 return idx;
             }
-
-            if (win.startTstamp < minTstamp) {
-                minTstamp = win.startTstamp;
-                minIndex = idx;
-            }
-
-            if (win.endTstamp > maxTstamp) {
-                maxTstamp = win.endTstamp;
-                maxIndex = idx;
-            }
         }
 
-        return tstamp < minTstamp ? minIndex : maxIndex;
+        return -1;
     }
 
     public byte[] getEntry(long key) {
@@ -112,6 +99,7 @@ public class StorageLongKey {
         long index = timeKeys.index(key);
 
         int winIndex = windowIndexForTstamp(tstamp);
+        if (winIndex < 0) return null;
         Window window = windows.get(winIndex);
         byte[] data = window.store.get(index);
         return data;
