@@ -3,7 +3,6 @@ package mt.fireworks.timecache;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
-import java.util.function.Function;
 
 import org.eclipse.collections.api.list.primitive.MutableLongList;
 import org.eclipse.collections.api.set.primitive.MutableLongSet;
@@ -16,7 +15,6 @@ import mt.fireworks.timecache.storage.StorageLongKey;
 @AllArgsConstructor
 public class ByteCacheImpl<T> implements Cache<T, byte[], byte[]>{
 
-//    SerDes<T, byte[]> serdes;
     StorageLongKey storage;
     Index<T>[] indexes;
     SerDes2<T> serdes2;
@@ -54,20 +52,6 @@ public class ByteCacheImpl<T> implements Cache<T, byte[], byte[]>{
             MutableLongSet strKeys = index.get(val);
             ArrayList<T> ts = new ArrayList<>(strKeys.size());
             result[idx] = ts;
-
-            /*
-            strKeys.forEach(strKey -> {
-                byte[] data = storage.getEntry(strKey);
-                if (data == null) {
-                    keysForRemoval.add(strKey);
-                    return;
-                }
-
-                Function<byte[], T> unmarshaller = serdes.getUnmarshaller();
-                T t = unmarshaller.apply(data);
-                ts.add(t);
-            });
-            */
 
             strKeys.forEach(strKey -> {
                 T res = storage.getEntry2(strKey, serdes2);
