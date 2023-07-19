@@ -4,14 +4,20 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
+import lombok.Cleanup;
 import mt.fireworks.timecache.SerDes2;
 
 public class StorageLongKey {
 
     static class Conf {
-        /** total count of windows */
+        /** count of windows preceeding nowWindow */
         int historyWindowCount = 7;
+
+        /** count of window following nowWindow */
         int futureWindowCount = 1;
 
         /** duration of window in ms */
@@ -33,6 +39,7 @@ public class StorageLongKey {
     }
 
 
+    ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
     Conf conf = new Conf();
     ArrayList<Window> windows = new ArrayList<>();
     Window nowWindow;	// window where events happening at currentTime would enter
@@ -57,31 +64,7 @@ public class StorageLongKey {
     }
 
 
-    /** @return address of stored data, or 0 if data is not storable */
-    public long addEntry(long tstamp, byte[] data) {
-        // find window based on tstamp
-            // TODO
-            // if tstamp is older than oldest window
-            // either ignore or store it to oldest window
-
-            // TODO
-            // if tstamp is younger than end of youngest window
-            // either ignore or store it to youngest window
-
-        // add entry to a window bucket
-        // generate key and return it
-
-        int winIndex = windowIndexForTstamp(tstamp);
-        if (winIndex < 0) return 0;
-        Window window = windows.get(winIndex);
-
-        long storeIndex = window.store.add(data);
-        long key = timeKeys.key(tstamp, storeIndex);
-        return key;
-    }
-
-
-    /* return index of window to which this tstamp belong */
+    /** return unsafe index of window to which this tstamp belong */
     int windowIndexForTstamp(long tstamp) {
         for (int idx = 0; idx < windows.size(); idx++) {
             Window win = windows.get(idx);
@@ -97,24 +80,56 @@ public class StorageLongKey {
         return -1;
     }
 
-    public byte[] getEntry(long key) {
-        long tstamp = timeKeys.tstamp(key);
-        long index = timeKeys.index(key);
+    /** @return threadsafe dohvat prozora po timestmapu */
+    Window windowForTstamp(long tstamp) {
+        @Cleanup("unlock") ReadLock rock = rwLock.readLock();
+        rock.lock();
 
         int winIndex = windowIndexForTstamp(tstamp);
         if (winIndex < 0) return null;
         Window window = windows.get(winIndex);
+        return window;
+    }
+
+
+    /** @return address of stored data, or 0 if data is not storable */
+    public long addEntry(long tstamp, byte[] data) {
+        // add entry to a window bucket
+        // generate key and return it
+
+        Window window = windowForTstamp(tstamp);
+        if (window == null) return 0;
+        long storeIndex = window.store.add(data);
+        long key = timeKeys.key(tstamp, storeIndex);
+        return key;
+    }
+
+
+    /**
+     * Fetch data stored under key. Returned array is newly allocated.
+     * @return byte array of entry under key or null.
+     **/
+    public byte[] getEntry(long key) {
+        long tstamp = timeKeys.tstamp(key);
+        long index = timeKeys.index(key);
+        Window window = windowForTstamp(tstamp);
+        if (window == null) return null;
         byte[] data = window.store.get(index);
         return data;
     }
 
+
+    /**
+     * Read data stored under key, and unmarshall it using provided serdes.
+     * Reading data will not allocate new byte array.
+     * @return unmarshalled object or null if data not present.
+     * @see SerDes2#unmarshall(byte[], int, int)
+     */
     public <T> T getEntry2(long key, SerDes2<T> serdes) {
         long tstamp = timeKeys.tstamp(key);
         long index = timeKeys.index(key);
-
-        int winIndex = windowIndexForTstamp(tstamp);
-        if (winIndex < 0) return null;
-        Window window = windows.get(winIndex);
+        Window window = windowForTstamp(tstamp);
+        if (window == null) return null;
         T val = window.store.peek(index, (bucket, pos, len) -> serdes.unmarshall(bucket, pos, len));
         return val;
     }
@@ -133,10 +148,28 @@ public class StorageLongKey {
 
 
     public void moveWindows() {
-        // allocate new one
-        // find oldest window
-        // mark it closed
+        @Cleanup("unlock") WriteLock wock = rwLock.writeLock();
+        wock.lock();
+
+        // add future window
+        Window lastWindow = windows.get(windows.size() - 1);
+        Window win = new Window();
+        win.startTstamp = lastWindow.endTstamp;
+        win.endTstamp = win.startTstamp + conf.windowTimespanMs;
+
+        // move now window
+        int nowWinIdx = windowIndexForTstamp(nowWindow.startTstamp);
+        Window newNowWindow = windows.get(nowWinIdx);
+        nowWindow = newNowWindow;
+
+        // remove oldest window
+        Window oldestWin = windows.get(0);
+        oldestWin.closed.set(true);
+        windows.remove(0);
+
+        // TODO gc of oldest windo
     }
+
 
     @Override
     public String toString() {
