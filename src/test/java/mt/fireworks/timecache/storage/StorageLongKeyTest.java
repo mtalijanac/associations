@@ -3,8 +3,12 @@ package mt.fireworks.timecache.storage;
 import static org.junit.Assert.assertArrayEquals;
 
 import java.nio.ByteBuffer;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -97,11 +101,6 @@ public class StorageLongKeyTest {
             int winIdx = storage.windowIndexForTstamp(tstamp);
             counter[winIdx]++;
         }
-
-        System.out.println(Arrays.toString(counter));
-        for (Window w: storage.windows) {
-            System.out.print(w.store.size.get() + ", ");
-        }
     }
 
     @Test
@@ -110,6 +109,55 @@ public class StorageLongKeyTest {
         int winSize = storage.windows.size();
         int expectedWinSize = storage.conf.historyWindowCount + 1 + storage.conf.futureWindowCount;
         Assert.assertEquals(expectedWinSize, winSize);
+    }
+
+    @Test
+    public void testInsertsOutsideWindow() {
+        StorageLongKey storage = StorageLongKey.init();
+        byte[] data = new byte[100];
+        ThreadLocalRandom.current().nextBytes(data);
+
+
+        long tstampInPast = System.currentTimeMillis();
+        tstampInPast -= 10 * 24 * 3600 * 1000;
+
+        long keyInPast = storage.addEntry(tstampInPast, data);
+        Assert.assertEquals(0L, keyInPast);
+
+
+        long tstampInFuture = System.currentTimeMillis();
+        tstampInFuture += 10 * 24 * 3600 * 1000;
+
+        long keyInFuture = storage.addEntry(tstampInFuture, data);
+        Assert.assertEquals(0L, keyInFuture);
+    }
+
+
+    @Test
+    public void testInsertsInEachWindow() {
+        StorageLongKey storage = StorageLongKey.init();
+
+        final long now = System.currentTimeMillis();
+        HashMap<Long, byte[]> storedDat = new HashMap<>();
+
+        for (int idx = -1 * storage.conf.historyWindowCount; idx <= storage.conf.futureWindowCount; idx++) {
+            long tstamp = now + idx * TimeUnit.DAYS.toMillis(1);
+            byte[] data = new byte[100];
+            ThreadLocalRandom.current().nextBytes(data);
+
+            long key = storage.addEntry(tstamp, data);
+            Assert.assertNotEquals(0, key);
+
+            storedDat.put(key, data);
+        }
+
+        for (Entry<Long, byte[]> e: storedDat.entrySet()) {
+            Long key = e.getKey();
+            byte[] orgData = e.getValue();
+
+            byte[] readData = storage.getEntry(key);
+            Assert.assertArrayEquals(orgData, readData);
+        }
     }
 
 }

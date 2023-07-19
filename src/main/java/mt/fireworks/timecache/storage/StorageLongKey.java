@@ -1,5 +1,6 @@
 package mt.fireworks.timecache.storage;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -43,7 +44,7 @@ public class StorageLongKey {
 
         for (int idx = -1 * st.conf.historyWindowCount; idx <= st.conf.futureWindowCount; idx++) {
             Window win = new Window();
-            win.startTstamp = startDate - idx * st.conf.windowTimespanMs;
+            win.startTstamp = startDate + idx * st.conf.windowTimespanMs;
             win.endTstamp = win.startTstamp + st.conf.windowTimespanMs;
             st.windows.add(win);
 
@@ -135,6 +136,23 @@ public class StorageLongKey {
         // allocate new one
         // find oldest window
         // mark it closed
+    }
 
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Storage summary\n");
+        sb.append("Window count: ").append(windows.size()).append("\n");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+        for (int idx = 0; idx < windows.size(); idx++) {
+            Window win = windows.get(idx);
+            sb.append("  ").append(idx + 1).append(". ");
+            sb.append(win.startTstamp).append(" - ").append(win.endTstamp);
+            sb.append(" [").append(sdf.format(win.startTstamp)).append(" - ");
+            sb.append(sdf.format(win.endTstamp)).append("]");
+            if (win.closed.get()) sb.append(" CLOSED");
+            sb.append("\n");
+        }
+        return sb.toString();
     }
 }
