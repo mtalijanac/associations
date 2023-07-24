@@ -5,7 +5,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import lombok.AllArgsConstructor;
-import lombok.ToString;
 import mt.fireworks.timecache.SerDes2;
 
 /**
@@ -16,15 +15,6 @@ import mt.fireworks.timecache.SerDes2;
 class MetricSerDes2<T> implements SerDes2<T> {
 
     SerDes2<T> delegate;
-
-    String info(String name, AtomicLong countRef, AtomicLong timeRef) {
-        long count = countRef.get();
-        long time = timeRef.get();
-        double sec = (double) time / 1_000_000_000d;
-        double speed = (double) count / sec;
-        String res = name + ": " + count + ", dur: " + sec + " s [" + speed + " per sec]";
-        return res;
-    }
 
 
 
@@ -132,6 +122,25 @@ class MetricSerDes2<T> implements SerDes2<T> {
     }
 
 
+    <X,R> R doTheFun(AtomicLong count, AtomicLong timer, Function<X, R> job, X arg) {
+        long d = -System.nanoTime();
+        R res = job.apply(arg);
+        d += System.nanoTime();
+        count.incrementAndGet();
+        timer.addAndGet(d);
+        return res;
+    }
+
+    <X, Y,R> R doTheBi(AtomicLong count, AtomicLong timer, BiFunction<X, Y, R> job, X x, Y y) {
+        long d = -System.nanoTime();
+        R res = job.apply(x, y);
+        d += System.nanoTime();
+        count.incrementAndGet();
+        timer.addAndGet(d);
+        return res;
+    }
+
+
     public String resetMetrics() {
         String ts = toString();
 
@@ -182,22 +191,13 @@ class MetricSerDes2<T> implements SerDes2<T> {
         return res;
     }
 
-
-    <X,R> R doTheFun(AtomicLong count, AtomicLong timer, Function<X, R> job, X arg) {
-        long d = -System.nanoTime();
-        R res = job.apply(arg);
-        d += System.nanoTime();
-        count.incrementAndGet();
-        timer.addAndGet(d);
+    String info(String name, AtomicLong countRef, AtomicLong timeRef) {
+        long count = countRef.get();
+        long time = timeRef.get();
+        double sec = (double) time / 1_000_000_000d;
+        double speed = (double) count / sec;
+        String res = name + ": " + count + ", dur: " + sec + " s [" + speed + " per sec]";
         return res;
     }
 
-    <X, Y,R> R doTheBi(AtomicLong count, AtomicLong timer, BiFunction<X, Y, R> job, X x, Y y) {
-        long d = -System.nanoTime();
-        R res = job.apply(x, y);
-        d += System.nanoTime();
-        count.incrementAndGet();
-        timer.addAndGet(d);
-        return res;
-    }
 }
