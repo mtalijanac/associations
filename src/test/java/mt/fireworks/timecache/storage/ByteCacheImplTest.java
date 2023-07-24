@@ -1,19 +1,17 @@
-package mt.fireworks.timecache;
+package mt.fireworks.timecache.storage;
 
 import static junit.framework.Assert.assertEquals;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import org.junit.Test;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import mt.fireworks.timecache.SerDes2;
 import mt.fireworks.timecache.index.Index;
-import mt.fireworks.timecache.storage.StorageLongKey;
 
 public class ByteCacheImplTest {
 
@@ -34,8 +32,8 @@ public class ByteCacheImplTest {
             return array;
         }
 
-        public TstTrx unmarshall(byte[] data, int position, int length) {
-            ByteBuffer bb = ByteBuffer.wrap(data, position, length);
+        public TstTrx unmarshall(byte[] data) {
+            ByteBuffer bb = ByteBuffer.wrap(data);
             long tstamp = bb.getLong();
             int val = bb.getInt();
             return new TstTrx(tstamp, val);
@@ -43,19 +41,6 @@ public class ByteCacheImplTest {
 
         public long timestampOfT(TstTrx val) {
             return val.tstamp;
-        }
-
-        public long timestampOfD(byte[] data, int position, int length) {
-            long tstamp = ByteBuffer.wrap(data, position, length).getLong();
-            return tstamp;
-        }
-
-        public boolean equalsT(TstTrx t, TstTrx u) {
-            return t.equals(u);
-        }
-
-        public boolean equalsD(byte[] data1, byte[] data2) {
-            return Arrays.equals(data1, data2);
         }
     };
 
@@ -66,7 +51,6 @@ public class ByteCacheImplTest {
         byte[] array = bb.array();
         return array;
     };
-
 
 
     @Test

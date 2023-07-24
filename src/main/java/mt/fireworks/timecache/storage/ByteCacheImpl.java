@@ -1,4 +1,4 @@
-package mt.fireworks.timecache;
+package mt.fireworks.timecache.storage;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -9,8 +9,9 @@ import org.eclipse.collections.api.set.primitive.MutableLongSet;
 import org.eclipse.collections.impl.factory.primitive.LongLists;
 
 import lombok.AllArgsConstructor;
+import mt.fireworks.timecache.Cache;
+import mt.fireworks.timecache.SerDes2;
 import mt.fireworks.timecache.index.Index;
-import mt.fireworks.timecache.storage.StorageLongKey;
 
 @AllArgsConstructor
 public class ByteCacheImpl<T> implements Cache<T, byte[], byte[]>{
@@ -72,6 +73,19 @@ public class ByteCacheImpl<T> implements Cache<T, byte[], byte[]>{
     public Map<byte[], Collection<T>> getMap(T val) {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    public void tick() {
+        // FIXME implement move of storage windows, and cleaning of index
+        storage.moveWindows();
+    }
+
+    @Override
+    public String toString() {
+        if (serdes2 instanceof MetricSerDes2) {
+            return ((MetricSerDes2) serdes2).resetMetrics();
+        }
+        return "";
     }
 
 }

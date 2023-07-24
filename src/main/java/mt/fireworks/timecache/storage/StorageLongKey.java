@@ -8,11 +8,16 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
+import lombok.AllArgsConstructor;
 import lombok.Cleanup;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import mt.fireworks.timecache.SerDes2;
 
 public class StorageLongKey {
 
+    @AllArgsConstructor
+    @RequiredArgsConstructor
     static class Conf {
         /** count of windows preceeding nowWindow */
         int historyWindowCount = 7;
@@ -46,8 +51,20 @@ public class StorageLongKey {
     public TimeKeys timeKeys = new TimeKeys();
 
     public static StorageLongKey init() {
+        return init(null, null);
+    }
+
+    public static StorageLongKey init(Conf conf, Long start) {
         StorageLongKey st = new StorageLongKey();
-        final long startDate = (System.currentTimeMillis() / 1000l) * 1000l;
+
+        if (conf != null) {
+            st.conf = conf;
+        }
+
+        long startDate = (System.currentTimeMillis() / 1000l) * 1000l;
+        if (start != null) {
+            startDate = start;
+        }
 
         for (int idx = -1 * st.conf.historyWindowCount; idx <= st.conf.futureWindowCount; idx++) {
             Window win = new Window();
@@ -152,13 +169,15 @@ public class StorageLongKey {
         wock.lock();
 
         // add future window
-        Window lastWindow = windows.get(windows.size() - 1);
+        int lastWinIndex = windows.size() - 1;
+        Window lastWindow = windows.get(lastWinIndex);
         Window win = new Window();
         win.startTstamp = lastWindow.endTstamp;
         win.endTstamp = win.startTstamp + conf.windowTimespanMs;
+        windows.add(win);
 
         // move now window
-        int nowWinIdx = windowIndexForTstamp(nowWindow.startTstamp);
+        int nowWinIdx = windowIndexForTstamp(nowWindow.endTstamp);
         Window newNowWindow = windows.get(nowWinIdx);
         nowWindow = newNowWindow;
 
