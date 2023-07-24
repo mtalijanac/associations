@@ -1,4 +1,4 @@
-package mt.fireworks.timecache;
+package mt.fireworks.timecache.storage;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.ThreadLocalRandom;
@@ -8,6 +8,7 @@ import org.junit.Test;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import mt.fireworks.timecache.SerDes2;
 import mt.fireworks.timecache.storage.ByteCacheFactory;
 import mt.fireworks.timecache.storage.ByteCacheImpl;
 
