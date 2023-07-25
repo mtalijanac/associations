@@ -2,6 +2,7 @@ package mt.fireworks.timecache.storage;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -44,7 +45,7 @@ public class StorageLongKey {
     }
 
 
-    ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
+    final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
     Conf conf = new Conf();
     ArrayList<Window> windows = new ArrayList<>();
     Window nowWindow;	// window where events happening at currentTime would enter
