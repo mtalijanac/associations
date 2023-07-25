@@ -64,7 +64,7 @@ public class StorageLongKey {
 
         long startDate = (System.currentTimeMillis() / 1000l) * 1000l;
         if (start != null) {
-            startDate = start;
+            startDate = (start / 1000l) * 1000l;
         }
 
         for (int idx = -1 * st.conf.historyWindowCount; idx <= st.conf.futureWindowCount; idx++) {
