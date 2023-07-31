@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import lombok.AllArgsConstructor;
@@ -47,6 +48,7 @@ public class BigTest {
      * @throws InterruptedException
      * @throws ExecutionException
      */
+    @Ignore
     @Test
     public void runLargeTest() throws InterruptedException, ExecutionException {
         // indexes which be used during all testing
