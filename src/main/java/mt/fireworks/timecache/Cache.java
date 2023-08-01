@@ -11,6 +11,10 @@ import java.util.Map;
  */
 public interface Cache<T, K, S> {
 
+    /**
+     * Add an object to cache.
+     * @return true if object is stored
+     */
     boolean add(T val);
 
     /** @return [key, ArrayList<T>, key, ArrayList<T>] */
