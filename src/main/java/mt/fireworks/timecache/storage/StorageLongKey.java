@@ -2,7 +2,6 @@ package mt.fireworks.timecache.storage;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -11,9 +10,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import lombok.AllArgsConstructor;
 import lombok.Cleanup;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import mt.fireworks.timecache.SerDes2;
+import mt.fireworks.timecache.storage.ByteList.ForEachAction;
+import mt.fireworks.timecache.storage.ByteList.Peeker;
 
 public class StorageLongKey {
 
@@ -148,7 +148,7 @@ public class StorageLongKey {
         long index = timeKeys.index(key);
         Window window = windowForTstamp(tstamp);
         if (window == null) return null;
-        T val = window.store.peek(index, (bucket, pos, len) -> serdes.unmarshall(bucket, pos, len));
+        T val = window.store.peek(index, (objPos, bucket, pos, len) -> serdes.unmarshall(bucket, pos, len));
         return val;
     }
 
@@ -165,7 +165,7 @@ public class StorageLongKey {
     }
 
 
-    public void moveWindows() {
+    public Window moveWindows() {
         @Cleanup("unlock") WriteLock wock = rwLock.writeLock();
         wock.lock();
 
@@ -187,7 +187,13 @@ public class StorageLongKey {
         oldestWin.closed.set(true);
         windows.remove(0);
 
-        // TODO gc of oldest windo
+        return oldestWin;
+    }
+
+    void forEach(Window win, Peeker<ForEachAction> gcPeeker) {
+        int pos = 0;
+        ByteList store = win.store;
+        store.forEach(gcPeeker);
     }
 
 

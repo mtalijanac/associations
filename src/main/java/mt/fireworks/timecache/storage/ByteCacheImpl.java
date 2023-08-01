@@ -3,7 +3,6 @@ package mt.fireworks.timecache.storage;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
-import java.util.concurrent.ThreadLocalRandom;
 
 import org.eclipse.collections.api.list.primitive.MutableLongList;
 import org.eclipse.collections.api.set.primitive.MutableLongSet;
@@ -13,6 +12,8 @@ import lombok.AllArgsConstructor;
 import mt.fireworks.timecache.Cache;
 import mt.fireworks.timecache.SerDes2;
 import mt.fireworks.timecache.index.Index;
+import mt.fireworks.timecache.storage.ByteList.ForEachAction;
+import mt.fireworks.timecache.storage.StorageLongKey.Window;
 
 @AllArgsConstructor
 public class ByteCacheImpl<T> implements Cache<T, byte[], byte[]>{
@@ -76,9 +77,20 @@ public class ByteCacheImpl<T> implements Cache<T, byte[], byte[]>{
         return null;
     }
 
+    @Override
     public void tick() {
-        // FIXME implement move of storage windows, and cleaning of index
-        storage.moveWindows();
+        // add new and, remove obsolete window from storage
+        Window removedWindow = storage.moveWindows();
+
+        // clean indexes
+        long endTstamp = removedWindow.endTstamp;
+        removedWindow.store.forEach((objPos, bucket, pos, len) -> {
+            T obj = serdes2.unmarshall(bucket, pos, len);
+            for(Index<T> idx: indexes) {
+                idx.clearKey(obj, endTstamp);
+            }
+            return ForEachAction.CONTINUE;
+        });
     }
 
     @Override

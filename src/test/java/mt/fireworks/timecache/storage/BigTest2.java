@@ -42,7 +42,7 @@ public class BigTest2 {
      * @throws InterruptedException
      * @throws ExecutionException
      */
-    @Ignore
+//    @Ignore
     @Test
     public void runLargeTest() throws InterruptedException, ExecutionException {
         // indexes which be used during all testing

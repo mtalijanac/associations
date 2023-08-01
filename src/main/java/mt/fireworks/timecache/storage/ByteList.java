@@ -18,8 +18,11 @@ public class ByteList {
 
     @FunctionalInterface
     interface Peeker<T> {
-        T peek(byte[] bucket, int pos, int len);
+        T peek(long objPos, byte[] bucket, int pos, int len);
     }
+
+
+
 
     AtomicLong size = new AtomicLong();
     Conf conf = new Conf();
@@ -82,19 +85,19 @@ public class ByteList {
         int dataPos = readPos + conf.dataHeaderSize;
         byte[] bucket = buckets.get(bucketIndex);
         int dataLen = BitsAndBytes.readUnsignedShort(bucket, readPos);
-        T res = peeker.peek(bucket, dataPos, dataLen);
+        T res = peeker.peek(key, bucket, dataPos, dataLen);
         return res;
     }
 
     /** @return Length of data stored under key. */
     int length(long key) {
-        return peek(key, (bucket, pos, len) -> len);
+        return peek(key, (objPos, bucket, pos, len) -> len);
     }
 
 
     /** @return data under key */
     byte[] get(long key) {
-        byte[] data = peek(key, (bucket, pos, len) -> {
+        byte[] data = peek(key, (objPos, bucket, pos, len) -> {
             byte[] res = new byte[len];
             System.arraycopy(bucket, pos, res, 0, len);
             return res;
@@ -105,7 +108,7 @@ public class ByteList {
     /** Copy data under key to dest array at given idx.
      * @throws RuntimeException when there is no space in destination */
     int copy(long key, byte[] dest, int destPos) {
-        return peek(key, (bucket, pos, len) -> {
+        return peek(key, (objPos, bucket, pos, len) -> {
             int space = dest.length - destPos;
             if (space < len) {
                 throw new RuntimeException("No enough space in destination to copy data. Data len is: " + len + ", but space is: " + space);
@@ -119,10 +122,10 @@ public class ByteList {
         CONTINUE, BREAK
     }
 
-    void forEach(Peeker<ForEachAction> userPeeker) {
+    public void forEach(Peeker<ForEachAction> userPeeker) {
         Peeker<Integer> iterator = new Peeker<Integer>() {
-            public Integer peek(byte[] bucket, int pos, int len) {
-                ForEachAction res = userPeeker.peek(bucket, pos, len);
+            public Integer peek(long objPos, byte[] bucket, int pos, int len) {
+                ForEachAction res = userPeeker.peek(objPos, bucket, pos, len);
                 if (ForEachAction.BREAK.equals(res)) {
                     return -1;
                 }
@@ -137,14 +140,19 @@ public class ByteList {
         for (int bucketIndex = 0; bucketIndex < buckets.size(); bucketIndex++) {
             byte[] bucket = buckets.get(bucketIndex);
             int dataLen = BitsAndBytes.readUnsignedShort(bucket, 0);
+            if (dataLen == 0) continue;
+
             int dataPos = conf.dataHeaderSize;
 
+            long lead = conf.bucketSize * (bucketIndex == 0 ? 0 : bucketIndex - 1) ;
+
             inBucket: while (true) {
-                int nextObjPos = iterator.peek(bucket, dataPos, dataLen).intValue();
+                long objPos = lead + dataPos - conf.dataHeaderSize;
+                int nextObjPos = iterator.peek(objPos, bucket, dataPos, dataLen).intValue();
                 if (nextObjPos < 0) {
                     return;
                 }
-                if (nextObjPos >= bucket.length) {
+                if (nextObjPos >= bucket.length - conf.dataHeaderSize) {
                     break inBucket;
                 }
                 dataLen = BitsAndBytes.readUnsignedShort(bucket, nextObjPos);
@@ -155,5 +163,6 @@ public class ByteList {
             }
         }
     }
+
 
 }

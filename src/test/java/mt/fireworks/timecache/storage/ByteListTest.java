@@ -62,7 +62,7 @@ public class ByteListTest {
 
 
         // peek example, return int at start of data:
-        int cafeBabe = byteList.peek(dataKey_2, (bucket, pos, len) -> {
+        int cafeBabe = byteList.peek(dataKey_2, (objPos, bucket, pos, len) -> {
             return ByteBuffer.wrap(bucket).getInt(pos);
         });
         assertEquals(0xCAFEBABE, cafeBabe);
@@ -70,7 +70,7 @@ public class ByteListTest {
 
         // forEach example, count objects:
         AtomicInteger objCount = new AtomicInteger();
-        byteList.forEach((bucket, pos, len) -> {
+        byteList.forEach((objPos, bucket, pos, len) -> {
             objCount.incrementAndGet();
             return ForEachAction.CONTINUE;
         });
@@ -114,7 +114,7 @@ public class ByteListTest {
         // test foreach:
         AtomicInteger objCount = new AtomicInteger();
         AtomicInteger objLen = new AtomicInteger();
-        bl.forEach((bucket, pos, len) -> {
+        bl.forEach((objPos, bucket, pos, len) -> {
             objCount.incrementAndGet();
             objLen.addAndGet(len);
             return ForEachAction.CONTINUE;

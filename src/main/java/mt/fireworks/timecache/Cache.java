@@ -19,4 +19,7 @@ public interface Cache<T, K, S> {
 
     Map<K, Collection<T>> getMap(T val);
 
+
+    void tick();
+
 }
