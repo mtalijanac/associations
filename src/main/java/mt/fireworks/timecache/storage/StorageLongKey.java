@@ -190,13 +190,6 @@ public class StorageLongKey {
         return oldestWin;
     }
 
-    void forEach(Window win, Peeker<ForEachAction> gcPeeker) {
-        int pos = 0;
-        ByteList store = win.store;
-        store.forEach(gcPeeker);
-    }
-
-
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
