@@ -62,20 +62,4 @@ public class BitsAndBytes {
         return (1l << bits) - 1l;
     }
 
-
-    public static void main(String[] args) {
-        long timestamp = System.currentTimeMillis();
-        System.out.println(timestamp);
-        System.out.println("numberOfLeadingZeros: " + Long.numberOfLeadingZeros(timestamp));
-
-        System.out.println("\nIn year: ");
-        long msInYear = 365 * 24 * 3600 * 1000;
-        long timestamp2 = timestamp + msInYear;
-        System.out.println(timestamp2);
-        System.out.println("numberOfLeadingZeros: " + Long.numberOfLeadingZeros(timestamp2));
-
-
-        System.out.println(msInYear);
-    }
-
 }
