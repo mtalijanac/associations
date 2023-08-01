@@ -47,14 +47,15 @@ public class StorageLongKey {
     Conf conf = new Conf();
     ArrayList<Window> windows = new ArrayList<>();
     Window nowWindow;	// window where events happening at currentTime would enter
-    public TimeKeys timeKeys = new TimeKeys();
+    public TimeKeys timeKeys;
 
-    public static StorageLongKey init() {
-        return init(null, null);
+    static StorageLongKey init() {
+        return init(null, null, new TimeKeys());
     }
 
-    public static StorageLongKey init(Conf conf, Long start) {
+    static StorageLongKey init(Conf conf, Long start, TimeKeys timeKeys) {
         StorageLongKey st = new StorageLongKey();
+        st.timeKeys = timeKeys;
 
         if (conf != null) {
             st.conf = conf;

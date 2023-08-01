@@ -5,7 +5,6 @@ import java.util.function.Function;
 
 import lombok.Setter;
 import mt.fireworks.timecache.SerDes2;
-import mt.fireworks.timecache.index.Index;
 
 public class ByteCacheFactory<T> {
 
@@ -16,6 +15,7 @@ public class ByteCacheFactory<T> {
 
     @Setter StorageLongKey.Conf storageConf;
     @Setter Long startTimestamp;
+    @Setter TimeKeys timeKeys = new TimeKeys();
 
     public ByteCacheImpl<T> getInstance() {
         if (serdes == null)
@@ -28,13 +28,12 @@ public class ByteCacheFactory<T> {
 
         ArrayList<Index<T>> indexList = new ArrayList<>();
         for (Function<T, byte[]> key: keyers) {
-            Index<T> i = new Index<>();
-            i.setKeyer(key);
+            Index<T> i = new Index<T>(key, timeKeys);
             indexList.add(i);
         }
 
         Index[] indexes = indexList.toArray(new Index[indexList.size()]);
-        StorageLongKey storage = StorageLongKey.init(storageConf, startTimestamp);
+        StorageLongKey storage = StorageLongKey.init(storageConf, startTimestamp, timeKeys);
         ByteCacheImpl<T> cache = new ByteCacheImpl<>(storage, indexes, ser);
         return cache;
     }

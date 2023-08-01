@@ -11,7 +11,6 @@ import org.junit.Test;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import mt.fireworks.timecache.SerDes2;
-import mt.fireworks.timecache.index.Index;
 
 public class ByteCacheImplTest {
 
@@ -56,8 +55,7 @@ public class ByteCacheImplTest {
     @Test
     public void usageExample() throws InterruptedException {
         StorageLongKey storage = StorageLongKey.init();
-        Index<TstTrx> index = new Index<>();
-        index.setKeyer(keyer);
+        Index<TstTrx> index = new Index<>(keyer, new TimeKeys());
 
         Index<TstTrx>[] indexes = new Index[1];
         indexes[0] = index;

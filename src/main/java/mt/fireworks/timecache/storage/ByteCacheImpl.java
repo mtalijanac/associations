@@ -12,7 +12,6 @@ import org.eclipse.collections.impl.factory.primitive.LongLists;
 import lombok.AllArgsConstructor;
 import mt.fireworks.timecache.Cache;
 import mt.fireworks.timecache.SerDes2;
-import mt.fireworks.timecache.index.Index;
 import mt.fireworks.timecache.storage.ByteList.ForEachAction;
 import mt.fireworks.timecache.storage.StorageLongKey.Window;
 
