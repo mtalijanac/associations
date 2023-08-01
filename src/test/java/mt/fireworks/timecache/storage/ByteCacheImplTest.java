@@ -77,11 +77,13 @@ public class ByteCacheImplTest {
         cache.add(t5);
 
         Object[] res1 = cache.getArray(t1);
-        ArrayList<TstTrx> ts1 = (ArrayList<ByteCacheImplTest.TstTrx>) res1[0];
+        assertEquals(indexes.length * 2, res1.length);
+        ArrayList<TstTrx> ts1 = (ArrayList<ByteCacheImplTest.TstTrx>) res1[1];
         assertEquals(3, ts1.size());
 
         Object[] res2 = cache.getArray(t2);
-        ArrayList<TstTrx> ts2 = (ArrayList<ByteCacheImplTest.TstTrx>) res2[0];
+        assertEquals(indexes.length * 2, res2.length);
+        ArrayList<TstTrx> ts2 = (ArrayList<ByteCacheImplTest.TstTrx>) res2[1];
         assertEquals(2, ts2.size());
     }
 

@@ -20,6 +20,7 @@ public interface Cache<T, K, S> {
     Map<K, Collection<T>> getMap(T val);
 
 
+    /** move caching window to next iteration, and gc old entries */
     void tick();
 
 }

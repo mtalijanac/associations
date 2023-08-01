@@ -3,6 +3,7 @@ package mt.fireworks.timecache.storage;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.eclipse.collections.api.list.primitive.MutableLongList;
 import org.eclipse.collections.api.set.primitive.MutableLongSet;
@@ -47,14 +48,22 @@ public class ByteCacheImpl<T> implements Cache<T, byte[], byte[]>{
 
     @Override
     public Object[] getArray(T val) {
-        Object[] result = new Object[indexes.length];
+        ArrayList<Object> resultList = new ArrayList<>();
         MutableLongList keysForRemoval = LongLists.mutable.empty();
 
         for (int idx = 0; idx < indexes.length; idx++) {
             Index<T> index = indexes[idx];
+            byte[] key = index.getKeyer().apply(val);
+            if (key == null) continue;
+
             MutableLongSet strKeys = index.get(val);
+            if (strKeys == null) continue;
+            if (strKeys.isEmpty()) continue;
+
+
             ArrayList<T> ts = new ArrayList<>(strKeys.size());
-            result[idx] = ts;
+            resultList.add(key);
+            resultList.add(ts);
 
             strKeys.forEach(strKey -> {
                 T res = storage.getEntry2(strKey, serdes2);
@@ -68,6 +77,7 @@ public class ByteCacheImpl<T> implements Cache<T, byte[], byte[]>{
             }
         }
 
+        Object[] result = resultList.toArray();
         return result;
     }
 
@@ -79,18 +89,32 @@ public class ByteCacheImpl<T> implements Cache<T, byte[], byte[]>{
 
     @Override
     public void tick() {
+        long t1 = System.nanoTime();
         // add new and, remove obsolete window from storage
         Window removedWindow = storage.moveWindows();
+
+        long t2 = System.nanoTime();
+        long mwDur = t2 - t1;
+        AtomicLong objCounter = new AtomicLong();
 
         // clean indexes
         long endTstamp = removedWindow.endTstamp;
         removedWindow.store.forEach((objPos, bucket, pos, len) -> {
+            objCounter.incrementAndGet();
             T obj = serdes2.unmarshall(bucket, pos, len);
             for(Index<T> idx: indexes) {
                 idx.clearKey(obj, endTstamp);
             }
             return ForEachAction.CONTINUE;
         });
+
+        long t3 = System.nanoTime();
+        long ic = t3 - t2;
+        long objCount = objCounter.get();
+        System.out.println(
+            "Moving windows: '" + mwDur + "', "
+          + "index cleaning: '" + ic + "', "
+          + "obj count: '" + objCount + "'");
     }
 
     @Override
