@@ -21,7 +21,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import lombok.AllArgsConstructor;
-import mt.fireworks.timecache.mock.MockObj;
 import mt.fireworks.timecache.storage.ByteCacheFactory;
 import mt.fireworks.timecache.storage.ByteCacheImpl;
 
@@ -187,7 +186,7 @@ public class BigTest2 {
     //                if (c % 100_000 == 0) System.out.println(c);
                     cache.add(val);
                     Object[] res = cache.getArray(val);
-                    ArrayList<MockObj> objects = (ArrayList<MockObj>) res[0];
+                    ArrayList<MockObj> objects = (ArrayList<MockObj>) res[1];
                     if (objects.size() > 1000) {
                         System.out.println(objects.size());
                     }

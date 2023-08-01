@@ -1,8 +1,4 @@
-package mt.fireworks.timecache.mock;
-
-import java.util.concurrent.ThreadLocalRandom;
-
-import org.apache.commons.lang3.RandomStringUtils;
+package mt.fireworks.timecache;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

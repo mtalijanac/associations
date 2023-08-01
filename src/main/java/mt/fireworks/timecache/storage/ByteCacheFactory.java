@@ -32,9 +32,9 @@ public class ByteCacheFactory<T> {
             indexList.add(i);
         }
 
-        Index[] indexes = indexList.toArray(new Index[indexList.size()]);
+        Index<T>[] indexes = indexList.toArray(new Index[indexList.size()]);
         StorageLongKey storage = StorageLongKey.init(storageConf, startTimestamp, timeKeys);
-        ByteCacheImpl<T> cache = new ByteCacheImpl<>(storage, indexes, ser);
+        ByteCacheImpl<T> cache = new ByteCacheImpl<T>(storage, indexes, ser);
         return cache;
     }
 

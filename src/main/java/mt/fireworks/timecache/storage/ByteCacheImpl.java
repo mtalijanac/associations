@@ -4,12 +4,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import org.eclipse.collections.api.list.primitive.MutableLongList;
 import org.eclipse.collections.api.set.primitive.MutableLongSet;
 import org.eclipse.collections.impl.factory.primitive.LongLists;
 
 import lombok.AllArgsConstructor;
+import lombok.Cleanup;
 import mt.fireworks.timecache.Cache;
 import mt.fireworks.timecache.SerDes2;
 import mt.fireworks.timecache.storage.ByteList.ForEachAction;
@@ -86,8 +89,13 @@ public class ByteCacheImpl<T> implements Cache<T, byte[], byte[]>{
         return null;
     }
 
+    final ReentrantReadWriteLock tickLock = new ReentrantReadWriteLock();
+
     @Override
     public void tick() {
+        @Cleanup("unlock") WriteLock wock = tickLock.writeLock();
+        wock.lock();
+
         long t1 = System.nanoTime();
         // add new and, remove obsolete window from storage
         Window removedWindow = storage.moveWindows();
@@ -110,10 +118,13 @@ public class ByteCacheImpl<T> implements Cache<T, byte[], byte[]>{
         long t3 = System.nanoTime();
         long ic = t3 - t2;
         long objCount = objCounter.get();
+
+        // FIXME add metrics and logging
         System.out.println(
             "Moving windows: '" + mwDur + "', "
           + "index cleaning: '" + ic + "', "
           + "obj count: '" + objCount + "'");
+
     }
 
     @Override
