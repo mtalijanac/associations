@@ -19,7 +19,7 @@ public class ByteCacheFactory<T> {
 
     public ByteCacheImpl<T> getInstance() {
         if (serdes == null)
-            throw new NullPointerException("Serdes not set");
+            throw new RuntimeException("Serdes not set");
 
         SerDes2<T> ser = serdes;
         if (metricsEnabled) {
