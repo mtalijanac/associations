@@ -17,32 +17,14 @@ import java.time.ZoneOffset;
  * Po dizajnu maksimalni offset je ~10 godina. Kod nije stabilan za
  * pohranu tstampova koji su više od 10 godina u budučnosti.
  *
- * Index je pohranjen do 35 bitova. U slučaju korištenja indexa većeg od 2^32-1,
+ * Index je pohranjen do 35 bitova. U slučaju korištenja indexa većeg od 2^35-1,
  * kod baca grešku.
  */
 public class TimeKeys {
 
-    long epoch = startingYear();
-    long maxIndex = (1l << 35) - 1l; // 34_359_738_367
-    long mask = BitsAndBytes.lmask(35);
-
-
-    public static void main(String[] args) {
-
-        // id sadrži milisekunde -> 39 bitova
-        // ostane nam 25 bitova za: 33,554,432 unosa, tj oko 268 mb sa 8 byte padingom
-        long tenYearsOfMillis = 10l * 366 * 24 * 3600 * 1000;
-        System.out.println(tenYearsOfMillis);
-
-        // id sadrži sekunde -> 29 bitova
-        // ostane 35 bitova za: 34,359,738,368 unosa, tj 32 gb direkntog prostora
-        // tj. 256 gibabajta 8 bayt paddingom
-        long tenYearsOfSeconds = 10l * 366 * 24 * 3600;
-        System.out.println(tenYearsOfSeconds);
-
-        TimeKeys tk = new TimeKeys();
-        System.out.println(tk.maxIndex);
-    }
+    final long epoch = startingYear();
+    final long maxIndex = (1l << 35) - 1l; // 34_359_738_367
+    final long mask = BitsAndBytes.lmask(35);
 
 
     /** @return tstamp of current new year, unless if current month is January. Than it is last new year */
