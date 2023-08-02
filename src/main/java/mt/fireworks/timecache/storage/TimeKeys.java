@@ -66,6 +66,15 @@ public class TimeKeys {
         return (key >>> 35) * 1000l + epoch;
     }
 
+    /**
+     * @return true if tsamps are in same second
+     */
+    public boolean equalSec(long tstampA, long tstampB) {
+        long a = (tstampA / 1000l);
+        long b = (tstampB / 1000l);
+        return a == b;
+    }
+
     /** @return index */
     long index(final long key) {
         return key & mask;

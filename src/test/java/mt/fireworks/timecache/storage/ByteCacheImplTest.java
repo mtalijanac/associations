@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.function.Function;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import lombok.AllArgsConstructor;
@@ -85,4 +86,26 @@ public class ByteCacheImplTest {
         assertEquals(2, ts2.size());
     }
 
+    @Test
+    public void duplicateTest() {
+        ByteCacheFactory<TstTrx> factory = new ByteCacheFactory<>();
+        factory.setSerdes(serdes2);
+        factory.addKeyers(keyer);
+
+        ByteCacheImpl<TstTrx> cache = factory.getInstance();
+
+        long now = System.currentTimeMillis();
+        TstTrx t1 = new TstTrx(now, 1);
+        TstTrx t2 = new TstTrx(now + 10, 2);
+
+        boolean r1 = cache.add(t1);
+        Assert.assertTrue(r1);
+
+        boolean r2 = cache.add(t2);
+        Assert.assertTrue(r2);
+
+        // adding duplicate should fail
+        boolean r12 = cache.add(t1);
+        Assert.assertFalse(r12);
+    }
 }

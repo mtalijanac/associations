@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
+import org.eclipse.collections.api.iterator.MutableLongIterator;
 import org.eclipse.collections.api.list.primitive.MutableLongList;
 import org.eclipse.collections.api.set.primitive.MutableLongSet;
 import org.eclipse.collections.impl.factory.primitive.LongLists;
@@ -30,6 +31,18 @@ public class ByteCacheImpl<T> implements Cache<T, byte[], byte[]>{
         long tstamp = serdes2.timestampOfT(val);
         byte[] data = serdes2.marshall(val);
 
+        //
+        // check for duplicates
+        //
+        for (Index<T> i: indexes) {
+            MutableLongSet onSameTime = i.onSameTime(val, tstamp);
+            if (onSameTime == null) continue;
+            boolean contains = onSameTime.anySatisfy(copyKey -> {
+                return storage.equal(copyKey, data, serdes2);
+            });
+            if (contains) return false;
+        }
+
         long storageIdx = storage.addEntry(tstamp, data);
         if (storageIdx == 0) {
             return false;
@@ -38,11 +51,6 @@ public class ByteCacheImpl<T> implements Cache<T, byte[], byte[]>{
         for (Index<T> i: indexes) {
             i.put(val, storageIdx);
         }
-
-        // TODO provjeri da li već postoji ova vrijednost u kešu
-        //			za svaki index dohvati listu s istim timestmapom
-        //          dohvati sve vrijednosti s istim tstampom
-        //          provrti equalsD
 
         return true;
     }

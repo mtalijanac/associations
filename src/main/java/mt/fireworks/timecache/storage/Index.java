@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.function.Function;
 
 import org.eclipse.collections.api.block.HashingStrategy;
+import org.eclipse.collections.api.block.procedure.primitive.LongProcedure;
 import org.eclipse.collections.api.list.primitive.MutableLongList;
 import org.eclipse.collections.api.map.MutableMap;
 import org.eclipse.collections.api.set.primitive.MutableLongSet;
@@ -42,6 +43,31 @@ public class Index<T> {
         if (key == null) return null;
         MutableLongSet keyData = index.get(key);
         return keyData;
+    }
+
+
+    public MutableLongSet onSameTime(T val, long valTstamp) {
+        byte[] valKey = keyer.apply(val);
+        if (valKey == null) return null;
+        MutableLongSet keyData = index.get(valKey);
+        if (keyData == null) return null;
+
+        boolean matching = keyData.anySatisfy(storedKey -> {
+            long keyTstamp = timeKeys.tstamp(storedKey);
+            boolean sameTime = timeKeys.equalSec(valTstamp, keyTstamp);
+            return sameTime;
+        });
+
+        if (!matching) return null;
+
+        MutableLongSet onSameTime = keyData.select(storedKey -> {
+            long keyTstamp = timeKeys.tstamp(storedKey);
+            boolean sameTime = timeKeys.equalSec(valTstamp, keyTstamp);
+            return sameTime;
+        });
+
+        return onSameTime;
+
     }
 
     public void gc(long upperTstampExclusive) {

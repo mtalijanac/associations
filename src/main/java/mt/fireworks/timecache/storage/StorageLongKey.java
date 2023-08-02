@@ -12,6 +12,7 @@ import lombok.AllArgsConstructor;
 import lombok.Cleanup;
 import lombok.RequiredArgsConstructor;
 import mt.fireworks.timecache.SerDes2;
+import mt.fireworks.timecache.storage.ByteList.Peeker;
 
 public class StorageLongKey {
 
@@ -149,6 +150,18 @@ public class StorageLongKey {
         if (window == null) return null;
         T val = window.store.peek(index, (objPos, bucket, pos, len) -> serdes.unmarshall(bucket, pos, len));
         return val;
+    }
+
+    /** @return true if value under key equal to passed data? */
+    public boolean equal(long key, byte[] data, SerDes2 serdes) {
+        long tstamp = timeKeys.tstamp(key);
+        long index = timeKeys.index(key);
+        Window window = windowForTstamp(tstamp);
+        if (window == null) return false;
+        Boolean res = window.store.peek(index, (objPos, bucket, pos, len) -> {
+            return serdes.equalsD(bucket, pos, len, data, 0, data.length);
+        });
+        return res;
     }
 
 
