@@ -5,39 +5,41 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
+import org.eclipse.collections.api.collection.primitive.MutableLongCollection;
 import org.eclipse.collections.api.list.primitive.MutableLongList;
-import org.eclipse.collections.api.set.primitive.MutableLongSet;
 import org.eclipse.collections.impl.factory.primitive.LongLists;
 
-import lombok.AllArgsConstructor;
-import lombok.Cleanup;
+import lombok.*;
 import mt.fireworks.timecache.Cache;
 import mt.fireworks.timecache.SerDes2;
 import mt.fireworks.timecache.storage.ByteList.ForEachAction;
 import mt.fireworks.timecache.storage.StorageLongKey.Window;
 
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class ByteCacheImpl<T> implements Cache<T, byte[], byte[]>{
 
-    StorageLongKey storage;
-    Index<T>[] indexes;
-    SerDes2<T> serdes2;
+    @NonNull StorageLongKey storage;
+    @NonNull Index<T>[] indexes;
+    @NonNull SerDes2<T> serdes2;
+
+    /** enabled/disable check if data is already stored in cache */
+    @Setter boolean checkForDuplicates = true;
 
     @Override
     public boolean add(T val) {
         long tstamp = serdes2.timestampOfT(val);
         byte[] data = serdes2.marshall(val);
 
-        //
-        // check for duplicates
-        //
-        for (Index<T> i: indexes) {
-            MutableLongSet onSameTime = i.onSameTime(val, tstamp);
-            if (onSameTime == null) continue;
-            boolean contains = onSameTime.anySatisfy(copyKey -> {
-                return storage.equal(copyKey, data, serdes2);
-            });
-            if (contains) return false;
+
+        if (checkForDuplicates) {
+            for (Index<T> i: indexes) {
+                MutableLongCollection onSameTime = i.onSameTime(val, tstamp);
+                if (onSameTime == null) continue;
+                boolean hasDuplicate = onSameTime.anySatisfy(copyKey -> {
+                    return storage.equal(copyKey, data, serdes2);
+                });
+                if (hasDuplicate) return false;
+            }
         }
 
         long storageIdx = storage.addEntry(tstamp, data);
@@ -63,10 +65,9 @@ public class ByteCacheImpl<T> implements Cache<T, byte[], byte[]>{
             byte[] key = index.getKeyer().apply(val);
             if (key == null) continue;
 
-            MutableLongSet strKeys = index.get(val);
+            MutableLongCollection strKeys = index.get(val);
             if (strKeys == null) continue;
             if (strKeys.isEmpty()) continue;
-
 
             ArrayList<T> ts = new ArrayList<>(strKeys.size());
             resultList.add(key);
@@ -76,7 +77,6 @@ public class ByteCacheImpl<T> implements Cache<T, byte[], byte[]>{
                 T res = storage.getEntry2(strKey, serdes2);
                 if (res != null) ts.add(res);
             });
-
 
             if (keysForRemoval != null && keysForRemoval.size() > 0) {
                 strKeys.removeAll(keysForRemoval);
@@ -98,12 +98,13 @@ public class ByteCacheImpl<T> implements Cache<T, byte[], byte[]>{
 
     @Override
     public void tick() {
-        @Cleanup("unlock") WriteLock wock = tickLock.writeLock();
-        wock.lock();
 
         long t1 = System.nanoTime();
         // add new and, remove obsolete window from storage
+        WriteLock wock = tickLock.writeLock();
+        wock.lock();
         Window removedWindow = storage.moveWindows();
+        wock.unlock();
 
         long t2 = System.nanoTime();
         long mwDur = t2 - t1;

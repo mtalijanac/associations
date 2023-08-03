@@ -4,12 +4,10 @@ import java.util.Arrays;
 import java.util.function.Function;
 
 import org.eclipse.collections.api.block.HashingStrategy;
-import org.eclipse.collections.api.block.procedure.primitive.LongProcedure;
+import org.eclipse.collections.api.collection.primitive.MutableLongCollection;
 import org.eclipse.collections.api.list.primitive.MutableLongList;
 import org.eclipse.collections.api.map.MutableMap;
-import org.eclipse.collections.api.set.primitive.MutableLongSet;
 import org.eclipse.collections.impl.factory.primitive.LongLists;
-import org.eclipse.collections.impl.factory.primitive.LongSets;
 import org.eclipse.collections.impl.map.strategy.mutable.UnifiedMapWithHashingStrategy;
 
 import lombok.Data;
@@ -17,15 +15,17 @@ import lombok.Data;
 @Data
 public class Index<T> {
 
-    MutableMap<byte[], MutableLongSet> index;
+    MutableMap<byte[], MutableLongCollection> index;
     Function<T, byte[]> keyer;
     TimeKeys timeKeys;
+
+
 
     Index(Function<T, byte[]> keyer, TimeKeys tk) {
         this.keyer = keyer;
         this.timeKeys = tk;
 
-        UnifiedMapWithHashingStrategy<byte[], MutableLongSet> map = new UnifiedMapWithHashingStrategy<>(new IndexHashCode());
+        UnifiedMapWithHashingStrategy<byte[], MutableLongCollection> map = new UnifiedMapWithHashingStrategy<>(new IndexHashCode());
         index = map.asSynchronized();
     }
 
@@ -33,23 +33,26 @@ public class Index<T> {
     public boolean put(T val, long storageKey) {
         byte[] key = keyer.apply(val);
         if (key == null) return false;
-        MutableLongSet keyData = index.getIfAbsentPut(key, () -> LongSets.mutable.empty().asSynchronized());
+        MutableLongCollection keyData = index.getIfAbsentPut(key, () -> LongLists.mutable.empty().asSynchronized());
         keyData.add(storageKey);
         return true;
     }
 
-    public MutableLongSet get(T val) {
+    public MutableLongCollection get(T val) {
         byte[] key = keyer.apply(val);
         if (key == null) return null;
-        MutableLongSet keyData = index.get(key);
+        MutableLongCollection keyData = index.get(key);
         return keyData;
     }
 
 
-    public MutableLongSet onSameTime(T val, long valTstamp) {
+    /**
+     * Values of T which happened on same tstamp by {@link TimeKeys#equalSec(long, long)}
+     */
+    public MutableLongCollection onSameTime(T val, long valTstamp) {
         byte[] valKey = keyer.apply(val);
         if (valKey == null) return null;
-        MutableLongSet keyData = index.get(valKey);
+        MutableLongCollection keyData = index.get(valKey);
         if (keyData == null) return null;
 
         boolean matching = keyData.anySatisfy(storedKey -> {
@@ -60,7 +63,7 @@ public class Index<T> {
 
         if (!matching) return null;
 
-        MutableLongSet onSameTime = keyData.select(storedKey -> {
+        MutableLongCollection onSameTime = keyData.select(storedKey -> {
             long keyTstamp = timeKeys.tstamp(storedKey);
             boolean sameTime = timeKeys.equalSec(valTstamp, keyTstamp);
             return sameTime;
@@ -98,7 +101,7 @@ public class Index<T> {
         byte[] key = keyer.apply(val);
         if (key == null) return;
 
-        MutableLongSet keyData = index.get(key);
+        MutableLongCollection keyData = index.get(key);
         if (keyData == null) return;
         if (keyData.isEmpty()) return;
 

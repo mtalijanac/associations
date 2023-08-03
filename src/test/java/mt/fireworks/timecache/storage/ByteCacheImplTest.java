@@ -93,6 +93,7 @@ public class ByteCacheImplTest {
         factory.addKeyers(keyer);
 
         ByteCacheImpl<TstTrx> cache = factory.getInstance();
+        cache.setCheckForDuplicates(true);
 
         long now = System.currentTimeMillis();
         TstTrx t1 = new TstTrx(now, 1);
