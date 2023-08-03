@@ -4,17 +4,20 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
+import java.util.function.Function;
 
 import org.eclipse.collections.api.collection.primitive.MutableLongCollection;
 import org.eclipse.collections.api.list.primitive.MutableLongList;
 import org.eclipse.collections.impl.factory.primitive.LongLists;
 
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 import mt.fireworks.timecache.Cache;
 import mt.fireworks.timecache.SerDes2;
 import mt.fireworks.timecache.storage.ByteList.ForEachAction;
 import mt.fireworks.timecache.storage.StorageLongKey.Window;
 
+@Slf4j
 @RequiredArgsConstructor
 public class ByteCacheImpl<T> implements Cache<T, byte[], byte[]>{
 
@@ -23,7 +26,7 @@ public class ByteCacheImpl<T> implements Cache<T, byte[], byte[]>{
     @NonNull SerDes2<T> serdes2;
 
     /** enabled/disable check if data is already stored in cache */
-    @Setter boolean checkForDuplicates = true;
+    @Setter boolean checkForDuplicates = false;
 
     @Override
     public boolean add(T val) {
@@ -126,19 +129,29 @@ public class ByteCacheImpl<T> implements Cache<T, byte[], byte[]>{
         long objCount = objCounter.get();
 
         // FIXME add metrics and logging
-        System.out.println(
-            "Moving windows: '" + mwDur + "', "
-          + "index cleaning: '" + ic + "', "
-          + "obj count: '" + objCount + "'");
 
+        if (log.isDebugEnabled()) {
+            String durReadable = TimeUtils.toReadable(mwDur);
+            String icReadable = TimeUtils.toReadable(ic);
+            log.debug("New window: '{}', index cleaned: '{}', obj count: '{}'", durReadable, icReadable, objCount);
+        }
     }
 
     @Override
     public String toString() {
+        String res = "";
         if (serdes2 instanceof MetricSerDes2) {
-            return ((MetricSerDes2) serdes2).resetMetrics();
+            String serdesMetric = ((MetricSerDes2<T>) serdes2).resetMetrics();
+            res += serdesMetric;
         }
-        return "";
+        for (Index<T> idx: indexes) {
+            Function<T, byte[]> keyer = idx.getKeyer();
+            if (keyer instanceof MetricKeyer) {
+                String keyerMetrics = ((MetricKeyer<T, byte[]>) keyer).resetMetrics();
+                res += "\n" + keyerMetrics;
+            }
+        }
+        return res;
     }
 
 }

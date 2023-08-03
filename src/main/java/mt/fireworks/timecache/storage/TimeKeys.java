@@ -7,6 +7,7 @@ import java.time.Month;
 import java.time.Year;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Enkodiranje ključeva za keš. Ključ sadrži tstamp podatka i njegov index.

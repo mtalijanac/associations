@@ -1,9 +1,10 @@
 package mt.fireworks.timecache.storage;
 
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
-import lombok.Setter;
+import lombok.*;
 import mt.fireworks.timecache.SerDes2;
 
 public class ByteCacheFactory<T> {
@@ -16,6 +17,8 @@ public class ByteCacheFactory<T> {
     @Setter StorageLongKey.Conf storageConf;
     @Setter Long startTimestamp;
     @Setter TimeKeys timeKeys = new TimeKeys();
+
+    @Setter boolean checkForDuplicates = false;
 
     public ByteCacheImpl<T> getInstance() {
         if (serdes == null)
@@ -35,13 +38,17 @@ public class ByteCacheFactory<T> {
         Index<T>[] indexes = indexList.toArray(new Index[indexList.size()]);
         StorageLongKey storage = StorageLongKey.init(storageConf, startTimestamp, timeKeys);
         ByteCacheImpl<T> cache = new ByteCacheImpl<T>(storage, indexes, ser);
+        cache.setCheckForDuplicates(checkForDuplicates);
         return cache;
     }
 
 
-    public void addKeyers(Function<T, byte[]>... keyer) {
-        for (Function<T, byte[]> k: keyer) {
-            keyers.add(k);
+    public void addKeyers(Function<T, byte[]>... keys) {
+        int i = 1;
+        for (Function<T, byte[]> k: keys) {
+            Function<T, byte[]> key = (metricsEnabled) ? new MetricKeyer<>(k, "key " + (i++))
+                                                       : k;
+            keyers.add(key);
         }
     }
 
