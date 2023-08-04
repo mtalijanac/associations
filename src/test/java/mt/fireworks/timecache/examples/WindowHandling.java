@@ -52,7 +52,7 @@ public class WindowHandling {
         // Initialize cache using two past and two future windows of one minute duration.
         // Associate events by leading letters
         //
-        Function<Event, byte[]> fourLetterKey = (Event e) -> e.data.substring(0, 5).getBytes(UTF_8);
+        Function<Event, byte[]> key = (Event e) -> e.data.substring(0, 5).getBytes(UTF_8);
 
         long now = System.currentTimeMillis();
         long windowDuration = oneMinute;
@@ -61,7 +61,7 @@ public class WindowHandling {
 
         ByteCacheFactory<Event> factory = new ByteCacheFactory<>();
         factory.setSerdes(new EventSerDes());
-        factory.addKeyers(fourLetterKey);
+        factory.addKeyers(key);
         factory.storageConf(pastWindowCount, futureWindowCount, windowDuration);
         long start = factory.setStartTimestamp(now);
         ByteCacheImpl<Event> cache = factory.getInstance();
