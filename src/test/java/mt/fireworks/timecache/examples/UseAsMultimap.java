@@ -20,7 +20,7 @@ import mt.fireworks.timecache.*;
  * Fetch back associated events. Print output and assert correctness.
  * Ignore all time logic, and use cache as simple multimap.
  */
-public class UseAsMutlimap {
+public class UseAsMultimap {
 
     @Data @AllArgsConstructor
     static class Event {

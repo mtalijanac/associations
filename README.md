@@ -73,7 +73,7 @@ Test folder contains many [examples](https://github.com/mtalijanac/timecache/blo
 of usage.
 
 Most important:
- - using Timecache as [mutlimap](https://github.com/mtalijanac/timecache/blob/main/src/test/java/mt/fireworks/timecache/examples/UseAsMutlimap.java)
+ - using Timecache as [multimap](https://github.com/mtalijanac/timecache/blob/main/src/test/java/mt/fireworks/timecache/examples/UseAsMultimap.java)
  - passing Time and [handling time windows](https://github.com/mtalijanac/timecache/blob/main/src/test/java/mt/fireworks/timecache/examples/WindowHandling.java)
 
 
