@@ -75,7 +75,7 @@ public class WindowHandling {
         //
 
         // add event in current time window
-        cache.add(new Event(start, "Event now"));
+        assertTrue(  cache.add( new Event(start, "Event now")));
 
         // add couple future events
         assertTrue(  cache.add( new Event(start + oneMinute,  "Event in one minute")));
@@ -93,7 +93,7 @@ public class WindowHandling {
 
 
         //
-        // Repeatedly query for stored events while increment time
+        // Repeatedly query for stored events while incrementing time
         //
 
         Event query = new Event(System.currentTimeMillis(), "Event query");
