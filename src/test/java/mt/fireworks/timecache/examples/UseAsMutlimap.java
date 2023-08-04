@@ -7,6 +7,7 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Random;
+import java.util.function.Function;
 
 import org.junit.Test;
 
@@ -21,14 +22,25 @@ import mt.fireworks.timecache.*;
  */
 public class UseAsMutlimap {
 
+    @Data @AllArgsConstructor
+    static class Event {
+        long tstamp;
+        String data;
+    }
+
+
     @Test
     public void example() throws InterruptedException {
         //
-        // Initialize cache using default values
+        // Initialize cache using default values,
+        // associate events by starting letters
         //
+        Function<Event, byte[]> twoLetterKey  = (Event e) -> e.data.substring(0, 2).getBytes(UTF_8);
+        Function<Event, byte[]> fourLetterKey = (Event e) -> e.data.substring(0, 4).getBytes(UTF_8);
+
         ByteCacheFactory<Event> factory = new ByteCacheFactory<>();
         factory.setSerdes(new EventSerDes());
-        factory.addKeyers(Event::key2, Event::key4);
+        factory.addKeyers(twoLetterKey, fourLetterKey);
         ByteCacheImpl<Event> cache = factory.getInstance();
 
 
@@ -68,27 +80,13 @@ public class UseAsMutlimap {
         assertEquals(hillAssociated.get(0).getValue().size(), 2); // 'Hi'
 
         // Pretty print output
-        hellAssociated.forEach( e -> System.out.println(e) );
-        hillAssociated.forEach( e -> System.out.println(e) );
+        hellAssociated.forEach( System.out::println );
+        hillAssociated.forEach( System.out::println );
+
     }
 
 
-    @Data @AllArgsConstructor
-    public static class Event {
-        long tstamp;
-        String data;
-
-        byte[] key2() {
-            return data.substring(0, 2).getBytes(UTF_8);
-        }
-
-        byte[] key4() {
-            return data.substring(0, 4).getBytes(UTF_8);
-        }
-    }
-
-
-    public static class EventSerDes implements SerDes<Event> {
+    static class EventSerDes implements SerDes<Event> {
         public byte[] marshall(Event val) {
             return ByteBuffer.allocate(val.data.length() + 8)
                            .putLong(val.tstamp)
