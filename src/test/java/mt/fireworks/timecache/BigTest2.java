@@ -3,6 +3,8 @@ package mt.fireworks.timecache;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map.Entry;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -185,8 +187,9 @@ public class BigTest2 {
                     long c = count.incrementAndGet();
     //                if (c % 100_000 == 0) System.out.println(c);
                     cache.add(val);
-                    Object[] res = cache.getArray(val);
-                    ArrayList<MockObj> objects = (ArrayList<MockObj>) res[1];
+//                    Object[] res = cache.getArray(val);
+                    List<Entry<byte[], List<MockObj>>> res = cache.get(val);
+                    ArrayList<MockObj> objects = (ArrayList<MockObj>) res.get(0).getValue();
                     if (objects.size() > 1000) {
                         System.out.println(objects.size());
                     }
@@ -212,7 +215,7 @@ public class BigTest2 {
     }
 
 
-    SerDes2<MockObj> serdes = new SerDes2<MockObj>() {
+    SerDes<MockObj> serdes = new SerDes<MockObj>() {
         public MockObj unmarshall(byte[] data) {
             ByteBuffer bb = ByteBuffer.wrap(data);
             long tstamp = bb.getLong();

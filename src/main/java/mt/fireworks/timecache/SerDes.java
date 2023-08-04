@@ -2,7 +2,7 @@ package mt.fireworks.timecache;
 
 import java.util.Arrays;
 
-public interface SerDes2<T> {
+public interface SerDes<T> {
 
     /**
      * Write an object to data array.

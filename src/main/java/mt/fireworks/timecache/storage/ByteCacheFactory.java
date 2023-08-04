@@ -5,13 +5,13 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 import lombok.*;
-import mt.fireworks.timecache.SerDes2;
+import mt.fireworks.timecache.SerDes;
 
 public class ByteCacheFactory<T> {
 
     @Setter ArrayList<Function<T, byte[]>> keyers = new ArrayList<>();
 
-    @Setter SerDes2<T> serdes;
+    @Setter SerDes<T> serdes;
     @Setter Boolean metricsEnabled = Boolean.TRUE;
 
     @Setter StorageLongKey.Conf storageConf;
@@ -24,7 +24,7 @@ public class ByteCacheFactory<T> {
         if (serdes == null)
             throw new RuntimeException("Serdes not set");
 
-        SerDes2<T> ser = serdes;
+        SerDes<T> ser = serdes;
         if (metricsEnabled) {
             ser = new MetricSerDes2<>(serdes);
         }
@@ -44,9 +44,8 @@ public class ByteCacheFactory<T> {
 
 
     public void addKeyers(Function<T, byte[]>... keys) {
-        int i = 1;
         for (Function<T, byte[]> k: keys) {
-            Function<T, byte[]> key = (metricsEnabled) ? new MetricKeyer<>(k, "key " + (i++))
+            Function<T, byte[]> key = (metricsEnabled) ? new MetricKeyer<>(k, "key " + (keyers.size() + 1))
                                                        : k;
             keyers.add(key);
         }

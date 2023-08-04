@@ -11,7 +11,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 import lombok.AllArgsConstructor;
 import lombok.Cleanup;
 import lombok.RequiredArgsConstructor;
-import mt.fireworks.timecache.SerDes2;
+import mt.fireworks.timecache.SerDes;
 import mt.fireworks.timecache.storage.ByteList.Peeker;
 
 public class StorageLongKey {
@@ -141,9 +141,9 @@ public class StorageLongKey {
      * Read data stored under key, and unmarshall it using provided serdes.
      * Reading data will not allocate new byte array.
      * @return unmarshalled object or null if data not present.
-     * @see SerDes2#unmarshall(byte[], int, int)
+     * @see SerDes#unmarshall(byte[], int, int)
      */
-    public <T> T getEntry2(long key, SerDes2<T> serdes) {
+    public <T> T getEntry2(long key, SerDes<T> serdes) {
         long tstamp = timeKeys.tstamp(key);
         long index = timeKeys.index(key);
         Window window = windowForTstamp(tstamp);
@@ -153,7 +153,7 @@ public class StorageLongKey {
     }
 
     /** @return true if value under key equal to passed data? */
-    public boolean equal(long key, byte[] data, SerDes2 serdes) {
+    public boolean equal(long key, byte[] data, SerDes serdes) {
         long tstamp = timeKeys.tstamp(key);
         long index = timeKeys.index(key);
         Window window = windowForTstamp(tstamp);

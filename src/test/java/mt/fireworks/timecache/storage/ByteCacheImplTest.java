@@ -3,7 +3,8 @@ package mt.fireworks.timecache.storage;
 import static junit.framework.Assert.assertEquals;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
+import java.util.List;
+import java.util.Map.Entry;
 import java.util.function.Function;
 
 import org.junit.Assert;
@@ -11,7 +12,7 @@ import org.junit.Test;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import mt.fireworks.timecache.SerDes2;
+import mt.fireworks.timecache.SerDes;
 
 public class ByteCacheImplTest {
 
@@ -22,7 +23,7 @@ public class ByteCacheImplTest {
         int val;
     }
 
-    SerDes2<TstTrx> serdes2 = new SerDes2<ByteCacheImplTest.TstTrx>() {
+    SerDes<TstTrx> serdes2 = new SerDes<ByteCacheImplTest.TstTrx>() {
 
         public byte[] marshall(TstTrx t) {
             ByteBuffer bb = ByteBuffer.allocate(12);
@@ -75,14 +76,15 @@ public class ByteCacheImplTest {
         cache.add(t4);
         cache.add(t5);
 
-        Object[] res1 = cache.getArray(t1);
-        assertEquals(indexes.length * 2, res1.length);
-        ArrayList<TstTrx> ts1 = (ArrayList<ByteCacheImplTest.TstTrx>) res1[1];
+        List<Entry<byte[], List<TstTrx>>> res1 = cache.get(t1);
+        assertEquals(1, res1.size());
+        List<TstTrx> ts1 = res1.get(0).getValue();
         assertEquals(3, ts1.size());
 
-        Object[] res2 = cache.getArray(t2);
-        assertEquals(indexes.length * 2, res2.length);
-        ArrayList<TstTrx> ts2 = (ArrayList<ByteCacheImplTest.TstTrx>) res2[1];
+
+        List<Entry<byte[], List<TstTrx>>> res2 = cache.get(t2);
+        assertEquals(1, res2.size());
+        List<TstTrx> ts2 = res2.get(0).getValue();
         assertEquals(2, ts2.size());
     }
 
@@ -110,3 +112,4 @@ public class ByteCacheImplTest {
         Assert.assertFalse(r12);
     }
 }
+

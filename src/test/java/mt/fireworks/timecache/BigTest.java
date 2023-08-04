@@ -158,7 +158,7 @@ public class BigTest {
     }
 
 
-    SerDes2<MockObj> serdes = new SerDes2<BigTest.MockObj>() {
+    SerDes<MockObj> serdes = new SerDes<BigTest.MockObj>() {
         public MockObj unmarshall(byte[] data) {
             ByteBuffer bb = ByteBuffer.wrap(data);
             long tstamp = bb.getLong();

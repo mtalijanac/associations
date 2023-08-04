@@ -1,6 +1,7 @@
 package mt.fireworks.timecache.storage;
 
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
@@ -13,17 +14,17 @@ import org.eclipse.collections.impl.factory.primitive.LongLists;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import mt.fireworks.timecache.Cache;
-import mt.fireworks.timecache.SerDes2;
+import mt.fireworks.timecache.SerDes;
 import mt.fireworks.timecache.storage.ByteList.ForEachAction;
 import mt.fireworks.timecache.storage.StorageLongKey.Window;
 
 @Slf4j
 @RequiredArgsConstructor
-public class ByteCacheImpl<T> implements Cache<T, byte[], byte[]>{
+public class ByteCacheImpl<T> implements Cache<T, byte[]>{
 
     @NonNull StorageLongKey storage;
     @NonNull Index<T>[] indexes;
-    @NonNull SerDes2<T> serdes2;
+    @NonNull SerDes<T> serdes2;
 
     /** enabled/disable check if data is already stored in cache */
     @Setter boolean checkForDuplicates = false;
@@ -59,8 +60,8 @@ public class ByteCacheImpl<T> implements Cache<T, byte[], byte[]>{
 
 
     @Override
-    public Object[] getArray(T val) {
-        ArrayList<Object> resultList = new ArrayList<>();
+    public List<Entry<byte[], List<T>>> get(T val) {
+        List<Entry<byte[], List<T>>> resultList = new ArrayList<>(indexes.length);
         MutableLongList keysForRemoval = LongLists.mutable.empty();
 
         for (int idx = 0; idx < indexes.length; idx++) {
@@ -73,8 +74,8 @@ public class ByteCacheImpl<T> implements Cache<T, byte[], byte[]>{
             if (strKeys.isEmpty()) continue;
 
             ArrayList<T> ts = new ArrayList<>(strKeys.size());
-            resultList.add(key);
-            resultList.add(ts);
+            CacheEntry<T> entry = new CacheEntry<>(key, ts);
+            resultList.add(entry);
 
             strKeys.forEach(strKey -> {
                 T res = storage.getEntry2(strKey, serdes2);
@@ -87,15 +88,9 @@ public class ByteCacheImpl<T> implements Cache<T, byte[], byte[]>{
             }
         }
 
-        Object[] result = resultList.toArray();
-        return result;
+        return resultList;
     }
 
-    @Override
-    public Map<byte[], Collection<T>> getMap(T val) {
-        // TODO Auto-generated method stub
-        return null;
-    }
 
     final ReentrantReadWriteLock tickLock = new ReentrantReadWriteLock();
 

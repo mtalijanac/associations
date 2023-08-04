@@ -5,16 +5,16 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import lombok.AllArgsConstructor;
-import mt.fireworks.timecache.SerDes2;
+import mt.fireworks.timecache.SerDes;
 
 /**
  * SerDes2 wrapper which does the metric.
  *
  */
 @AllArgsConstructor
-class MetricSerDes2<T> implements SerDes2<T> {
+class MetricSerDes2<T> implements SerDes<T> {
 
-    SerDes2<T> delegate;
+    SerDes<T> delegate;
 
 
 
