@@ -19,19 +19,20 @@ import mt.fireworks.timecache.*;
  * Example of handling time. <br>
  *
  * Cache in this example will group events in five time slots aka. windows.
- * Duration of window is set to one minute. Cache is are organized in two
- * past windows, one current window, and two future windows. <br>
+ * Duration of window is set to one minute. In this example cache  is
+ * organized in two past windows, one current window, and two future windows. <br>
  *
- * Events are stored to matching window, or are ignored if they are too old,
- * or too new. <br>
+ * Events are stored to matching window based on their tstamp. If event tstamp
+ * is too old or is too new, and matching window can not be found, event will
+ * be ignored and not stored to cache. <br>
  *
- * As time passes cache will {@code tick}, shifting all windows one step in
- * past. Oldest window will be removed, and new future one will be added. <br>
+ * Cache time passing is invoked by invoking {@code Cache#tick()}. Thick will
+ * shift all windows one step in past, and newest window will be added.
+ * Oldest window will be removed, and stored events removed. <br>
  *
- * This example will at start add five events, one for each cache window.
- * As time passes, indicated by calling {@code Cache#tick()}, oldest events
- * will be forgotten as their window is removed from cache. By ticking five
- * times no more events will bes stored in cache.
+ * This example will start by adding five events, one for each cache window.
+ * As time passes, by calling {@code Cache#tick()}, oldest events will be
+ * forgotten. After  ticking five times no more events will be stored in the cache.
  */
 public class WindowHandling {
 
