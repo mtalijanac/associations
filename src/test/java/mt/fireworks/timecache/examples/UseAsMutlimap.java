@@ -70,19 +70,18 @@ public class UseAsMutlimap {
 
 
         //
-        // Assert correctness
+        // Pretty print output, and assert correctness
         //
-        assertEquals(hellAssociated.size(), 2);
-        assertEquals(hellAssociated.get(0).getValue().size(), 5); // 'He'
-        assertEquals(hellAssociated.get(1).getValue().size(), 3); // 'Hell'
-
-        assertEquals(hillAssociated.size(), 1);
-        assertEquals(hillAssociated.get(0).getValue().size(), 2); // 'Hi'
-
-        // Pretty print output
         hellAssociated.forEach( System.out::println );
         hillAssociated.forEach( System.out::println );
 
+        // order of entries in response is determined by order of keyers
+        assertEquals(hellAssociated.size(), 2);
+        assertEquals(hellAssociated.get(0).getValue().size(), 5); // 5 events start with 'He'
+        assertEquals(hellAssociated.get(1).getValue().size(), 3); // 3 events start with 'Hell'
+
+        assertEquals(hillAssociated.size(), 1);
+        assertEquals(hillAssociated.get(0).getValue().size(), 2); // 2 events start with 'Hi'
     }
 
 
