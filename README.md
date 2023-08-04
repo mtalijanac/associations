@@ -133,11 +133,12 @@ _Below is an example of how you can instruct your audience on installing and set
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
+Test folder contains many [examples](https://github.com/mtalijanac/timecache/blob/main/src/test/java/mt/fireworks/timecache/examples)
+of usage.
 
-_For more examples, please refer to the [Documentation](https://example.com)_
+Most important:
+ - using timecache as [mutlimap](https://github.com/mtalijanac/timecache/blob/main/src/test/java/mt/fireworks/timecache/examples/UseAsMutlimap.java)
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 
