@@ -94,7 +94,7 @@ public class UseAsMutlimap {
         }
 
         public Event unmarshall(byte[] data) {
-            String strData = new String(data, 8, data.length - 8, UTF_8);
+            String strData = new String(data, 8,  data.length - 8, UTF_8);
             long tstamp = ByteBuffer.wrap(data).getLong();
             return new Event(tstamp, strData);
         }
