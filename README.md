@@ -83,12 +83,10 @@
 Timecache is data structure used to store timed data for some limited time. By usage, timecache is a form of multimap, as it is associative container that contains a sorted list of key-value pairs, while permitting multiple entries with the same key. Additionally each stored value can be associated to multiple keys. Timecache is optimized for small memory footprint. Each value is stored to an on-heap allocated array.
 
 Here's when you should use Timecache:
-* You need to store large amount of data
-* Stored data is associated to other stored data -> stored values have common key
-* Stored data is associated to multiple keys -> each value in timecache can have multiple associated keys
-* You need to clear data on periodic intervals (windows)
-
-Use the `BLANK_README.md` to get started.
+* You need to store large amount of data, as memory store is efficient
+* Data stored is associated to other stored data (grouping data by index)
+* Data stored is associated in multiple ways (arbitrary number of indexes)
+* Data is removed periodically based on its age (windowing)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -137,7 +135,7 @@ Test folder contains many [examples](https://github.com/mtalijanac/timecache/blo
 of usage.
 
 Most important:
- - using timecache as [mutlimap](https://github.com/mtalijanac/timecache/blob/main/src/test/java/mt/fireworks/timecache/examples/UseAsMutlimap.java)
+ - using Timecache as [mutlimap](https://github.com/mtalijanac/timecache/blob/main/src/test/java/mt/fireworks/timecache/examples/UseAsMutlimap.java)
 
 
 

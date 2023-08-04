@@ -1,10 +1,9 @@
 package mt.fireworks.timecache;
 
 import java.util.ArrayList;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
-import lombok.*;
+import lombok.Setter;
 
 public class ByteCacheFactory<T> {
 
@@ -14,7 +13,7 @@ public class ByteCacheFactory<T> {
     @Setter Boolean metricsEnabled = Boolean.TRUE;
 
     @Setter StorageLongKey.Conf storageConf;
-    @Setter Long startTimestamp;
+    Long startTimestamp;
     @Setter TimeKeys timeKeys = new TimeKeys();
 
     @Setter boolean checkForDuplicates = false;
@@ -56,6 +55,11 @@ public class ByteCacheFactory<T> {
         Long windowTimespanMs
     ) {
         storageConf = new StorageLongKey.Conf(historyWindowCount, futureWindowCount, windowTimespanMs);
+    }
+
+    public Long setStartTimestamp(Long startTimestamp) {
+        this.startTimestamp = (startTimestamp / 1000l) * 1000l;
+        return this.startTimestamp;
     }
 
 }

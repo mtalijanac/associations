@@ -12,7 +12,7 @@ public interface Cache<T, K> {
 
 
     /**
-     * @return associated entries to given value
+     * @return entries associated to given value
      */
     List<Entry<K, List<T>>> get(T val);
 
