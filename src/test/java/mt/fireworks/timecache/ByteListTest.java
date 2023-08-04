@@ -4,15 +4,12 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Assert;
 import org.junit.Test;
 
-import mt.fireworks.timecache.ByteList;
 import mt.fireworks.timecache.ByteList.ForEachAction;
 
 public class ByteListTest {
@@ -59,7 +56,7 @@ public class ByteListTest {
         byte[] destination = new byte[1000];
         int at = 125;
         byteList.copy(dataKey_2, destination, at);
-        assertEquals(0, Arrays.compare(someData_2, 0, someData_2.length, destination, at, someData_2.length + at));
+        assertEquals(0, BitsAndBytes.compare(someData_2, 0, someData_2.length, destination, at, someData_2.length + at));
 
 
         // peek example, return int at start of data:
@@ -77,7 +74,6 @@ public class ByteListTest {
         });
         assertEquals(2, objCount.get());
     }
-
 
 
     @Test

@@ -62,4 +62,24 @@ public class BitsAndBytes {
         return (1l << bits) - 1l;
     }
 
+
+    public static int compare(
+        byte[] a, int aFromIndex, int aToIndex,
+        byte[] b, int bFromIndex, int bToIndex
+    ) {
+        int aLength = aToIndex - aFromIndex;
+        int bLength = bToIndex - bFromIndex;
+        int l = aLength - bLength;
+        if (l != 0) return l;
+
+        for (int idx = 0; idx < aLength; idx++) {
+            byte aVal = a[aFromIndex + idx];
+            byte bVal = b[bFromIndex + idx];
+            int res = Byte.compare(aVal, bVal);
+            if (res != 0) return res;
+        }
+
+        return 0;
+    }
+
 }
