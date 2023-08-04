@@ -7,7 +7,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class MetricKeyer<I, O> implements Function<I, O> {
+class MetricKeyer<I, O> implements Function<I, O>, Measureable {
     @NonNull Function<I, O> delegate;
     @NonNull String name;
 
@@ -33,6 +33,10 @@ public class MetricKeyer<I, O> implements Function<I, O> {
         duration.set(0);
         counter.set(0);
         return ts;
+    }
+
+    public String metricsTxt() {
+        return toString();
     }
 
 }

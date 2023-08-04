@@ -8,12 +8,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
-import lombok.AllArgsConstructor;
-import lombok.Cleanup;
-import lombok.RequiredArgsConstructor;
-import mt.fireworks.timecache.ByteList.Peeker;
+import lombok.*;
 
-public class StorageLongKey {
+class StorageLongKey {
 
     @AllArgsConstructor
     @RequiredArgsConstructor
@@ -152,7 +149,7 @@ public class StorageLongKey {
     }
 
     /** @return true if value under key equal to passed data? */
-    public boolean equal(long key, byte[] data, SerDes serdes) {
+    public boolean equal(long key, byte[] data, SerDes<?> serdes) {
         long tstamp = timeKeys.tstamp(key);
         long index = timeKeys.index(key);
         Window window = windowForTstamp(tstamp);
@@ -164,7 +161,7 @@ public class StorageLongKey {
     }
 
 
-    /** return cachable time range */
+    /** @return cache time range */
     public long[] timespan() {
         long min = Long.MAX_VALUE;
         long max = Long.MIN_VALUE;

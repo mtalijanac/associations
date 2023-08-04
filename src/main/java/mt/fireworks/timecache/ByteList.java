@@ -3,7 +3,7 @@ package mt.fireworks.timecache;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class ByteList {
+class ByteList {
 
     static class Conf {
         /** Initial number of buckets in window **/

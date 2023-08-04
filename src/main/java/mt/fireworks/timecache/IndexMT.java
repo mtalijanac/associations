@@ -14,7 +14,7 @@ import org.eclipse.collections.impl.map.strategy.mutable.UnifiedMapWithHashingSt
 import lombok.Data;
 
 @Data
-public class IndexMT<T> {
+class IndexMT<T> {
 
     MutableMap<byte[], MutableLongCollection>[] indexes = new MutableMap[32];
     Function<T, byte[]> keyer;

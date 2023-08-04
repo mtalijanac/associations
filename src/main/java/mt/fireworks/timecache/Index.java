@@ -13,7 +13,7 @@ import org.eclipse.collections.impl.map.strategy.mutable.UnifiedMapWithHashingSt
 import lombok.Data;
 
 @Data
-public class Index<T> {
+class Index<T> {
 
     MutableMap<byte[], MutableLongCollection> index;
     Function<T, byte[]> keyer;

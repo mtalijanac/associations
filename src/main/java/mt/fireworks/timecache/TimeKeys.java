@@ -1,13 +1,6 @@
 package mt.fireworks.timecache;
 
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.Month;
-import java.time.Year;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
-import java.util.concurrent.TimeUnit;
+import java.time.*;
 
 /**
  * Enkodiranje ključeva za keš. Ključ sadrži tstamp podatka i njegov index.
@@ -21,7 +14,7 @@ import java.util.concurrent.TimeUnit;
  * Index je pohranjen do 35 bitova. U slučaju korištenja indexa većeg od 2^35-1,
  * kod baca grešku.
  */
-public class TimeKeys {
+class TimeKeys {
 
     final long epoch = startingYear();
     final long maxIndex = (1l << 35) - 1l; // 34_359_738_367

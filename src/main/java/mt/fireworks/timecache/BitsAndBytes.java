@@ -1,6 +1,6 @@
 package mt.fireworks.timecache;
 
-public class BitsAndBytes {
+class BitsAndBytes {
 
     static void writeShort(short val, byte[] arr, int idx) {
         arr[idx]     = (byte) (val >>> 8);

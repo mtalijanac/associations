@@ -1,5 +1,7 @@
 package mt.fireworks.timecache;
 
+import static mt.fireworks.timecache.TimeUtils.info;
+
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -11,7 +13,7 @@ import lombok.AllArgsConstructor;
  *
  */
 @AllArgsConstructor
-class MetricSerDes2<T> implements SerDes<T> {
+class MetricSerDes2<T> implements SerDes<T>, Measureable {
 
     SerDes<T> delegate;
 
@@ -140,6 +142,10 @@ class MetricSerDes2<T> implements SerDes<T> {
     }
 
 
+    public String metricsTxt() {
+        return toString();
+    }
+
     public String resetMetrics() {
         String ts = toString();
 
@@ -165,7 +171,6 @@ class MetricSerDes2<T> implements SerDes<T> {
         return ts;
     }
 
-
     public String toString() {
         String mar        = info("  marshall", marshallCount, marshallTime);
         String unmar      = info("unmarshall", unmarshallCount, unmarshallTime);
@@ -187,15 +192,6 @@ class MetricSerDes2<T> implements SerDes<T> {
                    + equalsT + "\n"
                    + equalsD + "\n"
                    + inPlaceEqu;
-        return res;
-    }
-
-    String info(String name, AtomicLong countRef, AtomicLong timeRef) {
-        long count = countRef.get();
-        long time = timeRef.get();
-        double sec = (double) time / 1_000_000_000d;
-        double speed = (double) count / sec;
-        String res = name + ": " + count + ", dur: " + sec + " s [" + speed + " per sec]";
         return res;
     }
 
