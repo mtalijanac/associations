@@ -136,7 +136,7 @@ of usage.
 
 Most important:
  - using Timecache as [mutlimap](https://github.com/mtalijanac/timecache/blob/main/src/test/java/mt/fireworks/timecache/examples/UseAsMutlimap.java)
-
+ - passing Time and [handling time windows](https://github.com/mtalijanac/timecache/blob/main/src/test/java/mt/fireworks/timecache/examples/WindowHandling.java)
 
 
 
