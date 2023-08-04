@@ -44,16 +44,18 @@ public class WindowHandling {
 
     @Test
     public void usageExample() {
-        final long oneMinute = TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);
+        final long oneMinute    = TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);
+        final long twoMinutes   = TimeUnit.MILLISECONDS.convert(2, TimeUnit.MINUTES);
+        final long threeMinutes = TimeUnit.MILLISECONDS.convert(3, TimeUnit.MINUTES);
 
         //
-        // Initialize cache using default values,
-        // associate events by leading letters
+        // Initialize cache using two past and two future windows of one minute duration.
+        // Associate events by leading letters
         //
-        Function<Event, byte[]> fourLetterKey = (Event e) -> e.data.substring(0, 4).getBytes(UTF_8);
+        Function<Event, byte[]> fourLetterKey = (Event e) -> e.data.substring(0, 5).getBytes(UTF_8);
 
         long now = System.currentTimeMillis();
-        long windowDuration = TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);
+        long windowDuration = oneMinute;
         int  pastWindowCount = 2;
         int  futureWindowCount = 2;
 
@@ -61,29 +63,38 @@ public class WindowHandling {
         factory.setSerdes(new EventSerDes());
         factory.addKeyers(fourLetterKey);
         factory.storageConf(pastWindowCount, futureWindowCount, windowDuration);
-        long start = factory.setStartTimestamp(now); // startTimestamp is rounded to lowest second
+        long start = factory.setStartTimestamp(now);
+        ByteCacheImpl<Event> cache = factory.getInstance();
 
+        // startTimestamp is rounded to lowest second
         assertEquals(now / 1000l * 1000l, start);
 
-        ByteCacheImpl<Event> cache = factory.getInstance();
+
+        //
+        // Add events to cache
+        //
 
         // add event in current time window
         cache.add(new Event(start, "Event now"));
 
         // add couple future events
-        assertTrue(  cache.add( new Event(start + 1 * oneMinute, "Event in one minute")));
-        assertTrue(  cache.add( new Event(start + 2 * oneMinute, "Event in two minutes")));
+        assertTrue(  cache.add( new Event(start + oneMinute,  "Event in one minute")));
+        assertTrue(  cache.add( new Event(start + twoMinutes, "Event in two minutes")));
 
         // but ignore one too far in future:
-        assertFalse( cache.add( new Event(start + 3 * oneMinute, "Event in three minutes")));
+        assertFalse( cache.add( new Event(start + threeMinutes, "Event in three minutes")));
 
         // add couple past events
-        assertTrue(  cache.add( new Event(start - 1 * oneMinute, "Event before one minute")));
-        assertTrue(  cache.add( new Event(start - 2 * oneMinute, "Event before two minutes")));
+        assertTrue(  cache.add( new Event(start - oneMinute, "Event before one minute")));
+        assertTrue(  cache.add( new Event(start - twoMinutes, "Event before two minutes")));
 
         // but ignore one too far in past:
-        assertFalse( cache.add( new Event(start - 3 * oneMinute, "Event before three minutes")));
+        assertFalse( cache.add( new Event(start - threeMinutes, "Event before three minutes")));
 
+
+        //
+        // Repeatedly query for stored events while increment time
+        //
 
         Event query = new Event(System.currentTimeMillis(), "Event query");
 
@@ -117,7 +128,7 @@ public class WindowHandling {
         events = res.get(0).getValue();
         assertEquals(1, events.size());
 
-        // Finally, all events should be forgotten..
+        // Finally, tick once again, for all events being forgotten..
         cache.tick();
         res = cache.get(query);
         assertTrue(res.isEmpty());
