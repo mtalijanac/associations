@@ -1,4 +1,4 @@
-package mt.fireworks.timecache.storage;
+package mt.fireworks.timecache;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -13,10 +13,8 @@ import org.eclipse.collections.impl.factory.primitive.LongLists;
 
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import mt.fireworks.timecache.Cache;
-import mt.fireworks.timecache.SerDes;
-import mt.fireworks.timecache.storage.ByteList.ForEachAction;
-import mt.fireworks.timecache.storage.StorageLongKey.Window;
+import mt.fireworks.timecache.ByteList.ForEachAction;
+import mt.fireworks.timecache.StorageLongKey.Window;
 
 @Slf4j
 @RequiredArgsConstructor

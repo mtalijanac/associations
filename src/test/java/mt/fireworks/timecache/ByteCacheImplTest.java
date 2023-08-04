@@ -1,4 +1,4 @@
-package mt.fireworks.timecache.storage;
+package mt.fireworks.timecache;
 
 import static junit.framework.Assert.assertEquals;
 
@@ -12,7 +12,7 @@ import org.junit.Test;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import mt.fireworks.timecache.SerDes;
+import mt.fireworks.timecache.*;
 
 public class ByteCacheImplTest {
 

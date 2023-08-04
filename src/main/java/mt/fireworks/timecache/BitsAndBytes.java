@@ -1,4 +1,4 @@
-package mt.fireworks.timecache.storage;
+package mt.fireworks.timecache;
 
 public class BitsAndBytes {
 

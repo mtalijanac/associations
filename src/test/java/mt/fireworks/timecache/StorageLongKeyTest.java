@@ -1,4 +1,4 @@
-package mt.fireworks.timecache.storage;
+package mt.fireworks.timecache;
 
 import static org.junit.Assert.assertArrayEquals;
 
@@ -13,7 +13,8 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Test;
 
-import mt.fireworks.timecache.storage.StorageLongKey.Window;
+import mt.fireworks.timecache.StorageLongKey;
+import mt.fireworks.timecache.StorageLongKey.Window;
 
 
 public class StorageLongKeyTest {

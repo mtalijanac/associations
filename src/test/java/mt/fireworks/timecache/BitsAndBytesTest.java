@@ -1,12 +1,14 @@
-package mt.fireworks.timecache.storage;
+package mt.fireworks.timecache;
 
+import static mt.fireworks.timecache.BitsAndBytes.*;
 import static org.junit.Assert.assertEquals;
-import static mt.fireworks.timecache.storage.BitsAndBytes.*;
 
 import java.util.Random;
 
 import org.junit.Assert;
 import org.junit.Test;
+
+import mt.fireworks.timecache.BitsAndBytes;
 
 public class BitsAndBytesTest {
 

@@ -1,4 +1,4 @@
-package mt.fireworks.timecache.storage;
+package mt.fireworks.timecache;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -11,8 +11,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 import lombok.AllArgsConstructor;
 import lombok.Cleanup;
 import lombok.RequiredArgsConstructor;
-import mt.fireworks.timecache.SerDes;
-import mt.fireworks.timecache.storage.ByteList.Peeker;
+import mt.fireworks.timecache.ByteList.Peeker;
 
 public class StorageLongKey {
 

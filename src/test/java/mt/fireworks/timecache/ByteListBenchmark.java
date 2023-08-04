@@ -1,10 +1,12 @@
-package mt.fireworks.timecache.storage;
+package mt.fireworks.timecache;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 import java.text.DecimalFormat;
 import java.util.Random;
+
+import mt.fireworks.timecache.ByteList;
 
 public class ByteListBenchmark {
 
