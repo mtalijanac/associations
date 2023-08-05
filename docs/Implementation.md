@@ -13,7 +13,7 @@
 <br />
 <div align="center">
   <a href="https://github.com/mtalijanac/timecache.git">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
+    <img src="../images/logo.png" alt="Logo" width="80" height="80">
   </a>
 
   <h3 align="center">Timecache</h3>
@@ -64,24 +64,25 @@ Simple usage example:
     long key = byteList.add( dataToStore );
     byte[] readData = byteList.get( key );
 
-Important thing to notice is that key of ByteList is of **long** type.
+Important thing to notice is that returned key is of **long** type.
 So actual maximum size of list is enormous. For richer examples see [usageExample](https://github.com/mtalijanac/timecache/blob/main/src/test/java/mt/fireworks/timecache/ByteListTest.java).
 
 Under the hood ByteList is implemented as ArrayList of byte arrays, called buckets.
-When data is added to list, first length of data is written to a latest bucket,
-and then data is copied to bucket. Returned key is essentially index to a data.
-When reading data, key is decomposed to index of bucket in arrayList, and to an
-offset in that bucket.
+When data is added to list, first length of data is written to a free position in
+latest bucket. Then data is copied to following position. So data is stored
+with lenght prefix. Size of prefix / data header is 2 bytes. Returned key is
+essentially index to a data header. When reading data, key is decomposed to
+index of bucket in the ArrayList, and to an offset in the bucket fetched.
 
-Default values:
+Default configuration:
   - each bucket is 1 mb of size
   - data header is 2 bytes
 
 Because 2 byte header, maximum data array written to byteList cannot exceed 64kb.
-Storage efficiency is quite high. Essentially for each entry added, 2 bytes are
-lost to a header. When data + dataHeader is too large to fit at end of bucket,
-a new bucket is allocated and data is written to a start of new bucket.
-Free space at end of previous bucket is "lost".
+With default configuration storage efficiency is quite high. Essentially for each
+entry added, 2 bytes are lost to a header. When data + dataHeader is too large to
+fit at end of bucket, a new bucket is allocated and data is written to a start
+of new bucket. Free space at end of previous bucket is "lost".
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
