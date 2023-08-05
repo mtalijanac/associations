@@ -3,7 +3,7 @@ package mt.fireworks.timecache;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 
-class ByteList {
+public class ByteList {
 
     static class Conf {
         /** Initial number of buckets in window **/
@@ -32,6 +32,11 @@ class ByteList {
         buckets.add(new byte[conf.bucketSize]);
     }
 
+    public ByteList(int bucketSizeInBytes, int dataHeaderSize) {
+        this.conf.bucketSize = bucketSizeInBytes;
+        this.conf.dataHeaderSize = dataHeaderSize;
+        buckets.add(new byte[conf.bucketSize]);
+    }
 
 
     /**
@@ -39,7 +44,7 @@ class ByteList {
      * Index points to data header.
      */
     // FIXME ovaj syncronized je usko grlo
-    long add(byte[] data) {
+    public long add(byte[] data) {
         short dataLength;
         int offset, dataOffset;
         byte[] bucket;
@@ -96,7 +101,7 @@ class ByteList {
 
 
     /** @return data under key */
-    byte[] get(long key) {
+    public byte[] get(long key) {
         byte[] data = peek(key, (objPos, bucket, pos, len) -> {
             byte[] res = new byte[len];
             System.arraycopy(bucket, pos, res, 0, len);
@@ -107,7 +112,7 @@ class ByteList {
 
     /** Copy data under key to dest array at given idx.
      * @throws RuntimeException when there is no space in destination */
-    int copy(long key, byte[] dest, int destPos) {
+    public int copy(long key, byte[] dest, int destPos) {
         return peek(key, (objPos, bucket, pos, len) -> {
             int space = dest.length - destPos;
             if (space < len) {

@@ -42,6 +42,7 @@
       <a href="#about-the-project">About The Project</a>
     </li>
     <li><a href="#usage">Usage</a></li>
+    <li><a href="#Implementation">Implementation</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
     <li><a href="#acknowledgments">Acknowledgments</a></li>
@@ -77,6 +78,12 @@ Most important:
  - passing Time and [handling time windows](https://github.com/mtalijanac/timecache/blob/main/src/test/java/mt/fireworks/timecache/examples/WindowHandling.java)
 
 
+<!-- IMPLEMENTATION -->
+## Implementation
+
+Under the hood TimeCache is bunch of Java 8 wrappers for byte arrays and
+some Eclipse Collections magic.
+Refer do [implementation docs](https://github.com/mtalijanac/timecache/blob/docs/Implementation.md) for better understanding.
 
 <!-- LICENSE -->
 ## License
