@@ -83,7 +83,8 @@ Most important:
 
 Under the hood TimeCache is bunch of Java 8 wrappers for byte arrays and
 some Eclipse Collections magic.
-Refer do [implementation docs](https://github.com/mtalijanac/timecache/blob/docs/Implementation.md) for better understanding.
+
+Refer do [implementation docs](https://github.com/mtalijanac/timecache/blob/main/docs/Implementation.md) for deeper understanding.
 
 <!-- LICENSE -->
 ## License
