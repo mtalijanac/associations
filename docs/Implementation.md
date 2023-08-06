@@ -67,7 +67,7 @@ same key.
   - **You can have more than one keyer in cache**.
 
 
-For usage see [Keyers example](https://github.com/mtalijanac/timecache/blob/main/src/test/java/mt/fireworks/timecache/examples/Keyers.java)
+See [Keyers example](https://github.com/mtalijanac/timecache/blob/main/src/test/java/mt/fireworks/timecache/examples/Keyers.java)
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>

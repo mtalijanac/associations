@@ -11,6 +11,16 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import mt.fireworks.timecache.*;
 
+/**
+ * Example of keyer usage.
+ *
+ * Keyer is a {@code java.util.function.Function<T, R>} implementation.
+ * It should return a 'key' for a value stored in cache.
+ * Keyer should associate similar values. <br>
+ *
+ * In this example we are using TimeCache as http request storage.
+ * Stored request are grouped by http methond and uri.
+ */
 public class Keyers {
 
     @Data @AllArgsConstructor
@@ -36,10 +46,10 @@ public class Keyers {
         factory.addKeyer("URI", uri);
         BytesKeyedCache<HTTPRequest> cache = factory.getInstance();
 
-        long tstamp = System.currentTimeMillis();
 
         // 2 POSTs and 1 GET, 2 Google and 1 Facebook
-        cache.add(new HTTPRequest(tstamp, "GET", "http://google.com/", "First"));
+        long tstamp = System.currentTimeMillis();
+        cache.add(new HTTPRequest(tstamp, "GET", "http://google.com/", "First request"));
         cache.add(new HTTPRequest(tstamp, "POST", "http://google.com/", "Second"));
         cache.add(new HTTPRequest(tstamp, "POST", "http://facebook.com/", "Third"));
 
