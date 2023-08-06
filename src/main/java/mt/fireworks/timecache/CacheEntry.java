@@ -1,20 +1,23 @@
 package mt.fireworks.timecache;
 
 import java.nio.charset.StandardCharsets;
-import java.util.List;
+import java.util.Collection;
 import java.util.Map.Entry;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 @AllArgsConstructor
-public class CacheEntry<K, T> implements Entry<K, List<T>>{
+public class CacheEntry<K, T> implements Entry<K, T>{
     @Getter String name;
     @Getter K key;
-    @Getter List<T> value;
+    @Getter T value;
 
-    public List<T> setValue(List<T> value) {
+    @Override
+    public T setValue(T value) {
         throw new UnsupportedOperationException();
     }
+
 
     public String toString() {
         String keyName = null;
@@ -25,16 +28,22 @@ public class CacheEntry<K, T> implements Entry<K, List<T>>{
             keyName = key.toString();
         }
 
-
         StringBuilder sb = new StringBuilder();
-        sb.append("Name: '").append(name).append("', Key '")
-          .append(keyName)
-          .append("':\n");
+        sb.append("Name: '").append(name)
+          .append("', Key '").append(keyName).append("'");
 
-        for (T v: value) {
-            sb.append("\t").append(v).append("\n");
+        if (value instanceof Collection) {
+            sb.append(", values: :\n");
+            for (Object o: (Collection<?>) value) {
+                sb.append("\t").append(o).append("\n");
+            }
         }
+        else {
+            sb.append(". value:'").append(value).append("'");
+        }
+
         return sb.toString();
     }
+
 
 }

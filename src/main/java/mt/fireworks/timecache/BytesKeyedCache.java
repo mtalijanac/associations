@@ -1,7 +1,7 @@
 package mt.fireworks.timecache;
 
-import java.util.*;
-import java.util.Map.Entry;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
@@ -58,8 +58,8 @@ public class BytesKeyedCache<T> implements TimeCache<T, byte[]>{
 
 
     @Override
-    public List<Entry<byte[], List<T>>> get(T val) {
-        List<Entry<byte[], List<T>>> resultList = new ArrayList<>(indexes.length);
+    public List<CacheEntry<byte[], List<T>>> get(T val) {
+        List<CacheEntry<byte[], List<T>>> resultList = new ArrayList<>(indexes.length);
         MutableLongList keysForRemoval = LongLists.mutable.empty();
 
         for (int idx = 0; idx < indexes.length; idx++) {
@@ -73,7 +73,7 @@ public class BytesKeyedCache<T> implements TimeCache<T, byte[]>{
 
             String name = index.getName();
             ArrayList<T> ts = new ArrayList<>(strKeys.size());
-            CacheEntry<byte[], T> entry = new CacheEntry<>(name, key, ts);
+            CacheEntry<byte[], List<T>> entry = new CacheEntry<byte[], List<T>>(name, key, ts);
             resultList.add(entry);
 
             strKeys.forEach(strKey -> {

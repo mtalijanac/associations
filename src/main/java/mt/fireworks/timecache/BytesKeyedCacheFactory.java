@@ -37,6 +37,7 @@ public class BytesKeyedCacheFactory<T> {
             indexList.add(i);
         }
 
+        @SuppressWarnings("unchecked")
         Index<T>[] indexes = indexList.toArray(new Index[indexList.size()]);
         StorageLongKey storage = StorageLongKey.init(storageConf, startTimestamp, timeKeys);
         BytesKeyedCache<T> cache = new BytesKeyedCache<T>(storage, indexes, ser);

@@ -4,16 +4,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map.Entry;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
@@ -183,10 +174,8 @@ public class BigTest2 {
                     }
 
                     long c = count.incrementAndGet();
-    //                if (c % 100_000 == 0) System.out.println(c);
                     cache.add(val);
-//                    Object[] res = cache.getArray(val);
-                    List<Entry<byte[], List<MockObj>>> res = cache.get(val);
+                    List<CacheEntry<byte[], List<MockObj>>> res = cache.get(val);
                     ArrayList<MockObj> objects = (ArrayList<MockObj>) res.get(0).getValue();
                     if (objects.size() > 1000) {
                         System.out.println(objects.size());

@@ -64,10 +64,10 @@ public class UseAsMultimap {
         // Fetch events associated to a: "He", "Hell", "Hi" and "Hill"
         //
         Event hell_event = new Event(System.currentTimeMillis(), "Hellen of Troy");
-        List<Entry<byte[], List<Event>>> hellAssociated = cache.get(hell_event);
+        List<CacheEntry<byte[], List<Event>>> hellAssociated = cache.get(hell_event);
 
         Event hill_event = new Event(System.currentTimeMillis(), "Hill by a house");
-        List<Entry<byte[], List<Event>>> hillAssociated = cache.get(hill_event);
+        List<CacheEntry<byte[], List<Event>>> hillAssociated = cache.get(hill_event);
 
 
         //

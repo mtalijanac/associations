@@ -99,7 +99,7 @@ public class WindowHandling {
         Event query = new Event(System.currentTimeMillis(), "Event query");
 
         // query for events, 5 stored events should be returned
-        List<Entry<byte[], List<Event>>> res = cache.get(query);
+        List<CacheEntry<byte[], List<Event>>> res = cache.get(query);
         List<Event> events = res.get(0).getValue();
         assertEquals(5, events.size());
 

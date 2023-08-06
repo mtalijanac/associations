@@ -12,7 +12,6 @@ import org.junit.Test;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import mt.fireworks.timecache.*;
 
 public class BytesKeyedCacheTest {
 
@@ -76,13 +75,13 @@ public class BytesKeyedCacheTest {
         cache.add(t4);
         cache.add(t5);
 
-        List<Entry<byte[], List<TstTrx>>> res1 = cache.get(t1);
+        List<CacheEntry<byte[], List<TstTrx>>> res1 = cache.get(t1);
         assertEquals(1, res1.size());
         List<TstTrx> ts1 = res1.get(0).getValue();
         assertEquals(3, ts1.size());
 
 
-        List<Entry<byte[], List<TstTrx>>> res2 = cache.get(t2);
+        List<CacheEntry<byte[], List<TstTrx>>> res2 = cache.get(t2);
         assertEquals(1, res2.size());
         List<TstTrx> ts2 = res2.get(0).getValue();
         assertEquals(2, ts2.size());
