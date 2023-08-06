@@ -14,7 +14,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import mt.fireworks.timecache.*;
 
-public class ByteCacheImplTest {
+public class BytesKeyedCacheTest {
 
     @Data
     @AllArgsConstructor
@@ -23,7 +23,7 @@ public class ByteCacheImplTest {
         int val;
     }
 
-    SerDes<TstTrx> serdes2 = new SerDes<ByteCacheImplTest.TstTrx>() {
+    SerDes<TstTrx> serdes2 = new SerDes<BytesKeyedCacheTest.TstTrx>() {
 
         public byte[] marshall(TstTrx t) {
             ByteBuffer bb = ByteBuffer.allocate(12);
@@ -69,7 +69,7 @@ public class ByteCacheImplTest {
         TstTrx t4 = new TstTrx(now + 30, 2);
         TstTrx t5 = new TstTrx(now + 50, 1);
 
-        ByteCacheImpl<TstTrx> cache = new ByteCacheImpl<>(storage, indexes, serdes2);
+        BytesKeyedCache<TstTrx> cache = new BytesKeyedCache<>(storage, indexes, serdes2);
         cache.add(t1);
         cache.add(t2);
         cache.add(t3);
@@ -90,11 +90,11 @@ public class ByteCacheImplTest {
 
     @Test
     public void duplicateTest() {
-        ByteCacheFactory<TstTrx> factory = new ByteCacheFactory<>();
+        BytesKeyedCacheFactory<TstTrx> factory = new BytesKeyedCacheFactory<>();
         factory.setSerdes(serdes2);
         factory.addKeyer("Example", keyer);
 
-        ByteCacheImpl<TstTrx> cache = factory.getInstance();
+        BytesKeyedCache<TstTrx> cache = factory.getInstance();
         cache.setCheckForDuplicates(true);
 
         long now = System.currentTimeMillis();

@@ -1,6 +1,7 @@
 package mt.fireworks.timecache;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map.Entry;
 
 public interface TimeCache<T, K> {
@@ -20,7 +21,7 @@ public interface TimeCache<T, K> {
     /**
      * @return associated entries to given value which are older than given tstamp
      */
-    default List<Entry<K, List<T>>> getOlder(T val, long tstamp) {
+    default List<CacheEntry<K, List<T>>> getOlder(T val, long tstamp) {
         throw new UnsupportedOperationException();
     }
 

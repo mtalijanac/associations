@@ -7,7 +7,7 @@ import java.util.function.Function;
 
 import lombok.Setter;
 
-public class ByteCacheFactory<T> {
+public class BytesKeyedCacheFactory<T> {
 
     @Setter HashMap<String, Function<T, byte[]>> keyers = new HashMap<>();
 
@@ -20,7 +20,7 @@ public class ByteCacheFactory<T> {
 
     @Setter boolean checkForDuplicates = false;
 
-    public ByteCacheImpl<T> getInstance() {
+    public BytesKeyedCache<T> getInstance() {
         if (serdes == null)
             throw new RuntimeException("Serdes not set");
 
@@ -39,7 +39,7 @@ public class ByteCacheFactory<T> {
 
         Index<T>[] indexes = indexList.toArray(new Index[indexList.size()]);
         StorageLongKey storage = StorageLongKey.init(storageConf, startTimestamp, timeKeys);
-        ByteCacheImpl<T> cache = new ByteCacheImpl<T>(storage, indexes, ser);
+        BytesKeyedCache<T> cache = new BytesKeyedCache<T>(storage, indexes, ser);
         cache.setCheckForDuplicates(checkForDuplicates);
         return cache;
     }

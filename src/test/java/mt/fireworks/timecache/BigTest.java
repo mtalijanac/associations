@@ -53,7 +53,7 @@ public class BigTest {
 
         long[] indexes = testIndexes();
 
-        ByteCacheFactory<MockObj> fact = new ByteCacheFactory<>();
+        BytesKeyedCacheFactory<MockObj> fact = new BytesKeyedCacheFactory<>();
         fact.setSerdes(serdes);
         fact.addKeyer("IDX1", keyer);
 
@@ -63,7 +63,7 @@ public class BigTest {
         long tenMinutes = 10 * 60 * 1000;
         fact.storageConf(7, 1, tenMinutes);
 
-        ByteCacheImpl<MockObj> cache = fact.getInstance();
+        BytesKeyedCache<MockObj> cache = fact.getInstance();
 
         BlockingQueue<MockObj> q = new ArrayBlockingQueue<>(1000);
 
@@ -121,7 +121,7 @@ public class BigTest {
 
     @AllArgsConstructor
     static class Worker implements Callable<Long> {
-        ByteCacheImpl<MockObj> cache;
+        BytesKeyedCache<MockObj> cache;
         BlockingQueue<MockObj> q;
         AtomicBoolean end;
 

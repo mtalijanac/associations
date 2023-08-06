@@ -59,12 +59,12 @@ public class WindowHandling {
         int  pastWindowCount = 2;
         int  futureWindowCount = 2;
 
-        ByteCacheFactory<Event> factory = new ByteCacheFactory<>();
+        BytesKeyedCacheFactory<Event> factory = new BytesKeyedCacheFactory<>();
         factory.setSerdes(new EventSerDes());
         factory.addKeyer("LEADING_FIVE_LETTERS", key);
         factory.storageConf(pastWindowCount, futureWindowCount, windowDuration);
         long start = factory.setStartTimestamp(now);
-        ByteCacheImpl<Event> cache = factory.getInstance();
+        BytesKeyedCache<Event> cache = factory.getInstance();
 
         // startTimestamp is rounded to lowest second
         assertEquals(now / 1000l * 1000l, start);
