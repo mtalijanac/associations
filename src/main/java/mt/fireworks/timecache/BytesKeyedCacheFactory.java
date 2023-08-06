@@ -46,6 +46,11 @@ public class BytesKeyedCacheFactory<T> {
     }
 
     public void addKeyer(String name, Function<T, byte[]> keyer) {
+        if (metricsEnabled) {
+            MetricKeyer<T, byte[]> mk = new MetricKeyer<>(keyer, name);
+            keyers.put(name, mk);
+            return;
+        }
         keyers.put(name, keyer);
     }
 

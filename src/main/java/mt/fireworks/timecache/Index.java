@@ -1,6 +1,11 @@
 package mt.fireworks.timecache;
 
+import static mt.fireworks.timecache.TimeUtils.info;
+
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 import org.eclipse.collections.api.block.HashingStrategy;
@@ -11,6 +16,7 @@ import org.eclipse.collections.impl.factory.primitive.LongLists;
 import org.eclipse.collections.impl.map.strategy.mutable.UnifiedMapWithHashingStrategy;
 
 import lombok.Data;
+import lombok.Getter;
 
 @Data
 class Index<T> {
@@ -19,6 +25,12 @@ class Index<T> {
     MutableMap<byte[], MutableLongCollection> index;
     Function<T, byte[]> keyer;
     TimeKeys timeKeys;
+
+    final IndexMetrics metrics = new IndexMetrics();
+
+    public Metrics getMetrics() {
+        return metrics;
+    }
 
 
     Index(String name, Function<T, byte[]> keyer, TimeKeys tk) {
@@ -32,18 +44,34 @@ class Index<T> {
 
 
     public boolean put(T val, long storageKey) {
-        byte[] key = keyer.apply(val);
-        if (key == null) return false;
-        MutableLongCollection keyData = index.getIfAbsentPut(key, () -> LongLists.mutable.empty().asSynchronized());
-        keyData.add(storageKey);
-        return true;
+        metrics.putCount.incrementAndGet();
+        long t = -System.nanoTime();
+        try {
+            byte[] key = keyer.apply(val);
+            if (key == null) return false;
+            MutableLongCollection keyData = index.getIfAbsentPut(key, () -> LongLists.mutable.empty().asSynchronized());
+            keyData.add(storageKey);
+            return true;
+        }
+        finally {
+            t += System.nanoTime();
+            metrics.putDuration.addAndGet(t);
+        }
     }
 
     public MutableLongCollection get(T val) {
-        byte[] key = keyer.apply(val);
-        if (key == null) return null;
-        MutableLongCollection keyData = index.get(key);
-        return keyData;
+        metrics.getCount.incrementAndGet();
+        long t = -System.nanoTime();
+        try {
+            byte[] key = keyer.apply(val);
+            if (key == null) return null;
+            MutableLongCollection keyData = index.get(key);
+            return keyData;
+        }
+        finally {
+            t += System.nanoTime();
+            metrics.getDuration.addAndGet(t);
+        }
     }
 
 
@@ -51,27 +79,34 @@ class Index<T> {
      * Values of T which happened on same tstamp by {@link TimeKeys#equalSec(long, long)}
      */
     public MutableLongCollection onSameTime(T val, long valTstamp) {
-        byte[] valKey = keyer.apply(val);
-        if (valKey == null) return null;
-        MutableLongCollection keyData = index.get(valKey);
-        if (keyData == null) return null;
+        metrics.onSameTimeCount.incrementAndGet();
+        long t = -System.nanoTime();
+        try {
+            byte[] valKey = keyer.apply(val);
+            if (valKey == null) return null;
+            MutableLongCollection keyData = index.get(valKey);
+            if (keyData == null) return null;
 
-        boolean matching = keyData.anySatisfy(storedKey -> {
-            long keyTstamp = timeKeys.tstamp(storedKey);
-            boolean sameTime = timeKeys.equalSec(valTstamp, keyTstamp);
-            return sameTime;
-        });
+            boolean matching = keyData.anySatisfy(storedKey -> {
+                long keyTstamp = timeKeys.tstamp(storedKey);
+                boolean sameTime = timeKeys.equalSec(valTstamp, keyTstamp);
+                return sameTime;
+            });
 
-        if (!matching) return null;
+            if (!matching) return null;
 
-        MutableLongCollection onSameTime = keyData.select(storedKey -> {
-            long keyTstamp = timeKeys.tstamp(storedKey);
-            boolean sameTime = timeKeys.equalSec(valTstamp, keyTstamp);
-            return sameTime;
-        });
+            MutableLongCollection onSameTime = keyData.select(storedKey -> {
+                long keyTstamp = timeKeys.tstamp(storedKey);
+                boolean sameTime = timeKeys.equalSec(valTstamp, keyTstamp);
+                return sameTime;
+            });
 
-        return onSameTime;
-
+            return onSameTime;
+        }
+        finally {
+            t += System.nanoTime();
+            metrics.onSameTimeDuration.addAndGet(t);
+        }
     }
 
     public void gc(long upperTstampExclusive) {
@@ -97,26 +132,34 @@ class Index<T> {
     }
 
     public void clearKey(T val, long upperTstampExclusive) {
-        // TODO ukloni prazne ključeve
+        metrics.clearKeyCount.incrementAndGet();
+        long t = -System.nanoTime();
+        try {
+            // TODO ukloni prazne ključeve
 
-        byte[] key = keyer.apply(val);
-        if (key == null) return;
+            byte[] key = keyer.apply(val);
+            if (key == null) return;
 
-        MutableLongCollection keyData = index.get(key);
-        if (keyData == null) return;
-        if (keyData.isEmpty()) return;
+            MutableLongCollection keyData = index.get(key);
+            if (keyData == null) return;
+            if (keyData.isEmpty()) return;
 
-        MutableLongList tmpBuffer = LongLists.mutable.empty();
+            MutableLongList tmpBuffer = LongLists.mutable.empty();
 
-        keyData.forEach(storageKey -> {
-            long tstamp = timeKeys.tstamp(storageKey);
-            if (tstamp < upperTstampExclusive) {
-                tmpBuffer.add(storageKey);
-            }
-        });
+            keyData.forEach(storageKey -> {
+                long tstamp = timeKeys.tstamp(storageKey);
+                if (tstamp < upperTstampExclusive) {
+                    tmpBuffer.add(storageKey);
+                }
+            });
 
-        if (tmpBuffer.size() == 0) return;
-        keyData.removeAll(tmpBuffer);
+            if (tmpBuffer.size() == 0) return;
+            keyData.removeAll(tmpBuffer);
+        }
+        finally {
+            t += System.nanoTime();
+            metrics.clearKeyDuration.addAndGet(t);
+        }
     }
 
 
@@ -137,6 +180,60 @@ class Index<T> {
         @Override
         public boolean equals(byte[] object1, byte[] object2) {
             return Arrays.equals(object1, object2);
+        }
+    }
+
+
+    class IndexMetrics implements Metrics {
+        @Getter String name = "Index";
+        long startTstamp = System.currentTimeMillis();
+
+        final AtomicLong putCount = new AtomicLong();
+        final AtomicLong putDuration = new AtomicLong();
+
+        final AtomicLong getCount = new AtomicLong();
+        final AtomicLong getDuration = new AtomicLong();
+
+        final AtomicLong clearKeyCount = new AtomicLong();
+        final AtomicLong clearKeyDuration = new AtomicLong();
+
+        final AtomicLong onSameTimeCount = new AtomicLong();
+        final AtomicLong onSameTimeDuration = new AtomicLong();
+
+
+        @Override
+        public String text() {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+            Date start = new Date(startTstamp);
+            String startStr = sdf.format(start);
+
+            String put        = info("  put", putCount, putDuration);
+            String get        = info("  get", getCount, getDuration);
+            String clearKey   = info("  clearKey", clearKeyCount, clearKeyDuration);
+            String onSameTime = info("  onSameTime", onSameTimeCount, onSameTimeDuration);
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("## ").append(name).append(" ").append(Index.this.name).append(" metrics\n");
+            sb.append("  startTstamp: ").append(startStr).append("\n");
+            sb.append(put).append("\n");
+            sb.append(get).append("\n");
+            sb.append(clearKey).append("\n");
+            sb.append(onSameTime);
+            return sb.toString();
+        }
+
+        @Override
+        public String reset() {
+            String ts = text();
+            putCount.set(0);
+            putDuration.set(0);
+            getCount.set(0);
+            getDuration.set(0);
+            clearKeyCount.set(0);
+            clearKeyDuration.set(0);
+            onSameTimeCount.set(0);
+            onSameTimeDuration.set(0);
+            return ts;
         }
     }
 

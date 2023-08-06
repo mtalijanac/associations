@@ -83,13 +83,12 @@ public class BigTest {
 
                 MockObj obj = new MockObj(tstamp, index);
                 q.put(obj);
-
-//                if (counter.incrementAndGet() % 1_000_000 == 0)
-//                    System.out.println("Put: " + counter.get());
             }
             cache.tick();
             start = start + tenMinutes;
             if (d == 9 || d == 0) {
+                System.out.println(cache.allMetrics());
+
                 System.out.println(d + " - " + cache.toString());
                 t = -System.currentTimeMillis();
             }
@@ -110,6 +109,8 @@ public class BigTest {
         System.out.println(cache.toString());
         System.out.println("Duration: " + t + ", workerCount: " + workerCount);
         System.out.flush();
+
+        System.out.println(cache.allMetrics());
     }
 
     @AllArgsConstructor

@@ -7,7 +7,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-class MetricKeyer<I, O> implements Function<I, O>, Measureable {
+class MetricKeyer<I, O> implements Function<I, O>, Metrics {
     @NonNull Function<I, O> delegate;
     @NonNull String name;
 
@@ -16,27 +16,34 @@ class MetricKeyer<I, O> implements Function<I, O>, Measureable {
 
     public O apply(I obj) {
         long t = -System.nanoTime();
-        O res = delegate.apply(obj);
-        t += System.nanoTime();
-        duration.addAndGet(t);
-        counter.incrementAndGet();
-        return res;
+        try {
+            O res = delegate.apply(obj);
+            return res;
+        }
+        finally {
+            t += System.nanoTime();
+            duration.addAndGet(t);
+            counter.incrementAndGet();
+        }
     }
 
-    public String toString() {
-        String res = TimeUtils.info(name, counter, duration);
-        return res;
+    @Override
+    public String getName() {
+        return name;
     }
 
-    public String resetMetrics() {
-        String ts = toString();
+    @Override
+    public String text() {
+        return "## Keyer " + getName() + " metrics: \n"
+             + TimeUtils.info(name, counter, duration);
+    }
+
+    @Override
+    public String reset() {
+        String ts = text();
         duration.set(0);
         counter.set(0);
         return ts;
-    }
-
-    public String metricsTxt() {
-        return toString();
     }
 
 }

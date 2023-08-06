@@ -7,13 +7,16 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 /**
  * SerDes2 wrapper which does the metric.
  *
  */
 @AllArgsConstructor
-class MetricSerDes2<T> implements SerDes<T>, Measureable {
+class MetricSerDes2<T> implements SerDes<T>, Metrics {
+
+    @Getter final String name = "SerDes";
 
     SerDes<T> delegate;
 
@@ -142,11 +145,33 @@ class MetricSerDes2<T> implements SerDes<T>, Measureable {
     }
 
 
-    public String metricsTxt() {
-        return toString();
+
+    public String toString() {
+        String mar        = info("  marshall", marshallCount, marshallTime);
+        String unmar      = info("unmarshall", unmarshallCount, unmarshallTime);
+        String inPlaceUnm = info("inPlaceUnm", inPlaceUnmarshallCount, inPlaceUnmarshallTime);
+        String tstampT    = info("   tstampT", timestampOfTCount, timestampOfTTime);
+        String tstampD    = info("   tstampD", timestampOfDCount, timestampOfDTime);
+        String inPlaceTst = info("inPlaceTst", inPlaceTimestampOfDCount, inPlaceTimestampOfDTime);
+        String equalsT    = info("   equalsT", equalsTCount, equalsTTime);
+        String equalsD    = info("   equalsD", equalsDCount, equalsDTime);
+        String inPlaceEqu = info("inPlaceEqu", inPlaceEqualsDCount, inPlaceEqualsDTime);
+
+        String res = "## Serdes metrics:\n"
+                   + mar + "\n"
+                   + unmar + "\n"
+                   + inPlaceUnm + "\n"
+                   + tstampT + "\n"
+                   + tstampD + "\n"
+                   + inPlaceTst + "\n"
+                   + equalsT + "\n"
+                   + equalsD + "\n"
+                   + inPlaceEqu;
+        return res;
     }
 
-    public String resetMetrics() {
+    @Override
+    public String reset() {
         String ts = toString();
 
         marshallCount.set(0);
@@ -171,28 +196,9 @@ class MetricSerDes2<T> implements SerDes<T>, Measureable {
         return ts;
     }
 
-    public String toString() {
-        String mar        = info("  marshall", marshallCount, marshallTime);
-        String unmar      = info("unmarshall", unmarshallCount, unmarshallTime);
-        String inPlaceUnm = info("inPlaceUnm", inPlaceUnmarshallCount, inPlaceUnmarshallTime);
-        String tstampT    = info("   tstampT", timestampOfTCount, timestampOfTTime);
-        String tstampD    = info("   tstampD", timestampOfDCount, timestampOfDTime);
-        String inPlaceTst = info("inPlaceTst", inPlaceTimestampOfDCount, inPlaceTimestampOfDTime);
-        String equalsT    = info("   equalsT", equalsTCount, equalsTTime);
-        String equalsD    = info("   equalsD", equalsDCount, equalsDTime);
-        String inPlaceEqu = info("inPlaceEqu", inPlaceEqualsDCount, inPlaceEqualsDTime);
-
-        String res = "Serdes metrics:\n"
-                   + mar + "\n"
-                   + unmar + "\n"
-                   + inPlaceUnm + "\n"
-                   + tstampT + "\n"
-                   + tstampD + "\n"
-                   + inPlaceTst + "\n"
-                   + equalsT + "\n"
-                   + equalsD + "\n"
-                   + inPlaceEqu;
-        return res;
+    @Override
+    public String text() {
+        return toString();
     }
 
 }
