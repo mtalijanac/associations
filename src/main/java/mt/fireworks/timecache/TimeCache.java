@@ -2,7 +2,6 @@ package mt.fireworks.timecache;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map.Entry;
 
 public interface TimeCache<T, K> {
 
@@ -15,7 +14,7 @@ public interface TimeCache<T, K> {
     /**
      * @return entries associated to given value
      */
-    List<Entry<K, List<T>>> get(T val);
+    List<CacheEntry<K, List<T>>> get(T val);
 
 
     /**
@@ -33,7 +32,7 @@ public interface TimeCache<T, K> {
      * @see #add(Object)
      * @see #get(Object)
      */
-    default List<Entry<K, List<T>>> addAndGet(T val) {
+    default List<CacheEntry<K, List<T>>> addAndGet(T val) {
         return add(val) ? get(val) : Collections.emptyList();
     }
 
