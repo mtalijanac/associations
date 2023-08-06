@@ -54,10 +54,14 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-Timecache is data structure used to store timed data for some limited time. By usage, timecache is a form of multimap, as it is associative container that contains a sorted list of key-value pairs, while permitting multiple entries with the same key. Additionally each stored value can be associated to multiple keys. Timecache is optimized for small memory footprint. Each value is stored to an on-heap allocated array.
+TimeCache is data structure used to store related events with expiry
+TimeCache is a form of multimap, as it stores multiple entries under the same key.
+Additionally each stored value can be associated to multiple keys.
+TimeCache is primary optimized for memory footprint. Each value is
+serialized and then stored to an on-heap allocated array.
 
-Here's when you should use Timecache:
-* You need to store large amount of data, as memory store is efficient
+Here's when you should use TimeCache:
+* You need to store large amount of data, in space efficient manner
 * Data stored is associated to other stored data (grouping data by index)
 * Data stored is associated in multiple ways (arbitrary number of indexes)
 * Data is removed periodically based on its age (windowing)
@@ -84,7 +88,8 @@ Most important:
 Under the hood TimeCache is bunch of Java 8 wrappers for byte arrays and
 some Eclipse Collections magic.
 
-Refer do [implementation docs](https://github.com/mtalijanac/timecache/blob/main/docs/Implementation.md) for deeper understanding.
+Refer do [implementation docs](https://github.com/mtalijanac/timecache/blob/main/docs/Implementation.md)
+for deeper understanding of individual components.
 
 <!-- LICENSE -->
 ## License
