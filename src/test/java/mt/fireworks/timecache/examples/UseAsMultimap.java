@@ -40,7 +40,8 @@ public class UseAsMultimap {
 
         ByteCacheFactory<Event> factory = new ByteCacheFactory<>();
         factory.setSerdes(new EventSerDes());
-        factory.addKeyers(twoLetterKey, fourLetterKey);
+        factory.addKeyer("TWO_LETTER", twoLetterKey);
+        factory.addKeyer("FOUR_LETTER", fourLetterKey);
         ByteCacheImpl<Event> cache = factory.getInstance();
 
 

@@ -61,7 +61,7 @@ public class WindowHandling {
 
         ByteCacheFactory<Event> factory = new ByteCacheFactory<>();
         factory.setSerdes(new EventSerDes());
-        factory.addKeyers(key);
+        factory.addKeyer("LEADING_FIVE_LETTERS", key);
         factory.storageConf(pastWindowCount, futureWindowCount, windowDuration);
         long start = factory.setStartTimestamp(now);
         ByteCacheImpl<Event> cache = factory.getInstance();

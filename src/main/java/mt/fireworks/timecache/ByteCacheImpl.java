@@ -18,7 +18,7 @@ import mt.fireworks.timecache.StorageLongKey.Window;
 
 @Slf4j
 @RequiredArgsConstructor
-public class ByteCacheImpl<T> implements Cache<T, byte[]>{
+public class ByteCacheImpl<T> implements TimeCache<T, byte[]>{
 
     @NonNull StorageLongKey storage;
     @NonNull Index<T>[] indexes;
@@ -71,8 +71,9 @@ public class ByteCacheImpl<T> implements Cache<T, byte[]>{
             if (strKeys == null) continue;
             if (strKeys.isEmpty()) continue;
 
+            String name = index.getName();
             ArrayList<T> ts = new ArrayList<>(strKeys.size());
-            CacheEntry<T> entry = new CacheEntry<>(key, ts);
+            CacheEntry<T> entry = new CacheEntry<>(name, key, ts);
             resultList.add(entry);
 
             strKeys.forEach(strKey -> {

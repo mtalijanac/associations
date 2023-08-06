@@ -15,13 +15,14 @@ import lombok.Data;
 @Data
 class Index<T> {
 
+    String name;
     MutableMap<byte[], MutableLongCollection> index;
     Function<T, byte[]> keyer;
     TimeKeys timeKeys;
 
 
-
-    Index(Function<T, byte[]> keyer, TimeKeys tk) {
+    Index(String name, Function<T, byte[]> keyer, TimeKeys tk) {
+        this.name = name;
         this.keyer = keyer;
         this.timeKeys = tk;
 

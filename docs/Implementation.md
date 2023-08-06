@@ -25,15 +25,62 @@
 <details>
   <summary>Table of Contents</summary>
   <ol>
+    <li><a href="#keyer">Keyer</a></li>
     <li><a href="#bytelist">ByteList</a></li>
     <li><a href="#index">Index</a></li>
     <li><a href="#storage">Storage</a></li>
     <li><a href="#serdes">SerDes</a></li>
-    <li><a href="#keyer">Keyer</a></li>
   </ol>
 </details>
 
 
+
+<!-- KEYER -->
+## Keyer
+
+Keyer is java Function which associates data to a unique key.
+
+
+**Keyer must be idempotent!!!**.
+
+TimeCache dosent use keys to store data, instead it uses keyer function
+to extract a key from data and than associatess data with calculated key.
+
+Main difference to a normal map is that data is fetch by data:
+
+    Timecache cache = ...
+    cache.add(data);
+
+    List<Entry<byte[], List<T>>> = cache.get(data);
+
+Normal java.util.Map uses put metod to associate key with value:
+
+    HashMap map = new HashMap();
+    map.put("key", "firstValue");
+    map.put("key", "secondValue");
+    String value = map.get("key");
+
+Printin value will output:
+
+    secondValue
+
+Mutlimap uses put method to associate value to a key, but allows
+multimple values to be stored under same key.
+
+    Multimap<String, String> map = ArrayListMultimap.create();
+    map.put(key, "firstValue");
+    map.put(key, "secondValue");
+    Collection<String> values = map.get(key);
+
+Printing values will print:
+
+    [firstValue, secondValue]
+
+Byte array should allways be constructable fro
+
+
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- BYTELIST -->
 ## ByteList
@@ -74,17 +121,45 @@ of new bucket. Free space at end of previous bucket is "lost".
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
+<!-- STORAGE -->
+## Storage
 
-<!-- INDEX -->
-## Index
+Storage is collection of ByteLists. Each ByteList in storage is associated
+with start and end timestamp, and thus is a time 'Window'. TimeCache uses
+Storage to manage lifecycle of events. After all it is a **Time**Cache.
 
-T.B.D.
+Simple usage example:
+
+    byte[] dataToStore = ...
+    long tstamp = System.currentTimeMillis();
+    long key = storage.addEntry(tstamp, dataToStore);
+    byte[] dataRead = storage.getEntry(key);
+
+Essentially, storage will store data to a underlying ByteList. It uses passed
+timestamp to choose to a which of many ByteLists will it store this data.
+Returned key encodes timestamp, thus to which ByteList is data stored,
+and index within that ByteList.
+
+Storage key encoding is fundamental to a efficient TimeCache implementation.
+First 29 bits of key encodes offset in *seconds* from TimeCache *epoch*.
+TimeCache epoch is starting second of year in which TimeCache instance was
+**created**. 29 bits is enough to store more than 17 years of seconds.
+Following 35 bits are used to store **index** in ByteList.
+While ByteList is perfectly capable of storing 2^63 bytes of data, because
+storage key design, only lower 35 bits are used for maximum of 32gb of
+data within one window.
+
+Because data timestamp is, at least partly to a second resolution, encoded within
+key some basic equals comparison of data is possible without ever fetching data.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
-<!-- STORAGE -->
-## Storage
+<!-- INDEX -->
+## Index
+
+Index is multimap of data key to stora key.
+Data key is result of keyer on data
 
 T.B.D.
 
@@ -99,9 +174,4 @@ T.B.D.
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
-<!-- KEYER -->
-## Keyer
 
-T.B.D.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>

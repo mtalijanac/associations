@@ -1,13 +1,15 @@
 package mt.fireworks.timecache;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.function.Function;
 
 import lombok.Setter;
 
 public class ByteCacheFactory<T> {
 
-    @Setter ArrayList<Function<T, byte[]>> keyers = new ArrayList<>();
+    @Setter HashMap<String, Function<T, byte[]>> keyers = new HashMap<>();
 
     @Setter SerDes<T> serdes;
     @Setter Boolean metricsEnabled = Boolean.TRUE;
@@ -28,8 +30,10 @@ public class ByteCacheFactory<T> {
         }
 
         ArrayList<Index<T>> indexList = new ArrayList<>();
-        for (Function<T, byte[]> key: keyers) {
-            Index<T> i = new Index<T>(key, timeKeys);
+        for (Entry<String, Function<T, byte[]>> e: keyers.entrySet()) {
+            String name = e.getKey();
+            Function<T, byte[]> keyer = e.getValue();
+            Index<T> i = new Index<T>(name, keyer, timeKeys);
             indexList.add(i);
         }
 
@@ -40,13 +44,8 @@ public class ByteCacheFactory<T> {
         return cache;
     }
 
-
-    public void addKeyers(Function<T, byte[]>... keys) {
-        for (Function<T, byte[]> k: keys) {
-            Function<T, byte[]> key = (metricsEnabled) ? new MetricKeyer<>(k, "key " + (keyers.size() + 1))
-                                                       : k;
-            keyers.add(key);
-        }
+    public void addKeyer(String name, Function<T, byte[]> keyer) {
+        keyers.put(name, keyer);
     }
 
     public void storageConf(

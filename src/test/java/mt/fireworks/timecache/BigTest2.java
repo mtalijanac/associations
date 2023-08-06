@@ -50,7 +50,7 @@ public class BigTest2 {
 
         ByteCacheFactory<MockObj> fact = new ByteCacheFactory<>();
         fact.setSerdes(serdes);
-        fact.addKeyers(keyer);
+        fact.addKeyer("LONG", keyer);
 
         long start = System.currentTimeMillis();
         fact.setStartTimestamp(start);

@@ -8,6 +8,7 @@ import lombok.*;
 
 @AllArgsConstructor
 public class CacheEntry<T> implements Entry<byte[], List<T>>{
+    @Getter String name;
     @Getter byte[] key;
     @Getter List<T> value;
 
@@ -17,7 +18,7 @@ public class CacheEntry<T> implements Entry<byte[], List<T>>{
 
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("Key '")
+        sb.append("Name: '").append(name).append("', Key '")
           .append(new String(key, StandardCharsets.UTF_8))
           .append("':\n");
 

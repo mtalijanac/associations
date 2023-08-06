@@ -57,7 +57,7 @@ public class ByteCacheImplTest {
     @Test
     public void usageExample() throws InterruptedException {
         StorageLongKey storage = StorageLongKey.init();
-        Index<TstTrx> index = new Index<>(keyer, new TimeKeys());
+        Index<TstTrx> index = new Index<>("Example", keyer, new TimeKeys());
 
         Index<TstTrx>[] indexes = new Index[1];
         indexes[0] = index;
@@ -92,7 +92,7 @@ public class ByteCacheImplTest {
     public void duplicateTest() {
         ByteCacheFactory<TstTrx> factory = new ByteCacheFactory<>();
         factory.setSerdes(serdes2);
-        factory.addKeyers(keyer);
+        factory.addKeyer("Example", keyer);
 
         ByteCacheImpl<TstTrx> cache = factory.getInstance();
         cache.setCheckForDuplicates(true);
