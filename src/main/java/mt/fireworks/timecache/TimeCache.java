@@ -1,7 +1,8 @@
 package mt.fireworks.timecache;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+
+import org.eclipse.collections.impl.map.mutable.UnifiedMap;
 
 public interface TimeCache<T, K> {
 
@@ -15,6 +16,18 @@ public interface TimeCache<T, K> {
      * @return entries associated to given value
      */
     List<CacheEntry<K, List<T>>> get(T val);
+
+
+    default Map<String, List<T>> getAsMap(T val) {
+        List<CacheEntry<K, List<T>>> list = get(val);
+        Map<String, List<T>> res = UnifiedMap.newMap(list.size() + 1, 1f);
+        for (CacheEntry<K, List<T>> ce : list) {
+            String name = ce.getName();
+            List<T> value = ce.getValue();
+            res.put(name, value);
+        }
+        return res;
+    }
 
 
     /**
