@@ -1,4 +1,4 @@
-package mt.fireworks.timecache;
+package mt.fireworks.timecache.large;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -6,7 +6,7 @@ import lombok.Data;
 
 @Deprecated
 @Data @AllArgsConstructor
-public class MockObj {
+class MockObj {
     public final static int objSize = 2 * 8;
 
     long tstamp;
