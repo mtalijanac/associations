@@ -54,9 +54,10 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-TimeCache is data structure used to store related events with expiry
+TimeCache is data structure used to store related events with expiry.
 TimeCache is a form of multimap, as it stores multiple entries under the same key.
 Additionally each stored value can be associated to multiple keys.
+TimeCache is a cache, as data old data will eventually be cleared.
 TimeCache is primary optimized for memory footprint. Each value is
 serialized and then stored to an on-heap allocated array.
 
