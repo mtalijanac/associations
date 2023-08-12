@@ -39,7 +39,6 @@
 In computing an **Event** is data with a time.
 Minimal possible amount of data is "name".
 Minimal possible amount of time is "when did it happened".
-
 *Minimal event* is thus **NAME with TIMESTAMP**:
 
   - "Restart" at midnight
@@ -61,7 +60,7 @@ This event has more data to it than just name:
   - location: Madrid
 
 Adding data to events is one way to tell more complex story.
-It isn't the only way. Adding more time to event
+It isn't the only way. Sometimes story requires adding more time:
 
   - "Fire", started at 13:31, ended at 15:40
 
@@ -79,29 +78,22 @@ House, alarm, firemen - each of them has its own view of event,
 own timeline of observing and reacting to it; and thus similar, but
 not quite same story to tell about same fire.
 
-Events do not exist in vacuum. They have **interested parties**.
+That is because events do not exist in vacuum. They have **interested parties**.
 When events are shared by multiple parties they have multiple
 durations and all sorts of interesting correlations.
 
 If you think abut it, at one level of abstraction, each episode of Poirot
-is essentially retelling same event, from multiple observers.
+is essentially retelling same event, from multiple **observers**.
+
+Finaly, great stories are not ever richer event, but sequences of
+events. And not any sequence of random events (a dog barks, a bee polinates),
+but one where events have **causality**. Causal events are the ones
+that:
+
+  - are associated - by sharing parts of same data
+  - have proper time ordering
 
 
-
-We can always add more time and more data to event, but
-question is when it is enough? Why do we do it?
-
-Well events do not exist in vacuum. They have **interested parties**:
-
-What else events have?
-
-How about interested parties. They
-
-And often, they have more than one observer:
-
-
-
-
-
+Timecache is data structure for storing timeordered associated data
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
