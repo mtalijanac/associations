@@ -40,7 +40,7 @@
 
 Keyer is java Function which associates data, by assigning key to a data.
 
-TimeCache is "correlation map". In 'normal' map we associate a key with a value.
+TimeCache is "correlation map". In a 'normal' map we associate a key with a value.
 In TimeCache we associate a value with other - correlated - value.
 Correlated values, and their associations are abundant in this world:
 
@@ -149,10 +149,12 @@ key some basic equals comparison of data is possible without ever fetching data.
 <!-- INDEX -->
 ## Index
 
-Index is multimap of data key to stora key.
-Data key is result of keyer on data
+Index is map which stores data association. It is a multimap, which
+stores association key (result of keyer) to a storage key list (a
+key of data in storage).
 
-T.B.D.
+For each keyer stored in TimeCache a one index is created. Timecache
+always has at lest one index, but it can have more than one.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -160,7 +162,16 @@ T.B.D.
 <!-- SERDES -->
 ## SerDes
 
-T.B.D.
+Timecahe stores all  objects in their marshalled form. SerDes provides
+marshaller/unmarshaller functionality. SerDes is implemented
+by user. Minimal SerDes implementation has following three methods:
+
+    byte[] marshall(T val);    // write object to timecache
+
+    T unmarshall(byte[] data); // read object from timecache
+
+    long timestampOfT(T val);  // timestmap is used for aging and comparison
+
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
