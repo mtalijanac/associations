@@ -46,9 +46,8 @@ Minimal possible amount of time is "when did it happened".
   - "Shootout" at high noon
   - "Birthday" at September 26, 1979, 5 min after midnight
 
-Simple stories use simple events.
-We use events like that to tell a story.
-Some stories are simple, but other require more work:
+Events are used to tell a story. Simple stories use simple events.
+While some stories are simple, other require more work:
 
   - Debit card "Payment", 90€, in Zara, Madrid, yesterday at 14h
 
@@ -61,20 +60,20 @@ This event has more data to it than just name:
   - merchant: Zara
   - location: Madrid
 
-By adding more data, events tells more complex story.
-Besides data, we can also add more time to event:
+Adding data to events is one way to tell more complex story.
+It isn't the only way. Adding more time to event
 
-  - "Fire", started at 13:31:45, ended at 15:40:00
+  - "Fire", started at 13:31, ended at 15:40
 
 Fires have **durations** - pairs of start and end timestamps.
 Events often have durations. More than one:
 
-  - "House fire", fire started 13:31:45,
-                  fire alarm on 13:32:30,
-                  firemen notified at 13:34:00,
-                  firemen responed at 13:56:30,
-                  fire alarm off 13:58:20,
-                  fire extinguished 15:40:00
+  - "House fire", fire started 13:31,
+                  fire alarm on 13:32,
+                  firemen notified at 13:34,
+                  firemen responed at 13:56,
+                  fire alarm off 13:58,
+                  fire extinguished 15:40
 
 House, alarm, firemen - each of them has its own view of event,
 own timeline of observing and reacting to it; and thus similar, but
