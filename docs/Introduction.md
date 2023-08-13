@@ -45,12 +45,17 @@ Minimal possible amount of time is "when did it happened".
   - "Shootout" at high noon
   - "Birthday" at September 26, 1979, 5 min after midnight
 
-Events are used to tell a story. Simple stories use simple events.
-While some stories are simple, other require more work:
+Events are used to tell a story. Simplest stories use simplest events.
+And lot can be said with even simplest one.
+
+Each election victor is story told with a one event: one name and one timestamp.
+
+And while short stories can be powerfull [For Sale: baby shoes, never worn]
+or tragic [account ballance, today], other require more work:
 
   - Debit card "Payment", 90€, in Zara, Madrid, yesterday at 14h
 
-This event has more data to it than just name:
+Event of this story has more data to it than just name:
 
   - name: "Payment"
   - method: "debit card"
@@ -59,13 +64,13 @@ This event has more data to it than just name:
   - merchant: Zara
   - location: Madrid
 
-Adding data to events is one way to tell more complex story.
-It isn't the only way. Sometimes story requires adding more time:
+Adding data to event is one way to tell more complex story.
+It isn't the only way. Adding more time works too:
 
   - "Fire", started at 13:31, ended at 15:40
 
 Fires have **durations** - pairs of start and end timestamps.
-Events often have durations. More than one:
+Events often have durations. And more than one too:
 
   - "House fire", fire started 13:31,
                   fire alarm on 13:32,
@@ -82,18 +87,18 @@ That is because events do not exist in vacuum. They have **interested parties**.
 When events are shared by multiple parties they have multiple
 durations and all sorts of interesting correlations.
 
-If you think abut it, at one level of abstraction, each episode of Poirot
-is essentially retelling same event, from multiple **observers**.
+If you think abut it, at some level of abstraction, each episode of Poirot
+is essentially retelling of same event, from multiple **observers**.
 
-Finaly, great stories are not ever richer event, but sequences of
-events. And not any sequence of random events (a dog barks, a bee polinates),
+
+Finally, great stories are made by using sequences of
+events. And not sequence of any random events (a dog barks, a bee polinates, a null pointer),
 but one where events have **causality**. Causal events are the ones
 that:
 
-  - are associated - by sharing parts of same data
+  - are associated - other word for sharing parts of data
   - have proper time ordering
 
-
-Timecache is data structure for storing timeordered associated data
+Timecache is data structure for storing time ordered associated events.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
