@@ -62,7 +62,7 @@ public class BytesKeyedCacheFactory<T> {
         storageConf = new StorageLongKey.Conf(historyWindowCount, futureWindowCount, windowTimespanMs);
     }
 
-    public Long setStartTimestamp(Long startTimestamp) {
+    public long setStartTimeMillis(Long startTimestamp) {
         this.startTimestamp = (startTimestamp / 1000l) * 1000l;
         return this.startTimestamp;
     }

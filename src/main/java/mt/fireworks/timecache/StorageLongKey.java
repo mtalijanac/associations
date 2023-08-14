@@ -40,6 +40,8 @@ class StorageLongKey {
     }
 
 
+
+
     final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
     Conf conf = new Conf();
     ArrayList<Window> windows = new ArrayList<>();
@@ -115,9 +117,10 @@ class StorageLongKey {
         if (window == null) return 0;
         long storeIndex = window.store.add(data);
         long key = timeKeys.key(tstamp, storeIndex);
+
+
         return key;
     }
-
 
     /**
      * Fetch data stored under key. Returned array is newly allocated.

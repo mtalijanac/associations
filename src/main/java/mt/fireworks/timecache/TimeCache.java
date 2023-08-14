@@ -53,4 +53,8 @@ public interface TimeCache<T, K> {
     /** move caching window to next iteration, and gc old entries */
     void tick();
 
+
+    /** @return start time of current window */
+    long startTimeMillis();
+
 }

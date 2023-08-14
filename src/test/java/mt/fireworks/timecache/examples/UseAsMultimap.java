@@ -77,12 +77,12 @@ public class UseAsMultimap {
         hillAssociated.forEach( System.out::println );
 
         // order of entries in response is determined by order of keyers
-        assertEquals(hellAssociated.size(), 2);
-        assertEquals(hellAssociated.get(0).getValue().size(), 5); // 5 events start with 'He'
-        assertEquals(hellAssociated.get(1).getValue().size(), 3); // 3 events start with 'Hell'
+        assertEquals(2, hellAssociated.size());
+        assertEquals(5, hellAssociated.get(0).getValue().size()); // 5 events start with 'He'
+        assertEquals(3, hellAssociated.get(1).getValue().size()); // 3 events start with 'Hell'
 
-        assertEquals(hillAssociated.size(), 1);
-        assertEquals(hillAssociated.get(0).getValue().size(), 2); // 2 events start with 'Hi'
+        assertEquals(1, hillAssociated.size());
+        assertEquals(2, hillAssociated.get(0).getValue().size()); // 2 events start with 'Hi'
     }
 
 

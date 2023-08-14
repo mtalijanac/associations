@@ -4,7 +4,7 @@ public interface Metrics {
 
     String getName();
 
-    String text();
+    String text(boolean coments);
 
     String reset();
 

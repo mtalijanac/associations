@@ -51,7 +51,7 @@ public class BigTest {
         fact.addKeyer("IDX1", keyer);
 
         long start = System.currentTimeMillis();
-        fact.setStartTimestamp(start);
+        fact.setStartTimeMillis(start);
 
         long tenMinutes = 10 * 60 * 1000;
         fact.storageConf(7, 1, tenMinutes);

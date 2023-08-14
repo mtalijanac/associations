@@ -45,7 +45,7 @@ public class BigTest2 {
         fact.addKeyer("LONG", keyer);
 
         long start = System.currentTimeMillis();
-        fact.setStartTimestamp(start);
+        fact.setStartTimeMillis(start);
 
         long tenMinutes = 10 * 60 * 1000;
         fact.storageConf(7, 1, tenMinutes);

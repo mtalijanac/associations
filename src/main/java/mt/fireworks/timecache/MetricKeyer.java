@@ -33,14 +33,14 @@ class MetricKeyer<I, O> implements Function<I, O>, Metrics {
     }
 
     @Override
-    public String text() {
-        return "## Keyer " + getName() + " metrics: \n"
-             + TimeUtils.info(name, counter, duration);
+    public String text(boolean comments) {
+        return "## " + name + " keyer metrics: \n"
+             + TimeUtils.info("  usage count", counter, duration);
     }
 
     @Override
     public String reset() {
-        String ts = text();
+        String ts = text(false);
         duration.set(0);
         counter.set(0);
         return ts;

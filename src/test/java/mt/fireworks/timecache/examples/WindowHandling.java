@@ -63,7 +63,7 @@ public class WindowHandling {
         factory.setSerdes(new EventSerDes());
         factory.addKeyer("LEADING_FIVE_LETTERS", key);
         factory.storageConf(pastWindowCount, futureWindowCount, windowDuration);
-        long start = factory.setStartTimestamp(now);
+        long start = factory.setStartTimeMillis(now);
         BytesKeyedCache<Event> cache = factory.getInstance();
 
         // startTimestamp is rounded to lowest second

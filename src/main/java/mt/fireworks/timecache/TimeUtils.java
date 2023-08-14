@@ -4,20 +4,22 @@ import java.util.concurrent.atomic.AtomicLong;
 
 class TimeUtils {
 
+    private TimeUtils() {}
+
     static String toReadable(long nano) {
         if (nano < 1_000l) return nano + " ns";
         if (nano < 1_000_000l) return (nano / 1_000l) + " μs";
         if (nano < 1_000_000_000l) return (nano / 1_000_000l) + " ms";
-        return String.format("%.2f s", (double) nano / 1_000_000_000d);
+        return String.format("%.2f s", nano / 1_000_000_000d);
     }
-
 
     static String info(String name, AtomicLong countRef, AtomicLong timeRef) {
         long count = countRef.get();
         long time = timeRef.get();
         String sec = toReadable(time);
-        double speed = (double) count * 1_000_000_000d / time;
-        String res = name + ": " + count + ", dur: " + sec + " [" + speed + " per sec]";
+        double speed = 1_000_000_000d * count / time;
+        String speedStr = String.format("%.2f", speed);
+        String res = name + ": " + count + ", dur: " + sec + " [" + speedStr + " per sec]";
         return res;
     }
 

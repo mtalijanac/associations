@@ -202,15 +202,15 @@ class Index<T> {
 
 
         @Override
-        public String text() {
+        public String text(boolean comments) {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
             Date start = new Date(startTstamp);
             String startStr = sdf.format(start);
 
-            String put        = info("  put", putCount, putDuration);
-            String get        = info("  get", getCount, getDuration);
-            String clearKey   = info("  clearKey", clearKeyCount, clearKeyDuration);
-            String onSameTime = info("  onSameTime", onSameTimeCount, onSameTimeDuration);
+            String put        = info("          put", putCount, putDuration);
+            String get        = info("          get", getCount, getDuration);
+            String clearKey   = info("     clearKey", clearKeyCount, clearKeyDuration);
+            String onSameTime = info("   onSameTime", onSameTimeCount, onSameTimeDuration);
 
             StringBuilder sb = new StringBuilder();
             sb.append("## ").append(name).append(" ").append(Index.this.name).append(" metrics\n");
@@ -224,7 +224,7 @@ class Index<T> {
 
         @Override
         public String reset() {
-            String ts = text();
+            String ts = text(false);
             putCount.set(0);
             putDuration.set(0);
             getCount.set(0);

@@ -45,17 +45,16 @@ Minimal possible amount of time is "when did it happened".
   - "Shootout" at high noon
   - "Birthday" at September 26, 1979, 5 min after midnight
 
-Events are used to tell a story. Simplest stories use simplest events.
-And lot can be said with even simplest one.
-
-Each election victor is story told with a one event: one name and one timestamp.
+Events are used to tell a story. And lot can be said by using even simplest one.
+At end of the day each election victor is story told with a one event:
+one name and one timestamp.
 
 And while short stories can be powerfull [For Sale: baby shoes, never worn]
 or tragic [account ballance, today], other require more work:
 
   - Debit card "Payment", 90€, in Zara, Madrid, yesterday at 14h
 
-Event of this story has more data to it than just name:
+This story has more data to its event than just a name:
 
   - name: "Payment"
   - method: "debit card"

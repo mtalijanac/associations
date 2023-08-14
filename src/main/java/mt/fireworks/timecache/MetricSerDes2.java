@@ -147,15 +147,15 @@ class MetricSerDes2<T> implements SerDes<T>, Metrics {
 
 
     public String toString() {
-        String mar        = info("  marshall", marshallCount, marshallTime);
-        String unmar      = info("unmarshall", unmarshallCount, unmarshallTime);
-        String inPlaceUnm = info("inPlaceUnm", inPlaceUnmarshallCount, inPlaceUnmarshallTime);
-        String tstampT    = info("   tstampT", timestampOfTCount, timestampOfTTime);
-        String tstampD    = info("   tstampD", timestampOfDCount, timestampOfDTime);
-        String inPlaceTst = info("inPlaceTst", inPlaceTimestampOfDCount, inPlaceTimestampOfDTime);
-        String equalsT    = info("   equalsT", equalsTCount, equalsTTime);
-        String equalsD    = info("   equalsD", equalsDCount, equalsDTime);
-        String inPlaceEqu = info("inPlaceEqu", inPlaceEqualsDCount, inPlaceEqualsDTime);
+        String mar        = info("     marshall", marshallCount, marshallTime);
+        String unmar      = info("   unmarshall", unmarshallCount, unmarshallTime);
+        String inPlaceUnm = info("   inPlaceUnm", inPlaceUnmarshallCount, inPlaceUnmarshallTime);
+        String tstampT    = info("      tstampT", timestampOfTCount, timestampOfTTime);
+        String tstampD    = info("      tstampD", timestampOfDCount, timestampOfDTime);
+        String inPlaceTst = info("   inPlaceTst", inPlaceTimestampOfDCount, inPlaceTimestampOfDTime);
+        String equalsT    = info("      equalsT", equalsTCount, equalsTTime);
+        String equalsD    = info("      equalsD", equalsDCount, equalsDTime);
+        String inPlaceEqu = info("   inPlaceEqu", inPlaceEqualsDCount, inPlaceEqualsDTime);
 
         String res = "## Serdes metrics:\n"
                    + mar + "\n"
@@ -197,8 +197,9 @@ class MetricSerDes2<T> implements SerDes<T>, Metrics {
     }
 
     @Override
-    public String text() {
+    public String text(boolean comments) {
         return toString();
     }
+
 
 }

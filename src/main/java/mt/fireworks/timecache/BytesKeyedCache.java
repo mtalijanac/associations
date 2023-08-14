@@ -7,6 +7,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 import java.util.function.Function;
 
+import javax.xml.stream.events.Comment;
+
 import org.eclipse.collections.api.collection.primitive.MutableLongCollection;
 import org.eclipse.collections.api.list.primitive.MutableLongList;
 import org.eclipse.collections.impl.factory.primitive.LongLists;
@@ -94,6 +96,8 @@ public class BytesKeyedCache<T> implements TimeCache<T, byte[]> {
                 if (res != null) ts.add(res);
             });
 
+            metrics.trxGetCount.addAndGet(ts.size());
+
             if (keysForRemoval != null && keysForRemoval.size() > 0) {
                 strKeys.removeAll(keysForRemoval);
                 keysForRemoval.clear();
@@ -109,7 +113,9 @@ public class BytesKeyedCache<T> implements TimeCache<T, byte[]> {
 
     @Override
     public void tick() {
-        metrics.lastTickStart.set( System.nanoTime() );
+        metrics.tickCount.incrementAndGet();
+        metrics.lastTickStart.set( System.currentTimeMillis() );
+        long start = System.nanoTime();
         metrics.lastWindowSize.set(0);
 
         // add new and, remove obsolete window from storage
@@ -131,7 +137,9 @@ public class BytesKeyedCache<T> implements TimeCache<T, byte[]> {
 
         long count = metrics.lastWindowSize.get();
         metrics.objectsRemovedTotal.addAndGet(count);
-        metrics.lastTickEnd.set( System.nanoTime() );
+        long end = System.nanoTime();
+        long duration = end - start;
+        metrics.lastTickDuration.set( duration );
     }
 
 
@@ -145,58 +153,73 @@ public class BytesKeyedCache<T> implements TimeCache<T, byte[]> {
         final AtomicLong foundDuplicateCount = new AtomicLong();
 
         final AtomicLong getCount = new AtomicLong();
+        final AtomicLong trxGetCount = new AtomicLong();
 
         final AtomicLong tickCount = new AtomicLong();
         final AtomicLong objectsRemovedTotal = new AtomicLong();
         final AtomicLong lastWindowSize = new AtomicLong();
         final AtomicLong lastTickStart = new AtomicLong();
-        final AtomicLong lastTickEnd = new AtomicLong();
+        final AtomicLong lastTickDuration = new AtomicLong();
 
 
 
         @Override
-        public String text() {
+        public String text(boolean comments) {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
             Date start = new Date(startTstamp);
             String startStr = sdf.format(start);
-            String tickStart = sdf.format(new Date(lastTickStart.get() / 1000_000l));
-            String tickEnd = sdf.format(new Date(lastTickEnd.get()));
-            long duration = lastTickEnd.get() - lastTickStart.get();
+            String tickStart = sdf.format(new Date(lastTickStart.get()));
+            long duration = lastTickDuration.get();
             String durStr = TimeUtils.toReadable(duration);
 
             StringBuilder sb = new StringBuilder();
             sb.append("## ").append(name).append(" metrics\n");
-            sb.append("  startTstamp: ").append(startStr).append("\n");
+            sb.append("  startTstamp: ").append(startStr).append(" (metrics creation date) \n");
             sb.append("     addCount: ").append(addCount.get())
-              .append(" (including ").append(foundDuplicateCount.get()).append(" duplicates)\n");
-            sb.append("     getCount: ").append(getCount.get()).append("\n");
+              .append(" (including ").append(foundDuplicateCount.get()).append(" duplicates)")
+              .append(comments ? "    // number of cache writes\n" : "\n");
+
+            sb.append("     getCount: ").append(getCount.get())
+               .append(comments ? "    // number of cache reads\n" : "\n");
+
+            sb.append("  trxGetCount: ").append(trxGetCount.get())
+              .append(comments ? "    // total count of read transactions\n" : "\n");
+
             sb.append("    tickCount: ").append(tickCount.get()).append("\n");
             sb.append("      cleaned: ").append(objectsRemovedTotal.get()).append(" objects total\n");
-            sb.append("  last window: ").append(lastWindowSize.get()).append(" objects \n");
-            sb.append("          started at: ").append(tickStart).append("\n");
-            sb.append("            duration: ").append(durStr);
+
+            sb.append("  last window: ").append(lastWindowSize.get()).append(" objects")
+              .append(comments ? "    // number of objects in last cleaned window\n" : "\n");
+
+            sb.append("   last tickt: ").append(tickStart)
+              .append(comments ? "    // timestamp of last tick\n" : "\n");
+
+            sb.append("tick duration: ").append(durStr)
+              .append(comments ? "    // last tick duration " : "");
 
             return sb.toString();
         }
 
         @Override
         public String reset() {
-            String text = text();
+            String text = text(false);
             startTstamp = System.currentTimeMillis();
 
             tickCount.set(0);
             objectsRemovedTotal.set(0);
             lastWindowSize.set(0);
             lastTickStart.set(0);
-            lastTickEnd.set(0);
+            lastTickDuration.set(0);
 
             getCount.set(0);
+            trxGetCount.set(0);
             addCount.set(0);
             foundDuplicateCount.set(0);
 
             return text;
         }
     }
+
 
     public String allMetrics() {
         ArrayList<Metrics> ms = new ArrayList<>();
@@ -219,6 +242,11 @@ public class BytesKeyedCache<T> implements TimeCache<T, byte[]> {
         }
 
         return sb.toString();
+    }
+
+
+    public long startTimeMillis() {
+        return storage.nowWindow.startTstamp;
     }
 
 }
