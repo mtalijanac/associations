@@ -149,7 +149,7 @@ public class ByteList {
 
             int dataPos = conf.dataHeaderSize;
 
-            long lead = conf.bucketSize * (bucketIndex == 0 ? 0 : bucketIndex - 1) ;
+            long lead = conf.bucketSize * (bucketIndex == 0 ? 0l : bucketIndex - 1l) ;
 
             inBucket: while (true) {
                 long objPos = lead + dataPos - conf.dataHeaderSize;

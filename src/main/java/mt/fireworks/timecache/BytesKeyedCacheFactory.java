@@ -14,7 +14,7 @@ public class BytesKeyedCacheFactory<T> {
     @Setter SerDes<T> serdes;
     @Setter Boolean metricsEnabled = Boolean.TRUE;
 
-    @Setter StorageLongKey.Conf storageConf;
+    @Setter Storage.Conf storageConf;
     Long startTimestamp;
     @Setter TimeKeys timeKeys = new TimeKeys();
 
@@ -39,7 +39,7 @@ public class BytesKeyedCacheFactory<T> {
 
         @SuppressWarnings("unchecked")
         Index<T>[] indexes = indexList.toArray(new Index[indexList.size()]);
-        StorageLongKey storage = StorageLongKey.init(storageConf, startTimestamp, timeKeys);
+        Storage storage = Storage.init(storageConf, startTimestamp, timeKeys);
         BytesKeyedCache<T> cache = new BytesKeyedCache<>(storage, indexes, ser, timeKeys);
         cache.setCheckForDuplicates(checkForDuplicates);
         return cache;
@@ -59,7 +59,7 @@ public class BytesKeyedCacheFactory<T> {
         Integer futureWindowCount,
         Long windowTimespanMs
     ) {
-        storageConf = new StorageLongKey.Conf(historyWindowCount, futureWindowCount, windowTimespanMs);
+        storageConf = new Storage.Conf(historyWindowCount, futureWindowCount, windowTimespanMs);
     }
 
     public long setStartTimeMillis(Long startTimestamp) {

@@ -4,13 +4,14 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import lombok.*;
 
-class StorageLongKey {
+class Storage {
 
     @AllArgsConstructor
     @RequiredArgsConstructor
@@ -46,14 +47,17 @@ class StorageLongKey {
     Conf conf = new Conf();
     ArrayList<Window> windows = new ArrayList<>();
     Window nowWindow;	// window where events happening at currentTime would enter
-    public TimeKeys timeKeys;
+    TimeKeys timeKeys;
 
-    static StorageLongKey init() {
+    @Getter
+    StorageMetric metric = new StorageMetric();
+
+    static Storage init() {
         return init(null, null, new TimeKeys());
     }
 
-    static StorageLongKey init(Conf conf, Long start, TimeKeys timeKeys) {
-        StorageLongKey st = new StorageLongKey();
+    static Storage init(Conf conf, Long start, TimeKeys timeKeys) {
+        Storage st = new Storage();
         st.timeKeys = timeKeys;
 
         if (conf != null) {
@@ -113,11 +117,16 @@ class StorageLongKey {
         // add entry to a window bucket
         // generate key and return it
 
+        metric.bytesWritten.addAndGet(data.length);
+        long start = System.nanoTime();
+
         Window window = windowForTstamp(tstamp);
         if (window == null) return 0;
         long storeIndex = window.store.add(data);
         long key = timeKeys.key(tstamp, storeIndex);
 
+        long end = System.nanoTime();
+        metric.writeDuration.addAndGet(end - start);
 
         return key;
     }
@@ -218,4 +227,30 @@ class StorageLongKey {
         }
         return sb.toString();
     }
+
+
+    @Data
+    static class StorageMetric implements Metrics {
+        String name = "StorageMetric";
+
+        AtomicLong bytesWritten = new AtomicLong();
+        AtomicLong writeDuration = new AtomicLong();
+
+        @Override
+        public String text(boolean coments) {
+            String text = "## " + name + " metric:\n"
+                        + "  bytesWritten: " + bytesWritten + " bytes\n"
+                        + " writeDuration: " + writeDuration + " ns\n";
+            return text;
+        }
+
+        @Override
+        public String reset() {
+            String text = text(false);
+            bytesWritten.set(0);
+            writeDuration.set(0);
+            return text;
+        }
+    }
+
 }

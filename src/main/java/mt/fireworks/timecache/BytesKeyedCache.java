@@ -17,13 +17,13 @@ import org.eclipse.collections.impl.factory.primitive.LongLists;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import mt.fireworks.timecache.ByteList.ForEachAction;
-import mt.fireworks.timecache.StorageLongKey.Window;
+import mt.fireworks.timecache.Storage.Window;
 
 @Slf4j
 @RequiredArgsConstructor
 public class BytesKeyedCache<T> implements TimeCache<T, byte[]> {
 
-    @NonNull StorageLongKey storage;
+    @NonNull Storage storage;
     @NonNull Index<T>[] indexes;
     @NonNull SerDes<T> serdes2;
     @NonNull TimeKeys timeKeys;
@@ -258,6 +258,7 @@ public class BytesKeyedCache<T> implements TimeCache<T, byte[]> {
                 ms.add((Metrics) keyer);
             }
         }
+        ms.add(storage.getMetric());
 
         StringBuilder sb = new StringBuilder();
         for (Metrics m: ms) {

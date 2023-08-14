@@ -3,8 +3,6 @@ package mt.fireworks.timecache;
 import static org.junit.Assert.assertArrayEquals;
 
 import java.nio.ByteBuffer;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.concurrent.ThreadLocalRandom;
@@ -13,11 +11,8 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Test;
 
-import mt.fireworks.timecache.StorageLongKey;
-import mt.fireworks.timecache.StorageLongKey.Window;
 
-
-public class StorageLongKeyTest {
+public class StorageTest {
 
     byte[] randomData(int min, int max) {
         int len = ThreadLocalRandom.current().nextInt(min, max);
@@ -28,7 +23,7 @@ public class StorageLongKeyTest {
 
     @Test
     public void debug() {
-        StorageLongKey storage = StorageLongKey.init();
+        Storage storage = Storage.init();
 
         byte[] someData_1 = randomData(250, 500);
         ByteBuffer.wrap(someData_1).putInt(0x5ca1ab1e);
@@ -55,7 +50,7 @@ public class StorageLongKeyTest {
 
 
         // init storage
-        StorageLongKey storage = StorageLongKey.init();
+        Storage storage = Storage.init();
 
 
         // write data
@@ -73,7 +68,7 @@ public class StorageLongKeyTest {
 
     @Test
     public void testWithLotOfData() {
-        StorageLongKey storage = StorageLongKey.init();
+        Storage storage = Storage.init();
         long[] timespan = storage.timespan();
 
         for (int i = 0; i < 2_000_000; i++) {
@@ -87,7 +82,7 @@ public class StorageLongKeyTest {
 
     @Test
     public void testWithLotOfData2() {
-        StorageLongKey storage = StorageLongKey.init();
+        Storage storage = Storage.init();
         long[] timespan = storage.timespan();
 
         long[] counter = new long[8];
@@ -106,7 +101,7 @@ public class StorageLongKeyTest {
 
     @Test
     public void windowAllocationTest() {
-        StorageLongKey storage = StorageLongKey.init();
+        Storage storage = Storage.init();
         int winSize = storage.windows.size();
         int expectedWinSize = storage.conf.historyWindowCount + 1 + storage.conf.futureWindowCount;
         Assert.assertEquals(expectedWinSize, winSize);
@@ -114,7 +109,7 @@ public class StorageLongKeyTest {
 
     @Test
     public void testInsertsOutsideWindow() {
-        StorageLongKey storage = StorageLongKey.init();
+        Storage storage = Storage.init();
         byte[] data = new byte[100];
         ThreadLocalRandom.current().nextBytes(data);
 
@@ -136,7 +131,7 @@ public class StorageLongKeyTest {
 
     @Test
     public void testInsertsInEachWindow() {
-        StorageLongKey storage = StorageLongKey.init();
+        Storage storage = Storage.init();
 
         final long now = System.currentTimeMillis();
         HashMap<Long, byte[]> storedDat = new HashMap<>();
