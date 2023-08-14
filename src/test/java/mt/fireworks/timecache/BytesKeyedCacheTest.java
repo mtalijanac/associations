@@ -1,10 +1,10 @@
 package mt.fireworks.timecache;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 import java.nio.ByteBuffer;
 import java.util.List;
-import java.util.Map.Entry;
+import java.util.Map;
 import java.util.function.Function;
 
 import org.junit.Assert;
@@ -55,11 +55,10 @@ public class BytesKeyedCacheTest {
 
     @Test
     public void usageExample() throws InterruptedException {
-        StorageLongKey storage = StorageLongKey.init();
-        Index<TstTrx> index = new Index<>("Example", keyer, new TimeKeys());
-
-        Index<TstTrx>[] indexes = new Index[1];
-        indexes[0] = index;
+        BytesKeyedCacheFactory<TstTrx> factory = new BytesKeyedCacheFactory<>();
+        factory.setSerdes(serdes2);
+        factory.addKeyer("key", keyer);
+        BytesKeyedCache<TstTrx> cache = factory.getInstance();
 
         long now = System.currentTimeMillis();
         TstTrx t1 = new TstTrx(now, 1);
@@ -68,7 +67,6 @@ public class BytesKeyedCacheTest {
         TstTrx t4 = new TstTrx(now + 30, 2);
         TstTrx t5 = new TstTrx(now + 50, 1);
 
-        BytesKeyedCache<TstTrx> cache = new BytesKeyedCache<>(storage, indexes, serdes2);
         cache.add(t1);
         cache.add(t2);
         cache.add(t3);
@@ -109,6 +107,66 @@ public class BytesKeyedCacheTest {
         // adding duplicate should fail
         boolean r12 = cache.add(t1);
         Assert.assertFalse(r12);
+    }
+
+    @Test
+    public void timeLogicTEst() {
+        BytesKeyedCacheFactory<TstTrx> factory = new BytesKeyedCacheFactory<>();
+        factory.setSerdes(serdes2);
+        factory.addKeyer("key", keyer);
+        BytesKeyedCache<TstTrx> cache = factory.getInstance();
+
+        long t = System.currentTimeMillis();
+        cache.add( new TstTrx(t, 1) );
+        cache.add( new TstTrx(t + 1000, 1) );
+        cache.add( new TstTrx(t + 2000, 1) );
+        cache.add( new TstTrx(t + 3000, 1) );
+        cache.add( new TstTrx(t + 4000, 1) );
+
+        TstTrx q0 = new TstTrx(t + 10_000, 1);
+        Map<String, List<TstTrx>> m0 = cache.getAsMap(q0);
+        assertEquals(5, m0.get("key").size());
+
+        // test before
+
+        List<TstTrx> res_1 = cache.get("key", q0, null, null);
+        assertEquals(5, res_1.size());
+
+        List<TstTrx> res_2 = cache.get("key", q0, null, t);
+        assertEquals(0, res_2.size());
+
+        List<TstTrx> res_3 = cache.get("key", q0, null, t - 1);
+        assertEquals(0, res_3.size());
+
+        List<TstTrx> res_4 = cache.get("key", q0, null, t + 1l);
+        assertEquals(1, res_4.size());
+
+        List<TstTrx> res_5 = cache.get("key", q0, null, t + 1000l);
+        assertEquals(1, res_5.size());
+
+        List<TstTrx> res_6 = cache.get("key", q0, null, t + 1001l);
+        assertEquals(2, res_6.size());
+
+        List<TstTrx> res_7 = cache.get("key", q0, t + 1999, null);
+        assertEquals(3, res_7.size());
+
+        List<TstTrx> res_8 = cache.get("key", q0, t + 2000, null);
+        assertEquals(3, res_8.size());
+
+        List<TstTrx> res_9 = cache.get("key", q0, t + 2001, null);
+        assertEquals(2, res_9.size());
+
+        List<TstTrx> res_10 = cache.get("key", q0, t - 1000, t + 10000);
+        assertEquals(5, res_10.size());
+
+        List<TstTrx> res_11 = cache.get("key", q0, t, t + 4001);
+        assertEquals(5, res_11.size());
+
+        List<TstTrx> res_12 = cache.get("key", q0, t, t + 4000);
+        assertEquals(4, res_12.size());
+
+        List<TstTrx> res_13 = cache.get("key", q0, t + 1, t + 4000);
+        assertEquals(3, res_13.size());
     }
 }
 
