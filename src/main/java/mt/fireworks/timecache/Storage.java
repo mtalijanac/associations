@@ -238,9 +238,11 @@ class Storage {
 
         @Override
         public String text(boolean coments) {
+            String durStr = TimeUtils.toReadable(writeDuration.get());
+            double speed = 1_000_000_000d * bytesWritten.get() / writeDuration.get() / 1024d / 1024d;
+            String speedStr = String.format("%.2f Mb/sec", speed);
             String text = "## " + name + " metric:\n"
-                        + "  bytesWritten: " + bytesWritten + " bytes\n"
-                        + " writeDuration: " + writeDuration + " ns\n";
+                        + " bytesWritten: " + bytesWritten + " bytes, dur: " + durStr + " [" + speedStr + "]";
             return text;
         }
 

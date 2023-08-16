@@ -6,9 +6,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 import java.util.function.Function;
-import java.util.function.ToIntBiFunction;
-
-import javax.xml.stream.events.Comment;
 
 import org.eclipse.collections.api.collection.primitive.MutableLongCollection;
 import org.eclipse.collections.api.list.primitive.MutableLongList;
@@ -159,6 +156,10 @@ public class BytesKeyedCache<T> implements TimeCache<T, byte[]> {
             return ForEachAction.CONTINUE;
         });
 
+        for(Index<T> idx: indexes) {
+            idx.removeEmptyEntries();
+        }
+
         long count = metrics.lastWindowSize.get();
         metrics.objectsRemovedTotal.addAndGet(count);
         long end = System.nanoTime();
@@ -262,7 +263,7 @@ public class BytesKeyedCache<T> implements TimeCache<T, byte[]> {
 
         StringBuilder sb = new StringBuilder();
         for (Metrics m: ms) {
-            sb.append(m.reset());
+            sb.append(m.text(true));
             sb.append("\n\n");
         }
 

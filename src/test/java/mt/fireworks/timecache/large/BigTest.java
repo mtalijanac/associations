@@ -10,6 +10,8 @@ import java.util.function.Function;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import ch.qos.logback.core.joran.conditional.ThenAction;
+import ch.qos.logback.core.recovery.ResilientSyslogOutputStream;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import mt.fireworks.timecache.*;
@@ -22,11 +24,24 @@ public class BigTest {
 
         long tstamp;
         long idx1;
+        byte[] randomData;
     }
 
     public static void main(String[] args) throws InterruptedException, ExecutionException {
         BigTest bt = new BigTest();
         bt.runLargeTest();
+    }
+
+    static class Threads implements ThreadFactory {
+        String name = "Worker-";
+        int counter = 0;
+
+        @Override
+        public Thread newThread(Runnable r) {
+            Thread t = new Thread(r);
+            t.setName(name + (++counter));
+            return t;
+        }
     }
 
     /**
@@ -60,7 +75,7 @@ public class BigTest {
 
         BlockingQueue<MockObj> q = new ArrayBlockingQueue<>(1000);
 
-        ExecutorService executors = Executors.newFixedThreadPool(20);
+        ExecutorService executors = Executors.newFixedThreadPool(20, new Threads());
         ArrayList<Future<Long>> futures = new ArrayList<>();
         AtomicBoolean end = new AtomicBoolean(false);
 
@@ -70,18 +85,22 @@ public class BigTest {
             futures.add(fut);
         }
 
-        AtomicLong counter = new AtomicLong();
         long t = -System.currentTimeMillis();
 
+        ThreadLocalRandom rng = ThreadLocalRandom.current();
         for (int d = 0; d < 110; d++) {
             // one day
             for (int c = 0; c < 1_000_000; c++) {
-                long tstamp = ThreadLocalRandom.current().nextLong(start, start + tenMinutes);
+                long tstamp = rng.nextLong(start, start + tenMinutes);
 
-                int i = ThreadLocalRandom.current().nextInt(indexes.length);
+                int i = rng.nextInt(indexes.length);
                 long index = indexes[i];
 
-                MockObj obj = new MockObj(tstamp, index);
+                int len = rng.nextInt(280, 320);
+                byte[] data = new byte[len];
+                rng.nextBytes(data);
+
+                MockObj obj = new MockObj(tstamp, index, data);
                 q.put(obj);
             }
             cache.tick();
@@ -120,6 +139,8 @@ public class BigTest {
         AtomicBoolean end;
 
         public Long call() throws Exception {
+            try {
+            System.out.println(Thread.currentThread().getName() + " called");
             AtomicLong count = new AtomicLong();
             while (true) {
                 MockObj val = q.poll(2, TimeUnit.SECONDS);
@@ -136,6 +157,11 @@ public class BigTest {
             }
             System.out.println("Worker '" + Thread.currentThread().getName() + "' ended. Read: " + count.get());
             return count.get();
+            }
+            catch (Exception ex) {
+                System.out.println(ex);
+                throw ex;
+            }
         }
     }
 
@@ -155,7 +181,20 @@ public class BigTest {
             ByteBuffer bb = ByteBuffer.wrap(data);
             long tstamp = bb.getLong();
             long idx = bb.getLong();
-            return new MockObj(tstamp, idx);
+            short len = bb.getShort();
+            byte[] objData = new byte[len];
+            bb.get(objData);
+            return new MockObj(tstamp, idx, objData);
+        }
+
+        public MockObj unmarshall(byte[] data, int position, int length) {
+            ByteBuffer bb = ByteBuffer.wrap(data, position, length);
+            long tstamp = bb.getLong();
+            long idx = bb.getLong();
+            short len = bb.getShort();
+            byte[] objData = new byte[len];
+            bb.get(objData);
+            return new MockObj(tstamp, idx, objData);
         }
 
         public long timestampOfT(MockObj val) {
@@ -163,9 +202,11 @@ public class BigTest {
         }
 
         public byte[] marshall(MockObj val) {
-            ByteBuffer bb = ByteBuffer.allocate(MockObj.objSize);
+            ByteBuffer bb = ByteBuffer.allocate(MockObj.objSize + val.randomData.length + 2);
             bb.putLong(val.tstamp);
             bb.putLong(val.idx1);
+            bb.putShort((short) val.randomData.length);
+            bb.put(val.randomData);
             byte[] data = bb.array();
             return data;
         }

@@ -2,12 +2,7 @@ package mt.fireworks.timecache;
 
 import static org.junit.Assert.assertEquals;
 
-import java.net.http.HttpRequest;
-import java.util.function.Function;
-
 import org.junit.Test;
-
-import mt.fireworks.timecache.TimeKeys;
 
 public class TimeKeysTest {
 
@@ -25,8 +20,5 @@ public class TimeKeysTest {
 
         long index2 = tk.index(key);
         assertEquals(index, index2);
-
-
-
     }
 }

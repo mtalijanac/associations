@@ -132,11 +132,10 @@ class Index<T> {
     }
 
     public void clearKey(T val, long upperTstampExclusive) {
+        long limit = upperTstampExclusive / 1000l * 1000l;
         metrics.clearKeyCount.incrementAndGet();
         long t = -System.nanoTime();
         try {
-            // TODO ukloni prazne ključeve
-
             byte[] key = keyer.apply(val);
             if (key == null) return;
 
@@ -148,7 +147,7 @@ class Index<T> {
 
             keyData.forEach(storageKey -> {
                 long tstamp = timeKeys.tstamp(storageKey);
-                if (tstamp < upperTstampExclusive) {
+                if (tstamp < limit) {
                     tmpBuffer.add(storageKey);
                 }
             });
@@ -160,6 +159,19 @@ class Index<T> {
             t += System.nanoTime();
             metrics.clearKeyDuration.addAndGet(t);
         }
+    }
+
+    public void removeEmptyEntries() {
+        long dur = -System.nanoTime();
+        index.removeIf((key, val) -> {
+            if (val == null || val.isEmpty()) {
+                metrics.removeEmptyKeyCout.incrementAndGet();
+                return true;
+            }
+            return false;
+        });
+        dur += System.nanoTime();
+        metrics.removeEmptyDuration.addAndGet(dur);
     }
 
 
@@ -200,6 +212,9 @@ class Index<T> {
         final AtomicLong onSameTimeCount = new AtomicLong();
         final AtomicLong onSameTimeDuration = new AtomicLong();
 
+        final AtomicLong removeEmptyKeyCout = new AtomicLong();
+        final AtomicLong removeEmptyDuration = new AtomicLong();
+
 
         @Override
         public String text(boolean comments) {
@@ -215,10 +230,13 @@ class Index<T> {
             StringBuilder sb = new StringBuilder();
             sb.append("## ").append(name).append(" ").append(Index.this.name).append(" metrics\n");
             sb.append("  startTstamp: ").append(startStr).append("\n");
+            sb.append("         size: ").append(index.size()).append("\n");
             sb.append(put).append("\n");
             sb.append(get).append("\n");
             sb.append(clearKey).append("\n");
-            sb.append(onSameTime);
+            sb.append(onSameTime).append("\n");
+            sb.append("   empty keys: ").append(removeEmptyKeyCout.get()).append("\n");
+            sb.append(" emptying dur: ").append(TimeUtils.toReadable(removeEmptyDuration.get()));
             return sb.toString();
         }
 
@@ -233,6 +251,8 @@ class Index<T> {
             clearKeyDuration.set(0);
             onSameTimeCount.set(0);
             onSameTimeDuration.set(0);
+            removeEmptyKeyCout.set(0);
+            removeEmptyDuration.set(0);
             return ts;
         }
     }
