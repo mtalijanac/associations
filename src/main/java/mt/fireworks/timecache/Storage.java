@@ -85,7 +85,7 @@ class Storage {
 
     /** return unsafe index of window to which this tstamp belong */
     int windowIndexForTstamp(long tstamp) {
-        for (int idx = 0; idx < windows.size(); idx++) {
+        for (int idx = windows.size() - 1; idx > -1; idx--) {
             Window win = windows.get(idx);
             if (win.closed.get()) {
                 continue;

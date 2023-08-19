@@ -97,6 +97,9 @@ public class RealUsageTest {
 
     void run() throws InterruptedException {
         long tenSec = TimeUnit.MILLISECONDS.convert(10, TimeUnit.SECONDS);
+        long fiveSec = TimeUnit.MILLISECONDS.convert(5, TimeUnit.SECONDS);
+        long iterDur = fiveSec;
+        int workerCount = 4;
 
         Function<Trx, byte[]> panIndex = (Trx t) -> t.getPan().getBytes(UTF_8);
         Function<Trx, byte[]> midIndex = (Trx t) -> t.getMerId().getBytes(UTF_8);
@@ -105,7 +108,7 @@ public class RealUsageTest {
         factory.setSerdes(new TrxSerDes());
         factory.addKeyer("PAN", panIndex);
         factory.addKeyer("MID", midIndex);
-        factory.storageConf(7, 1, tenSec);
+        factory.storageConf(7, 1, iterDur);
 
         BytesKeyedCache<Trx> cache = factory.getInstance();
 
@@ -131,14 +134,14 @@ public class RealUsageTest {
         AtomicBoolean programEnd = new AtomicBoolean(false);
         ExecutorService executors = Executors.newCachedThreadPool(new Threads("producers", 0));
         ArrayList<Producer> producers = new ArrayList<>();
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < workerCount; i++) {
             Producer producer = new Producer("PRODUCER_" + i, cache, pans, mids, data, programEnd);
             producers.add(producer);
             executors.submit(producer);
         }
 
-        long sleepTime = tenSec;
-        for (int i = 0; i < 10; i++) {
+        long sleepTime = iterDur;
+        for (int i = 0; i < 15; i++) {
             Thread.sleep(sleepTime);
             long dur = -System.nanoTime();
             cache.tick();
@@ -149,7 +152,7 @@ public class RealUsageTest {
             }
             System.out.println(cache.allMetrics());
             dur += System.nanoTime();
-            sleepTime = tenSec - Math.round(dur / 1_000_000);
+            sleepTime = iterDur - Math.round(dur / 1_000_000);
         }
 
         programEnd.set(true);

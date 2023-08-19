@@ -2,7 +2,6 @@ package mt.fireworks.timecache;
 
 import static mt.fireworks.timecache.TimeUtils.info;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
@@ -18,10 +17,10 @@ import lombok.Data;
 import lombok.Getter;
 
 @Data
-class IndexMT<T> {
+class Index2<T> {
 
     String name;
-    MutableMap<byte[], MutableLongCollection>[] indexes;
+    MutableMap<byte[], MutableLongCollection> index;
     Function<T, byte[]> keyer;
     TimeKeys timeKeys;
 
@@ -31,25 +30,14 @@ class IndexMT<T> {
         return metrics;
     }
 
-    IndexHashCode hasher = new IndexHashCode();
-    MutableMap<byte[], MutableLongCollection> index(byte[] key) {
-        int idx = Math.abs( hasher.computeHashCode(key) ) % indexes.length;
-        return indexes[idx];
-    }
 
-
-    IndexMT(String name, Function<T, byte[]> keyer, TimeKeys tk) {
+    Index2(String name, Function<T, byte[]> keyer, TimeKeys tk) {
         this.name = name;
         this.keyer = keyer;
         this.timeKeys = tk;
 
-        MutableMap<byte[], MutableLongCollection>[] maps = new MutableMap[32];
-        indexes = maps;
-        for (int idx = 0; idx < indexes.length; idx++) {
-            UnifiedMapWithHashingStrategy<byte[], MutableLongCollection> map = new UnifiedMapWithHashingStrategy<>(new IndexHashCode());
-            MutableMap<byte[], MutableLongCollection> mmap = map.asSynchronized();
-            maps[idx] = mmap;
-        }
+        UnifiedMapWithHashingStrategy<byte[], MutableLongCollection> map = new UnifiedMapWithHashingStrategy<>(new IndexHashCode());
+        index = map.asSynchronized();
     }
 
 
@@ -59,7 +47,7 @@ class IndexMT<T> {
         try {
             byte[] key = keyer.apply(val);
             if (key == null) return false;
-            MutableLongCollection keyData = index(key).getIfAbsentPut(key, () -> LongLists.mutable.empty().asSynchronized());
+            MutableLongCollection keyData = index.getIfAbsentPut(key, () -> LongLists.mutable.empty().asSynchronized());
             keyData.add(storageKey);
             return true;
         }
@@ -75,7 +63,7 @@ class IndexMT<T> {
         try {
             byte[] key = keyer.apply(val);
             if (key == null) return null;
-            MutableLongCollection keyData = index(key).get(key);
+            MutableLongCollection keyData = index.get(key);
             return keyData;
         }
         finally {
@@ -94,7 +82,7 @@ class IndexMT<T> {
         try {
             byte[] valKey = keyer.apply(val);
             if (valKey == null) return null;
-            MutableLongCollection keyData = index(valKey).get(valKey);
+            MutableLongCollection keyData = index.get(valKey);
             if (keyData == null) return null;
 
             boolean matching = keyData.anySatisfy(storedKey -> {
@@ -124,7 +112,6 @@ class IndexMT<T> {
 
         MutableLongList tmpBuffer = LongLists.mutable.empty();
 
-        for (MutableMap<byte[], MutableLongCollection> index: indexes)
         index.forEachKeyValue((key, values) -> {
             if (values == null) return;
             if (values.size() == 0) return;
@@ -150,7 +137,7 @@ class IndexMT<T> {
             byte[] key = keyer.apply(val);
             if (key == null) return;
 
-            MutableLongCollection keyData = index(key).get(key);
+            MutableLongCollection keyData = index.get(key);
             if (keyData == null) return;
             if (keyData.isEmpty()) return;
 
@@ -174,7 +161,6 @@ class IndexMT<T> {
 
     public void removeEmptyEntries() {
         long dur = -System.nanoTime();
-        for(MutableMap<byte[], MutableLongCollection> index: indexes)
         index.removeIf((key, val) -> {
             if (val == null || val.isEmpty()) {
                 metrics.removeEmptyKeyCout.incrementAndGet();
@@ -232,24 +218,15 @@ class IndexMT<T> {
         public String text(boolean comments) {
             String startStr = TimeUtils.readableTstamp(startTstamp);
 
-
             String put        = info("          put", putCount, putDuration);
             String get        = info("          get", getCount, getDuration);
             String clearKey   = info("     clearKey", clearKeyCount, clearKeyDuration);
             String onSameTime = info("   onSameTime", onSameTimeCount, onSameTimeDuration);
 
-            long size = 0;
-            ArrayList<Integer> sizes = new ArrayList<>();
-            for (MutableMap<byte[], MutableLongCollection> index: indexes) {
-                size += index.size();
-                sizes.add(index.size());
-            }
-
             StringBuilder sb = new StringBuilder();
-            sb.append("## ").append(name).append(" ").append(IndexMT.this.name).append(" metrics\n");
+            sb.append("## ").append(name).append(" ").append(Index2.this.name).append(" metrics\n");
             sb.append("  startTstamp: ").append(startStr).append("\n");
-            sb.append("         size: ").append(size)
-            .append(" [").append(sizes.toString()).append("]\n");
+            sb.append("         size: ").append(index.size()).append("\n");
             sb.append(put).append("\n");
             sb.append(get).append("\n");
             sb.append(clearKey).append("\n");
