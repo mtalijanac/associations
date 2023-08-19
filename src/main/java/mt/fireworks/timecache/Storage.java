@@ -244,10 +244,17 @@ class Storage {
             String from = TimeUtils.readableTstamp(timespan[0]);
             String to = TimeUtils.readableTstamp(timespan[1]);
 
+            String windows = "[" + Storage.this.conf.historyWindowCount + "-1-" + Storage.this.conf.futureWindowCount + "]";
+            String winSize =  Storage.this.conf.windowTimespanMs + " ms (" + TimeUtils.toReadable(Storage.this.conf.windowTimespanMs * 1000_000) + ")";
+
+
             String text = "## " + name + " metric:\n"
                         + " bytesWritten: " + bytesWritten + " bytes, dur: " + durStr + " [" + speedStr + "]\n"
-                        + " window count: " + Storage.this.windows.size() + "\n"
-                        + "     timespan: " + from + " - " + to;
+                        + " window count: " + Storage.this.windows.size() + " " + windows + "\n"
+                        + "  window size: " + winSize + "\n"
+                        + "timespan from: " + from + "\n"
+                        + "           to: " + to;
+
 
             return text;
         }
