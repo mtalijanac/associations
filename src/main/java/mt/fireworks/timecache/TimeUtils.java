@@ -1,5 +1,7 @@
 package mt.fireworks.timecache;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.concurrent.atomic.AtomicLong;
 
 class TimeUtils {
@@ -23,4 +25,9 @@ class TimeUtils {
         return res;
     }
 
+    static String readableTstamp(long tstamp) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+        String res = sdf.format(new Date(tstamp));
+        return res;
+    }
 }

@@ -1,7 +1,7 @@
 package mt.fireworks.timecache;
 
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
@@ -190,10 +190,8 @@ public class BytesKeyedCache<T> implements TimeCache<T, byte[]> {
 
         @Override
         public String text(boolean comments) {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-            Date start = new Date(startTstamp);
-            String startStr = sdf.format(start);
-            String tickStart = sdf.format(new Date(lastTickStart.get()));
+            String startStr = TimeUtils.readableTstamp(startTstamp);
+            String tickStart = TimeUtils.readableTstamp(lastTickStart.get());
             long duration = lastTickDuration.get();
             String durStr = TimeUtils.toReadable(duration);
 

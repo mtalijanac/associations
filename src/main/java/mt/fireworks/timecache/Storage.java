@@ -1,6 +1,5 @@
 package mt.fireworks.timecache;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -215,13 +214,12 @@ class Storage {
         StringBuilder sb = new StringBuilder();
         sb.append("Storage summary\n");
         sb.append("Window count: ").append(windows.size()).append("\n");
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
         for (int idx = 0; idx < windows.size(); idx++) {
             Window win = windows.get(idx);
             sb.append("  ").append(idx + 1).append(". ");
             sb.append(win.startTstamp).append(" - ").append(win.endTstamp);
-            sb.append(" [").append(sdf.format(win.startTstamp)).append(" - ");
-            sb.append(sdf.format(win.endTstamp)).append("]");
+            sb.append(" [").append(TimeUtils.readableTstamp(win.startTstamp)).append(" - ");
+            sb.append(TimeUtils.readableTstamp(win.endTstamp)).append("]");
             if (win.closed.get()) sb.append(" CLOSED");
             sb.append("\n");
         }
@@ -230,7 +228,7 @@ class Storage {
 
 
     @Data
-    static class StorageMetric implements Metrics {
+    class StorageMetric implements Metrics {
         String name = "StorageMetric";
 
         AtomicLong bytesWritten = new AtomicLong();
@@ -241,8 +239,16 @@ class Storage {
             String durStr = TimeUtils.toReadable(writeDuration.get());
             double speed = 1_000_000_000d * bytesWritten.get() / writeDuration.get() / 1024d / 1024d;
             String speedStr = String.format("%.2f Mb/sec", speed);
+
+            long[] timespan = Storage.this.timespan();
+            String from = TimeUtils.readableTstamp(timespan[0]);
+            String to = TimeUtils.readableTstamp(timespan[1]);
+
             String text = "## " + name + " metric:\n"
-                        + " bytesWritten: " + bytesWritten + " bytes, dur: " + durStr + " [" + speedStr + "]";
+                        + " bytesWritten: " + bytesWritten + " bytes, dur: " + durStr + " [" + speedStr + "]\n"
+                        + " window count: " + Storage.this.windows.size() + "\n"
+                        + "     timespan: " + from + " - " + to;
+
             return text;
         }
 

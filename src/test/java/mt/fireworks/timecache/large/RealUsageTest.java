@@ -17,13 +17,6 @@ import mt.fireworks.timecache.*;
 
 public class RealUsageTest {
 
-    // 10 cosumer
-    // 2 writers
-    // 1 gc thread
-
-    // tick a minute
-    // N - pans
-
     @Data
     static class Trx {
         long tstamp;
@@ -128,18 +121,24 @@ public class RealUsageTest {
             mids.add(mid);
         }
 
+        ArrayList<String> data = new ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+            String trxData = RandomStringUtils.randomAlphanumeric(280, 320);
+            data.add(trxData);
+        }
+
 
         AtomicBoolean programEnd = new AtomicBoolean(false);
         ExecutorService executors = Executors.newCachedThreadPool(new Threads("producers", 0));
         ArrayList<Producer> producers = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
-            Producer producer = new Producer("PRODUCER_" + i, cache, pans, mids, programEnd);
+            Producer producer = new Producer("PRODUCER_" + i, cache, pans, mids, data, programEnd);
             producers.add(producer);
             executors.submit(producer);
         }
 
         long sleepTime = tenSec;
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 10; i++) {
             Thread.sleep(sleepTime);
             long dur = -System.nanoTime();
             cache.tick();
@@ -167,6 +166,7 @@ public class RealUsageTest {
         BytesKeyedCache<Trx> cache;
         ArrayList<String> pans;
         ArrayList<String> mids;
+        ArrayList<String> data;
 
         AtomicBoolean end;
 
@@ -210,10 +210,11 @@ public class RealUsageTest {
              int midIdx = rng.nextInt(mids.size());
              String mid = mids.get(midIdx);
 
+             int dataIdx = rng.nextInt(data.size());
+             String txt = data.get(dataIdx);
+
              long amount = rng.nextLong(10_000);
              long tstamp = System.currentTimeMillis();
-
-             String txt = RandomStringUtils.randomAlphanumeric(280, 320);
 
              Trx trx = new Trx();
              trx.setPan(pan);
@@ -229,6 +230,7 @@ public class RealUsageTest {
 
 
     public static void main(String[] args) throws InterruptedException {
+        Thread.sleep(10_000);
         RealUsageTest test = new RealUsageTest();
         test.run();
     }
