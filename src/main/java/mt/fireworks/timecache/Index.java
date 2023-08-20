@@ -43,7 +43,7 @@ class Index<T> {
         this.keyer = keyer;
         this.timeKeys = tk;
 
-        MutableMap<byte[], MutableLongCollection>[] maps = new MutableMap[32];
+        MutableMap<byte[], MutableLongCollection>[] maps = new MutableMap[128];
         indexes = maps;
         for (int idx = 0; idx < indexes.length; idx++) {
             UnifiedMapWithHashingStrategy<byte[], MutableLongCollection> map = new UnifiedMapWithHashingStrategy<>(new IndexHashCode());

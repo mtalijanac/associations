@@ -10,7 +10,7 @@ public class ByteList {
         int initialNumberOfBucketsInWindow = 1;
 
         /** bucket size in bytes */
-        int bucketSize = 1024 * 1024;
+        int bucketSize = 1 * 1024 * 1024;
 
         /** size of data header in bytes, where len of data is stored */
         int dataHeaderSize = 2;
@@ -23,7 +23,6 @@ public class ByteList {
 
 
 
-
     AtomicLong size = new AtomicLong();
     Conf conf = new Conf();
     ArrayList<byte[]> buckets = new ArrayList<byte[]>();
@@ -32,9 +31,8 @@ public class ByteList {
         buckets.add(new byte[conf.bucketSize]);
     }
 
-    public ByteList(int bucketSizeInBytes, int dataHeaderSize) {
+    public ByteList(int bucketSizeInBytes) {
         this.conf.bucketSize = bucketSizeInBytes;
-        this.conf.dataHeaderSize = dataHeaderSize;
         buckets.add(new byte[conf.bucketSize]);
     }
 
@@ -43,56 +41,113 @@ public class ByteList {
      * Write data to storage, and return index where is written.
      * Index points to data header.
      */
-    // FIXME ovaj syncronized je usko grlo
     public long add(byte[] data) {
-        short dataLength;
-        int offset, dataOffset;
-        byte[] bucket;
-        long writePos;
+        final int objSize = conf.dataHeaderSize + data.length;
+        final short dataLength = BitsAndBytes.toUnsignedShort(data.length);
+        final long writePos = size.getAndAdd(objSize);
+        final long endPos = writePos + objSize - 1;
 
-        final int dataSize = conf.dataHeaderSize + data.length;
+        final byte[] startBucket = bucketForPosition(writePos);
+        final int bucketPosition = (int) (writePos % conf.bucketSize);
+        final int freeSpace = startBucket.length - bucketPosition;
 
-        synchronized (this) {
-            // allocate memory if needed
-            {
-                long leadSize = (buckets.size() - 1l) * conf.bucketSize;
-                int bucketPos = (int) (size.get() - leadSize);
-                int spaceLeft = conf.bucketSize - bucketPos;
-                if (spaceLeft < dataSize) {
-                    size.set((long) buckets.size() * conf.bucketSize);
-                    buckets.add(new byte[conf.bucketSize]);
-                }
-            }
-
-            // write data at position
-            {
-                writePos = size.getAndAdd(dataSize);
-                bucket = buckets.get(buckets.size() - 1);
-                long leadSize = (buckets.size() - 1l) * conf.bucketSize;
-
-                offset = (int) (writePos - leadSize);
-                dataOffset =  offset + conf.dataHeaderSize;
-                dataLength = BitsAndBytes.toUnsignedShort(data.length);
-            }
+        // most common case, data fits bucket, write header, data
+        if (freeSpace >= objSize) {
+            BitsAndBytes.writeShort(dataLength, startBucket, bucketPosition);
+            System.arraycopy(data, 0, startBucket, bucketPosition + conf.dataHeaderSize, data.length);
+            return writePos;
         }
 
-        // write header, data
+        byte[] endBucket = bucketForPosition(endPos);
 
-        BitsAndBytes.writeShort(dataLength, bucket, offset);
-        System.arraycopy(data, 0, bucket, dataOffset, data.length);
-        return writePos;
+        // write header and upper bytes of in startBucket, rest of data to endBucket
+        if (freeSpace > conf.dataHeaderSize) {
+            BitsAndBytes.writeShort(dataLength, startBucket, bucketPosition);
+            int bucketIdx = bucketPosition + conf.dataHeaderSize;
+            int dataEnd = Math.min(data.length, startBucket.length - bucketIdx);
+            System.arraycopy(data, 0, startBucket, bucketIdx, dataEnd);
+            System.arraycopy(data, dataEnd, endBucket, 0, data.length - dataEnd);
+            return writePos;
+        }
+
+        // write header to startBucket, data to endBucket
+        if (freeSpace == 2) {
+            BitsAndBytes.writeShort(dataLength, startBucket, bucketPosition);
+            System.arraycopy(data, 0, endBucket, 0, data.length);
+            return writePos;
+        }
+
+        // write first byte of header to startBucket, second byte of header, and all data to endBucket
+        if (freeSpace == 1) {
+            BitsAndBytes.splitShort(dataLength, startBucket, endBucket);
+            System.arraycopy(data, 0, endBucket, 1, data.length);
+            return writePos;
+        }
+
+        throw new IllegalStateException("If you can see this, it is a bug withing TimeCache implementation. freeSapce == " + freeSpace);
     }
 
-    /** peek for data under key */
+    byte[] bucketForPosition(long writePos) {
+        try {
+            int bucketIndex = (int) (writePos / conf.bucketSize);
+            byte[] bucket = buckets.get(bucketIndex);
+            return bucket;
+        }
+        catch (IndexOutOfBoundsException exc) {
+            synchronized (this) {
+                int bucketIndex = (int) (writePos / conf.bucketSize);
+                while (bucketIndex >= buckets.size())
+                    buckets.add(new byte[conf.bucketSize]);
+                byte[] bucket = buckets.get(bucketIndex);
+                return bucket;
+            }
+        }
+    }
+
+
+
     <T> T peek(long key, Peeker<T> peeker) {
         int bucketIndex = (int) (key / conf.bucketSize);
-        int readPos = (int) (key - (long) bucketIndex * conf.bucketSize);
-        int dataPos = readPos + conf.dataHeaderSize;
-        byte[] bucket = buckets.get(bucketIndex);
-        int dataLen = BitsAndBytes.readUnsignedShort(bucket, readPos);
-        T res = peeker.peek(key, bucket, dataPos, dataLen);
+        byte[] startBucket = buckets.get(bucketIndex);
+
+        int objIdx = (int) (key % conf.bucketSize);
+        int freeSpace = startBucket.length - objIdx;
+
+        if (freeSpace == 1) {
+            byte[] endBucket = buckets.get(bucketIndex + 1);
+            short dataLen = BitsAndBytes.readSplitShort(startBucket, endBucket);
+            T res = peeker.peek(key, endBucket, 1, dataLen);
+            return res;
+        }
+
+        if (freeSpace == 2) {
+            byte[] endBucket = buckets.get(bucketIndex + 1);
+            int dataLen = BitsAndBytes.readUnsignedShort(startBucket, objIdx);
+            T res = peeker.peek(key, endBucket, 0, dataLen);
+            return res;
+        }
+
+        int dataLen = BitsAndBytes.readUnsignedShort(startBucket, objIdx);
+
+        if (objIdx + conf.dataHeaderSize + dataLen > startBucket.length) {
+            byte[] data = new byte[dataLen + 2];
+            BitsAndBytes.writeShort((short) dataLen, data, 0);
+
+            int toReadFromStartBucket = Math.min(startBucket.length - objIdx - 2, dataLen);
+            System.arraycopy(startBucket, objIdx + conf.dataHeaderSize, data, 2, toReadFromStartBucket);
+            byte[] endBucket = buckets.get(bucketIndex + 1);
+            int toReadFromEndBucket = dataLen - toReadFromStartBucket;
+            System.arraycopy(endBucket, 0, data, 2 + toReadFromStartBucket, toReadFromEndBucket);
+
+            T res = peeker.peek(key, data, 2, dataLen);
+            return res;
+        }
+
+        T res = peeker.peek(key, startBucket, objIdx + conf.dataHeaderSize, dataLen);
         return res;
+
     }
+
 
     /** @return Length of data stored under key. */
     int length(long key) {
@@ -127,45 +182,68 @@ public class ByteList {
         CONTINUE, BREAK
     }
 
+
     public void forEach(Peeker<ForEachAction> userPeeker) {
-        Peeker<Integer> iterator = new Peeker<Integer>() {
-            public Integer peek(long objPos, byte[] bucket, int pos, int len) {
-                ForEachAction res = userPeeker.peek(objPos, bucket, pos, len);
-                if (ForEachAction.BREAK.equals(res)) {
-                    return -1;
-                }
+        long objPos = 0;
+        while (true) {
+            final int bucketIdx = (int) (objPos / conf.bucketSize);
+            if (bucketIdx >= buckets.size()) break;
 
-                final int dataSize = conf.dataHeaderSize + len;
-                final int nextPos = pos + dataSize - conf.dataHeaderSize;
-                return nextPos;
+            final byte[] startBucket = buckets.get(bucketIdx);
+            final int objIdx = (int) (objPos % conf.bucketSize);
+            final int freeSpace = startBucket.length - objIdx;
+
+            // split header
+            if (freeSpace == 1) {
+                if (buckets.size() == bucketIdx + 1) return;
+                short dataLen = BitsAndBytes.readSplitShort(startBucket, buckets.get(bucketIdx + 1));
+                if (dataLen == 0) return;
+                byte[] endBucket = buckets.get(bucketIdx + 1);
+
+                ForEachAction res = userPeeker.peek(objPos, endBucket, 1, dataLen);
+                if (ForEachAction.BREAK.equals(res)) break;
+                objPos += conf.dataHeaderSize + dataLen;
+                continue;
             }
-        };
 
+            // header here, data in next bucket
+            if (freeSpace == 2) {
+                if (buckets.size() == bucketIdx + 1) return;
+                short dataLen = BitsAndBytes.readShort(startBucket, objIdx);
+                if (dataLen == 0) return;
+                byte[] endBucket = buckets.get(bucketIdx + 1);
 
-        for (int bucketIndex = 0; bucketIndex < buckets.size(); bucketIndex++) {
-            byte[] bucket = buckets.get(bucketIndex);
-            int dataLen = BitsAndBytes.readUnsignedShort(bucket, 0);
-            if (dataLen == 0) continue;
-
-            int dataPos = conf.dataHeaderSize;
-
-            long lead = conf.bucketSize * (bucketIndex == 0 ? 0l : bucketIndex - 1l) ;
-
-            inBucket: while (true) {
-                long objPos = lead + dataPos - conf.dataHeaderSize;
-                int nextObjPos = iterator.peek(objPos, bucket, dataPos, dataLen).intValue();
-                if (nextObjPos < 0) {
-                    return;
-                }
-                if (nextObjPos >= bucket.length - conf.dataHeaderSize) {
-                    break inBucket;
-                }
-                dataLen = BitsAndBytes.readUnsignedShort(bucket, nextObjPos);
-                if (dataLen == 0) {
-                    break inBucket;
-                }
-                dataPos = nextObjPos + conf.dataHeaderSize;
+                ForEachAction res = userPeeker.peek(objPos, endBucket, 0, dataLen);
+                if (ForEachAction.BREAK.equals(res)) break;
+                objPos += conf.dataHeaderSize + dataLen;
+                continue;
             }
+
+
+            short dataLen = BitsAndBytes.readShort(startBucket, objIdx);
+            if (dataLen == 0)
+                break;
+
+            if (objIdx + conf.dataHeaderSize + dataLen > startBucket.length) {
+
+                byte[] data = new byte[dataLen + 2];
+                BitsAndBytes.writeShort((short) dataLen, data, 0);
+
+                int toReadFromStartBucket = Math.min(startBucket.length - objIdx - 2, dataLen);
+                System.arraycopy(startBucket, objIdx + conf.dataHeaderSize, data, 2, toReadFromStartBucket);
+                byte[] endBucket = buckets.get(bucketIdx + 1);
+                int toReadFromEndBucket = dataLen - toReadFromStartBucket;
+                System.arraycopy(endBucket, 0, data, 2 + toReadFromStartBucket, toReadFromEndBucket);
+
+                ForEachAction res = userPeeker.peek(objPos, data, 2, dataLen);
+                objPos += conf.dataHeaderSize + dataLen;
+                if (ForEachAction.BREAK.equals(res)) break;
+                continue;
+            }
+
+            ForEachAction res = userPeeker.peek(objPos, startBucket, objIdx + conf.dataHeaderSize, dataLen);
+            if (ForEachAction.BREAK.equals(res)) break;
+            objPos += conf.dataHeaderSize + dataLen;
         }
     }
 

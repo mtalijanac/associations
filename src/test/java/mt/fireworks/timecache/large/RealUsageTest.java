@@ -71,8 +71,14 @@ public class RealUsageTest {
             bb.position(bb.position() + merIdLen);
 
             int trxDataLen = bb.getShort();
-            String trxData = new String(data, bb.position(), trxDataLen, UTF_8);
-            trx.setTrxData(trxData);
+            try {
+                String trxData = new String(data, bb.position(), trxDataLen, UTF_8);
+                trx.setTrxData(trxData);
+            }
+            catch (Exception e) {
+                System.out.println("Data len: " + data.length + " position: " + bb.position() + " trxDataLen: " + trxDataLen);
+                throw e;
+            }
             bb.position(bb.position() + merIdLen);
 
             return trx;
@@ -207,33 +213,32 @@ public class RealUsageTest {
         Trx randomTrx() {
             ThreadLocalRandom rng = ThreadLocalRandom.current();
 
-             int panIdx = rng.nextInt(pans.size());
-             String pan = pans.get(panIdx);
+            int panIdx = rng.nextInt(pans.size());
+            String pan = pans.get(panIdx);
 
-             int midIdx = rng.nextInt(mids.size());
-             String mid = mids.get(midIdx);
+            int midIdx = rng.nextInt(mids.size());
+            String mid = mids.get(midIdx);
 
-             int dataIdx = rng.nextInt(data.size());
-             String txt = data.get(dataIdx);
+            int dataIdx = rng.nextInt(data.size());
+            String txt = data.get(dataIdx);
 
-             long amount = rng.nextLong(10_000);
-             long tstamp = System.currentTimeMillis();
+            long amount = rng.nextLong(10_000);
+            long tstamp = System.currentTimeMillis();
 
-             Trx trx = new Trx();
-             trx.setPan(pan);
-             trx.setMerId(mid);
-             trx.setAmount(amount);
-             trx.setTstamp(tstamp);
-             trx.setTrxData(txt);
+            Trx trx = new Trx();
+            trx.setPan(pan);
+            trx.setMerId(mid);
+            trx.setAmount(amount);
+            trx.setTstamp(tstamp);
+            trx.setTrxData(txt);
 
-             return trx;
+            return trx;
         }
     }
 
 
 
     public static void main(String[] args) throws InterruptedException {
-        Thread.sleep(10_000);
         RealUsageTest test = new RealUsageTest();
         test.run();
     }

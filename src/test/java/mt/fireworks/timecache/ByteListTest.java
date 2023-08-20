@@ -85,7 +85,9 @@ public class ByteListTest {
 
         byte[] dest = new byte[1500];
 
-        for (int i = 0; i < 100_000; i++) {
+
+        int N = 1_000_000;
+        for (int i = 0; i < N; i++) {
             byte[] data = randomData(250, 1500);
             long key = bl.add(data);
             data_written += data.length;
@@ -117,7 +119,7 @@ public class ByteListTest {
             return ForEachAction.CONTINUE;
         });
 
-        assertEquals(100_000, objCount.get());
+        assertEquals(N, objCount.get());
         assertEquals(data_written, objLen.get());
     }
 

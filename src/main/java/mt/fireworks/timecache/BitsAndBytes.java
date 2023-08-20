@@ -2,6 +2,7 @@ package mt.fireworks.timecache;
 
 class BitsAndBytes {
 
+
     static void writeShort(short val, byte[] arr, int idx) {
         arr[idx]     = (byte) (val >>> 8);
         arr[idx + 1] = (byte) val;
@@ -25,6 +26,21 @@ class BitsAndBytes {
         );
         return res;
     }
+
+    static void splitShort(short val, byte[] top, byte[] bottom) {
+        top[top.length - 1] = (byte) (val >>> 8);
+        bottom[0]           = (byte) val;
+    }
+
+    static short readSplitShort(byte[] top, byte[] bottom) {
+        short res = (short) (	           // low two bytes of int composed
+                (0xff & top[top.length - 1]) << 8    // from high byte
+              | (0xff & bottom[0])     // and low byte
+       );
+       return res;
+    }
+
+
 
     static int readUnsignedShort(byte[] arr, int idx) {
         return 0xFFFF & readShort(arr, idx);
