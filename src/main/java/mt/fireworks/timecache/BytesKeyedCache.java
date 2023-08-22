@@ -16,7 +16,7 @@ import mt.fireworks.timecache.Storage.Window;
 
 @Slf4j
 @RequiredArgsConstructor
-public class BytesKeyedCache<T> implements TimeCache<T, byte[]> {
+public class BytesKeyedCache<T> implements TimeCache<T> {
 
     @NonNull Storage storage;
     @NonNull Index<T>[] indexes;
@@ -65,75 +65,6 @@ public class BytesKeyedCache<T> implements TimeCache<T, byte[]> {
 
         return true;
     }
-
-    /*
-    @Override
-    public Map<String, List<T>> getAsMap(T query, Long fromInclusive, Long toExclusive) {
-        metrics.getCount.incrementAndGet();
-
-        UnifiedMap<String, List<T>> result = new UnifiedMap<>();
-        MutableLongList keysForRemoval = null;
-
-        for (int idx = 0; idx < indexes.length; idx++) {
-            Index<T> index = indexes[idx];
-            String indexName = index.getName();
-            byte[] key = index.getKeyer().apply(query);
-            if (key == null) {
-                result.put(indexName, Collections.emptyList());
-                continue;
-            }
-
-            MutableLongList strKeys = index.get(query);
-            if (strKeys == null || strKeys.isEmpty()) {
-                result.put(indexName, Collections.emptyList());
-                continue;
-            }
-
-            ArrayList<T> ts = new ArrayList<>(strKeys.size());
-            result.put(indexName, ts);
-
-            for (int jdx = 0; jdx < strKeys.size(); jdx++) {
-                long strKey = strKeys.get(jdx);
-                long tstamp = timeKeys.tstamp(strKey);
-
-                if (fromInclusive != null) {
-                    long from = fromInclusive.longValue() / 1000l * 1000l;
-                    if (tstamp < from) continue;
-                }
-                if (toExclusive != null) {
-                    long to = toExclusive.longValue()     / 1000l * 1000l + 1000l;
-                    if (tstamp > to) continue;
-                }
-
-                T res = storage.getEntry2(strKey, serdes2);
-                if (res == null) {
-                    if (keysForRemoval == null) {
-                        keysForRemoval = LongLists.mutable.empty();
-                    }
-                    keysForRemoval.add(strKey);
-                    continue;
-                }
-
-                if (fromInclusive != null || toExclusive != null) {
-                    long timestamp = serdes2.timestampOfT(res);
-                    if (fromInclusive != null && timestamp < fromInclusive) continue;
-                    if (toExclusive != null && timestamp >= toExclusive) continue;
-                }
-
-                ts.add(res);
-            }
-
-            metrics.trxGetCount.addAndGet(ts.size());
-
-            if (keysForRemoval != null && keysForRemoval.size() > 0) {
-                strKeys.removeAll(keysForRemoval);
-                keysForRemoval.clear();
-            }
-        }
-
-        return result;
-    }
-    */
 
     @Override
     public List<T> get(String indexName, T query, Long fromInclusive, Long toExclusive) {
@@ -221,9 +152,6 @@ public class BytesKeyedCache<T> implements TimeCache<T, byte[]> {
 
         return result;
     }
-
-
-
 
 
 

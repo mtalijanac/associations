@@ -2,7 +2,7 @@ package mt.fireworks.timecache;
 
 import java.util.*;
 
-public interface TimeCache<T, K> {
+public interface TimeCache<T> {
 
     /**
      * @return true if object is added to cache
