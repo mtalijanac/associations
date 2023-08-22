@@ -1,15 +1,13 @@
 package mt.fireworks.timecache;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 import java.util.function.Function;
 
 import org.eclipse.collections.api.collection.primitive.MutableLongCollection;
 import org.eclipse.collections.api.list.primitive.MutableLongList;
 import org.eclipse.collections.impl.factory.primitive.LongLists;
+import org.eclipse.collections.impl.map.mutable.UnifiedMap;
 
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
@@ -68,53 +66,62 @@ public class BytesKeyedCache<T> implements TimeCache<T, byte[]> {
         return true;
     }
 
-
-    public List<CacheEntry<byte[], List<T>>> get(T query, Long fromInclusive, Long toExclusive) {
+    /*
+    @Override
+    public Map<String, List<T>> getAsMap(T query, Long fromInclusive, Long toExclusive) {
         metrics.getCount.incrementAndGet();
 
-        List<CacheEntry<byte[], List<T>>> resultList = new ArrayList<>(indexes.length);
-        // FIXME should be lazy
-        MutableLongList keysForRemoval = LongLists.mutable.empty();
+        UnifiedMap<String, List<T>> result = new UnifiedMap<>();
+        MutableLongList keysForRemoval = null;
 
         for (int idx = 0; idx < indexes.length; idx++) {
             Index<T> index = indexes[idx];
+            String indexName = index.getName();
             byte[] key = index.getKeyer().apply(query);
-            if (key == null) continue;
+            if (key == null) {
+                result.put(indexName, Collections.emptyList());
+                continue;
+            }
 
-            MutableLongCollection strKeys = index.get(query);
-            if (strKeys == null) continue;
-            if (strKeys.isEmpty()) continue;
+            MutableLongList strKeys = index.get(query);
+            if (strKeys == null || strKeys.isEmpty()) {
+                result.put(indexName, Collections.emptyList());
+                continue;
+            }
 
-            String name = index.getName();
             ArrayList<T> ts = new ArrayList<>(strKeys.size());
-            CacheEntry<byte[], List<T>> entry = new CacheEntry<>(name, key, ts);
-            resultList.add(entry);
+            result.put(indexName, ts);
 
-            strKeys.forEach(strKey -> {
+            for (int jdx = 0; jdx < strKeys.size(); jdx++) {
+                long strKey = strKeys.get(jdx);
                 long tstamp = timeKeys.tstamp(strKey);
+
                 if (fromInclusive != null) {
                     long from = fromInclusive.longValue() / 1000l * 1000l;
-                    if (tstamp < from) return;
+                    if (tstamp < from) continue;
                 }
                 if (toExclusive != null) {
-                    long to = toExclusive.longValue() / 1000l * 1000l + 1000l;
-                    if (tstamp > to) return;
+                    long to = toExclusive.longValue()     / 1000l * 1000l + 1000l;
+                    if (tstamp > to) continue;
                 }
 
                 T res = storage.getEntry2(strKey, serdes2);
                 if (res == null) {
+                    if (keysForRemoval == null) {
+                        keysForRemoval = LongLists.mutable.empty();
+                    }
                     keysForRemoval.add(strKey);
-                    return;
+                    continue;
                 }
 
                 if (fromInclusive != null || toExclusive != null) {
                     long timestamp = serdes2.timestampOfT(res);
-                    if (fromInclusive != null && timestamp < fromInclusive) return;
-                    if (toExclusive != null && timestamp >= toExclusive) return;
+                    if (fromInclusive != null && timestamp < fromInclusive) continue;
+                    if (toExclusive != null && timestamp >= toExclusive) continue;
                 }
 
                 ts.add(res);
-            });
+            }
 
             metrics.trxGetCount.addAndGet(ts.size());
 
@@ -124,12 +131,103 @@ public class BytesKeyedCache<T> implements TimeCache<T, byte[]> {
             }
         }
 
-        return resultList;
+        return result;
+    }
+    */
+
+    @Override
+    public List<T> get(String indexName, T query, Long fromInclusive, Long toExclusive) {
+        metrics.getCount.incrementAndGet();
+
+        Index<T> index = null;
+        for (int i = 0; i < indexes.length; i++) {
+            index = indexes[i];
+            if (indexName.equals(index.getName())) {
+                break;
+            }
+        }
+
+        if (index == null) return Collections.emptyList();
+
+        List<T> result = readIndex(index, query, fromInclusive, toExclusive);
+        metrics.trxGetCount.addAndGet(result.size());
+        return result;
+    }
+
+    @Override
+    public Map<String, List<T>> getAsMap(T query, Long fromInclusive, Long toExclusive) {
+        metrics.getCount.incrementAndGet();
+
+        int capacity = Math.round(indexes.length / 0.75f) + 1;
+        UnifiedMap<String, List<T>> result = new UnifiedMap<>(capacity);
+
+        for (int i = 0; i < indexes.length; i++) {
+            Index<T> index = indexes[i];
+            List<T> res = readIndex(index, query, fromInclusive, toExclusive);
+            result.put(index.getName(), res);
+            metrics.trxGetCount.addAndGet(res.size());
+        }
+
+        return result;
+    }
+
+    List<T> readIndex(Index<T> index, T query, Long fromInclusive, Long toExclusive) {
+        byte[] key = index.getKeyer().apply(query);
+        if (key == null) return Collections.emptyList();
+
+        MutableLongList strKeys = index.get(query);
+        if (strKeys == null)   return Collections.emptyList();
+        if (strKeys.isEmpty()) return Collections.emptyList();
+
+
+        MutableLongList keysForRemoval = null;
+        ArrayList<T> result = new ArrayList<>(strKeys.size());
+
+        for (int jdx = 0; jdx < strKeys.size(); jdx++) {
+            long strKey = strKeys.get(jdx);
+            long tstamp = timeKeys.tstamp(strKey);
+
+            if (fromInclusive != null) {
+                long from = fromInclusive.longValue() / 1000l * 1000l;
+                if (tstamp < from) continue;
+            }
+            if (toExclusive != null) {
+                long to = toExclusive.longValue()     / 1000l * 1000l + 1000l;
+                if (tstamp > to) continue;
+            }
+
+            T res = storage.getEntry2(strKey, serdes2);
+            if (res == null) {
+                if (keysForRemoval == null) {
+                    keysForRemoval = LongLists.mutable.empty();
+                }
+                keysForRemoval.add(strKey);
+                continue;
+            }
+
+            if (fromInclusive != null || toExclusive != null) {
+                long timestamp = serdes2.timestampOfT(res);
+                if (fromInclusive != null && timestamp < fromInclusive) continue;
+                if (toExclusive != null && timestamp >= toExclusive) continue;
+            }
+
+            result.add(res);
+        }
+
+        if (keysForRemoval != null && keysForRemoval.size() > 0) {
+            strKeys.removeAll(keysForRemoval);
+            keysForRemoval.clear();
+        }
+
+        return result;
     }
 
 
 
-    final ReentrantReadWriteLock tickLock = new ReentrantReadWriteLock();
+
+
+
+
 
 
     @Override
@@ -140,10 +238,7 @@ public class BytesKeyedCache<T> implements TimeCache<T, byte[]> {
         metrics.lastWindowSize.set(0);
 
         // add new and, remove obsolete window from storage
-        WriteLock wock = tickLock.writeLock();
-        wock.lock();
         Window removedWindow = storage.moveWindows();
-        wock.unlock();
 
         // clean indexes
         long endTstamp = removedWindow.endTstamp;

@@ -5,7 +5,7 @@ import static org.junit.Assert.*;
 
 import java.nio.ByteBuffer;
 import java.util.List;
-import java.util.Map.Entry;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -99,39 +99,39 @@ public class WindowHandling {
         Event query = new Event(System.currentTimeMillis(), "Event query");
 
         // query for events, 5 stored events should be returned
-        List<CacheEntry<byte[], List<Event>>> res = cache.get(query);
-        List<Event> events = res.get(0).getValue();
+        Map<String, List<Event>> res = cache.getAsMap(query);
+        List<Event> events = res.get("LEADING_FIVE_LETTERS");
         assertEquals(5, events.size());
 
         // move cache windows a step in future, oldest window should be removed,
         // one event stored in that window should be forgotten
         cache.tick();
-        res = cache.get(query);
-        events = res.get(0).getValue();
+        res = cache.getAsMap(query);
+        events = res.get("LEADING_FIVE_LETTERS");
         assertEquals(4, events.size());
 
         // Repeat
         cache.tick();
-        res = cache.get(query);
-        events = res.get(0).getValue();
+        res = cache.getAsMap(query);
+        events = res.get("LEADING_FIVE_LETTERS");
         assertEquals(3, events.size());
 
         // Repeat
         cache.tick();
-        res = cache.get(query);
-        events = res.get(0).getValue();
+        res = cache.getAsMap(query);
+        events = res.get("LEADING_FIVE_LETTERS");
         assertEquals(2, events.size());
 
         // Repeat
         cache.tick();
-        res = cache.get(query);
-        events = res.get(0).getValue();
+        res = cache.getAsMap(query);
+        events = res.get("LEADING_FIVE_LETTERS");
         assertEquals(1, events.size());
 
         // Finally, tick once again, for all events being forgotten..
         cache.tick();
-        res = cache.get(query);
-        assertTrue(res.isEmpty());
+        res = cache.getAsMap(query);
+        assertTrue(res.get("LEADING_FIVE_LETTERS").isEmpty());
     }
 
     static class EventSerDes implements SerDes<Event> {

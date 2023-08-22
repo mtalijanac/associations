@@ -2,8 +2,6 @@ package mt.fireworks.timecache;
 
 import java.util.*;
 
-import org.eclipse.collections.impl.map.mutable.UnifiedMap;
-
 public interface TimeCache<T, K> {
 
     /**
@@ -12,27 +10,13 @@ public interface TimeCache<T, K> {
     boolean add(T val);
 
 
-    /**
-     * @param val
-     * @param fromInclusive - lower tstamp limit, inclusive, nullable
-     * @param toExclusive - upper tstamp limit, exclusive, nullable
-     * @return entries associated to given value, filtered by tstamp
-     */
-    List<CacheEntry<K, List<T>>> get(T val, Long fromInclusive, Long toExclusive);
+    List<T> get(String indexName, T query, Long fromInclusive, Long toExclusive);
 
-    default List<T> get(String index, T val, Long fromInclusive, Long toExclusive) {
-        Map<String, List<T>> map = getAsMap(val, fromInclusive, toExclusive);
-        List<T> res = map.get(index);
-        return res;
+
+    default List<T> get(String indexName, T query) {
+        return get(indexName, query, null, null);
     }
 
-
-    /**
-     * @return entries associated to given value
-     */
-    default List<CacheEntry<K, List<T>>> get(T val) {
-        return get(val, null, null);
-    }
 
     /**
      * As get, but return value is map. Keys are index names.
@@ -44,22 +28,12 @@ public interface TimeCache<T, K> {
      * @return map of associated entries associated values, filtered by tstamp,
      * @see #get(Object, Long, Long)
      */
-    default Map<String /* INDEX NAME */, List<T>> getAsMap(T val, Long fromInclusive, Long toExclusive) {
-        List<CacheEntry<K, List<T>>> list = get(val, fromInclusive, toExclusive);
-        Map<String, List<T>> res = UnifiedMap.newMap(list.size() + 1, 1f);
-        for (CacheEntry<K, List<T>> ce : list) {
-            String name = ce.getName();
-            List<T> value = ce.getValue();
-            res.put(name, value);
-        }
-        return res;
-    }
+    Map<String /* INDEX NAME */, List<T>> getAsMap(T val, Long fromInclusive, Long toExclusive);
+
 
     default Map<String, List<T>> getAsMap(T val) {
         return getAsMap(val, null, null);
     }
-
-
 
 
     /**
@@ -69,8 +43,8 @@ public interface TimeCache<T, K> {
      * @see #add(Object)
      * @see #get(Object)
      */
-    default List<CacheEntry<K, List<T>>> addAndGet(T val) {
-        return add(val) ? get(val) : Collections.emptyList();
+    default Map<String, List<T>> addAndGet(T val) {
+        return add(val) ? getAsMap(val) : Collections.emptyMap();
     }
 
 

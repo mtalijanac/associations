@@ -4,9 +4,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 
 import java.nio.ByteBuffer;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Random;
+import java.util.*;
 import java.util.function.Function;
 
 import org.junit.Test;
@@ -40,8 +38,8 @@ public class UseAsMultimap {
 
         BytesKeyedCacheFactory<Event> factory = new BytesKeyedCacheFactory<>();
         factory.setSerdes(new EventSerDes());
-        factory.addKeyer("TWO_LETTER", twoLetterKey);
-        factory.addKeyer("FOUR_LETTER", fourLetterKey);
+        factory.addKeyer("TWO_LETTERS", twoLetterKey);
+        factory.addKeyer("FOUR_LETTERS", fourLetterKey);
         BytesKeyedCache<Event> cache = factory.getInstance();
 
 
@@ -64,25 +62,26 @@ public class UseAsMultimap {
         // Fetch events associated to a: "He", "Hell", "Hi" and "Hill"
         //
         Event hell_event = new Event(System.currentTimeMillis(), "Hellen of Troy");
-        List<CacheEntry<byte[], List<Event>>> hellAssociated = cache.get(hell_event);
+        Map<String, List<Event>> hellAssociated = cache.getAsMap(hell_event);
 
         Event hill_event = new Event(System.currentTimeMillis(), "Hill by a house");
-        List<CacheEntry<byte[], List<Event>>> hillAssociated = cache.get(hill_event);
+        Map<String, List<Event>> hillAssociated = cache.getAsMap(hill_event);
 
 
         //
         // Pretty print output, and assert correctness
         //
-        hellAssociated.forEach( System.out::println );
-        hillAssociated.forEach( System.out::println );
+        System.out.println(hellAssociated);
+        System.out.println(hillAssociated);
 
         // order of entries in response is determined by order of keyers
         assertEquals(2, hellAssociated.size());
-        assertEquals(5, hellAssociated.get(0).getValue().size()); // 5 events start with 'He'
-        assertEquals(3, hellAssociated.get(1).getValue().size()); // 3 events start with 'Hell'
+        assertEquals(5, hellAssociated.get("TWO_LETTERS").size()); // 5 events start with 'He'
+        assertEquals(3, hellAssociated.get("FOUR_LETTERS").size()); // 3 events start with 'Hell'
 
-        assertEquals(1, hillAssociated.size());
-        assertEquals(2, hillAssociated.get(0).getValue().size()); // 2 events start with 'Hi'
+        assertEquals(2, hillAssociated.size());
+        assertEquals(2, hillAssociated.get("TWO_LETTERS").size()); // 2 events start with 'Hi'
+        assertEquals(0, hillAssociated.get("FOUR_LETTERS").size()); // 2 events start with 'Hi'
     }
 
 

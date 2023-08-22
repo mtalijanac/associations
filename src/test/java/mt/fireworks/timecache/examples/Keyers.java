@@ -72,7 +72,7 @@ public class Keyers {
         List<HTTPRequest> deleteRequests  = glDeleteRes.get("METHOD");
         List<HTTPRequest> googleRequests = glDeleteRes.get("URI");
 
-        Assert.assertNull(deleteRequests);
+        Assert.assertEquals(0, deleteRequests.size());
         Assert.assertEquals(2, googleRequests.size());
     }
 

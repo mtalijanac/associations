@@ -73,15 +73,14 @@ public class BytesKeyedCacheTest {
         cache.add(t4);
         cache.add(t5);
 
-        List<CacheEntry<byte[], List<TstTrx>>> res1 = cache.get(t1);
+        Map<String, List<TstTrx>> res1 = cache.getAsMap(t1);
         assertEquals(1, res1.size());
-        List<TstTrx> ts1 = res1.get(0).getValue();
+        List<TstTrx> ts1 = res1.get("key");
         assertEquals(3, ts1.size());
 
-
-        List<CacheEntry<byte[], List<TstTrx>>> res2 = cache.get(t2);
+        Map<String, List<TstTrx>> res2 = cache.getAsMap(t2);
         assertEquals(1, res2.size());
-        List<TstTrx> ts2 = res2.get(0).getValue();
+        List<TstTrx> ts2 = res2.get("key");
         assertEquals(2, ts2.size());
     }
 
@@ -129,43 +128,43 @@ public class BytesKeyedCacheTest {
 
         // test before
 
-        List<TstTrx> res_1 = cache.get("key", q0, null, null);
+        List<TstTrx> res_1 = cache.getAsMap(q0, null, null).get("key");
         assertEquals(5, res_1.size());
 
-        List<TstTrx> res_2 = cache.get("key", q0, null, t);
+        List<TstTrx> res_2 = cache.getAsMap(q0, null, t).get("key");
         assertEquals(0, res_2.size());
 
-        List<TstTrx> res_3 = cache.get("key", q0, null, t - 1);
+        List<TstTrx> res_3 = cache.getAsMap(q0, null, t - 1).get("key");
         assertEquals(0, res_3.size());
 
-        List<TstTrx> res_4 = cache.get("key", q0, null, t + 1l);
+        List<TstTrx> res_4 = cache.getAsMap(q0, null, t + 11).get("key");
         assertEquals(1, res_4.size());
 
-        List<TstTrx> res_5 = cache.get("key", q0, null, t + 1000l);
+        List<TstTrx> res_5 = cache.getAsMap(q0, null,   t + 1000l).get("key");
         assertEquals(1, res_5.size());
 
-        List<TstTrx> res_6 = cache.get("key", q0, null, t + 1001l);
+        List<TstTrx> res_6 = cache.getAsMap(q0, null, t + 1001l).get("key");
         assertEquals(2, res_6.size());
 
-        List<TstTrx> res_7 = cache.get("key", q0, t + 1999, null);
+        List<TstTrx> res_7 = cache.getAsMap(q0, t + 1999, null).get("key");
         assertEquals(3, res_7.size());
 
-        List<TstTrx> res_8 = cache.get("key", q0, t + 2000, null);
+        List<TstTrx> res_8 = cache.getAsMap(q0, t + 2000, null).get("key");
         assertEquals(3, res_8.size());
 
-        List<TstTrx> res_9 = cache.get("key", q0, t + 2001, null);
+        List<TstTrx> res_9 = cache.getAsMap(q0, t + 2001, null).get("key");
         assertEquals(2, res_9.size());
 
-        List<TstTrx> res_10 = cache.get("key", q0, t - 1000, t + 10000);
+        List<TstTrx> res_10 = cache.getAsMap(q0, t - 1000, t + 10000).get("key");
         assertEquals(5, res_10.size());
 
-        List<TstTrx> res_11 = cache.get("key", q0, t, t + 4001);
+        List<TstTrx> res_11 = cache.getAsMap(q0, t, t + 4001).get("key");
         assertEquals(5, res_11.size());
 
-        List<TstTrx> res_12 = cache.get("key", q0, t, t + 4000);
+        List<TstTrx> res_12 = cache.getAsMap(q0, t, t + 4000).get("key");
         assertEquals(4, res_12.size());
 
-        List<TstTrx> res_13 = cache.get("key", q0, t + 1, t + 4000);
+        List<TstTrx> res_13 = cache.getAsMap(q0, t + 1, t + 4000).get("key");
         assertEquals(3, res_13.size());
     }
 }

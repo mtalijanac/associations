@@ -2,13 +2,11 @@ package mt.fireworks.timecache;
 
 import static mt.fireworks.timecache.TimeUtils.info;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 import org.eclipse.collections.api.block.HashingStrategy;
-import org.eclipse.collections.api.collection.primitive.MutableLongCollection;
 import org.eclipse.collections.api.list.primitive.MutableLongList;
 import org.eclipse.collections.api.map.MutableMap;
 import org.eclipse.collections.impl.factory.primitive.LongLists;
@@ -21,7 +19,7 @@ import lombok.Getter;
 class Index<T> {
 
     String name;
-    MutableMap<byte[], MutableLongCollection>[] indexes;
+    MutableMap<byte[], MutableLongList>[] indexes;
     Function<T, byte[]> keyer;
     TimeKeys timeKeys;
 
@@ -32,7 +30,7 @@ class Index<T> {
     }
 
     IndexHashCode hasher = new IndexHashCode();
-    MutableMap<byte[], MutableLongCollection> index(byte[] key) {
+    MutableMap<byte[], MutableLongList> index(byte[] key) {
         int idx = Math.abs( hasher.computeHashCode(key) ) % indexes.length;
         return indexes[idx];
     }
@@ -43,11 +41,11 @@ class Index<T> {
         this.keyer = keyer;
         this.timeKeys = tk;
 
-        MutableMap<byte[], MutableLongCollection>[] maps = new MutableMap[128];
+        MutableMap<byte[], MutableLongList>[] maps = new MutableMap[128];
         indexes = maps;
         for (int idx = 0; idx < indexes.length; idx++) {
-            UnifiedMapWithHashingStrategy<byte[], MutableLongCollection> map = new UnifiedMapWithHashingStrategy<>(new IndexHashCode());
-            MutableMap<byte[], MutableLongCollection> mmap = map.asSynchronized();
+            UnifiedMapWithHashingStrategy<byte[], MutableLongList> map = new UnifiedMapWithHashingStrategy<>(new IndexHashCode());
+            MutableMap<byte[], MutableLongList> mmap = map.asSynchronized();
             maps[idx] = mmap;
         }
     }
@@ -59,7 +57,7 @@ class Index<T> {
         try {
             byte[] key = keyer.apply(val);
             if (key == null) return false;
-            MutableLongCollection keyData = index(key).getIfAbsentPut(key, () -> LongLists.mutable.empty().asSynchronized());
+            MutableLongList keyData = index(key).getIfAbsentPut(key, () -> LongLists.mutable.empty().asSynchronized());
             keyData.add(storageKey);
             return true;
         }
@@ -69,13 +67,13 @@ class Index<T> {
         }
     }
 
-    public MutableLongCollection get(T val) {
+    public MutableLongList get(T val) {
         metrics.getCount.incrementAndGet();
         long t = -System.nanoTime();
         try {
             byte[] key = keyer.apply(val);
             if (key == null) return null;
-            MutableLongCollection keyData = index(key).get(key);
+            MutableLongList keyData = index(key).get(key);
             return keyData;
         }
         finally {
@@ -88,13 +86,13 @@ class Index<T> {
     /**
      * Values of T which happened on same tstamp by {@link TimeKeys#equalSec(long, long)}
      */
-    public MutableLongCollection onSameTime(T val, long valTstamp) {
+    public MutableLongList onSameTime(T val, long valTstamp) {
         metrics.onSameTimeCount.incrementAndGet();
         long t = -System.nanoTime();
         try {
             byte[] valKey = keyer.apply(val);
             if (valKey == null) return null;
-            MutableLongCollection keyData = index(valKey).get(valKey);
+            MutableLongList keyData = index(valKey).get(valKey);
             if (keyData == null) return null;
 
             boolean matching = keyData.anySatisfy(storedKey -> {
@@ -105,7 +103,7 @@ class Index<T> {
 
             if (!matching) return null;
 
-            MutableLongCollection onSameTime = keyData.select(storedKey -> {
+            MutableLongList onSameTime = keyData.select(storedKey -> {
                 long keyTstamp = timeKeys.tstamp(storedKey);
                 boolean sameTime = timeKeys.equalSec(valTstamp, keyTstamp);
                 return sameTime;
@@ -124,7 +122,7 @@ class Index<T> {
 
         MutableLongList tmpBuffer = LongLists.mutable.empty();
 
-        for (MutableMap<byte[], MutableLongCollection> index: indexes)
+        for (MutableMap<byte[], MutableLongList> index: indexes)
         index.forEachKeyValue((key, values) -> {
             if (values == null) return;
             if (values.size() == 0) return;
@@ -150,7 +148,7 @@ class Index<T> {
             byte[] key = keyer.apply(val);
             if (key == null) return;
 
-            MutableLongCollection keyData = index(key).get(key);
+            MutableLongList keyData = index(key).get(key);
             if (keyData == null) return;
             if (keyData.isEmpty()) return;
 
@@ -174,7 +172,7 @@ class Index<T> {
 
     public void removeEmptyEntries() {
         long dur = -System.nanoTime();
-        for(MutableMap<byte[], MutableLongCollection> index: indexes)
+        for(MutableMap<byte[], MutableLongList> index: indexes)
         index.removeIf((key, val) -> {
             if (val == null || val.isEmpty()) {
                 metrics.removeEmptyKeyCout.incrementAndGet();
@@ -239,17 +237,14 @@ class Index<T> {
             String onSameTime = info("   onSameTime", onSameTimeCount, onSameTimeDuration);
 
             long size = 0;
-            ArrayList<Integer> sizes = new ArrayList<>();
-            for (MutableMap<byte[], MutableLongCollection> index: indexes) {
+            for (MutableMap<byte[], MutableLongList> index: indexes) {
                 size += index.size();
-                sizes.add(index.size());
             }
 
             StringBuilder sb = new StringBuilder();
             sb.append("## ").append(name).append(" ").append(Index.this.name).append(" metrics\n");
             sb.append("  startTstamp: ").append(startStr).append("\n");
-            sb.append("         size: ").append(size)
-            .append(" [").append(sizes.toString()).append("]\n");
+            sb.append("         size: ").append(size).append("\n");
             sb.append(put).append("\n");
             sb.append(get).append("\n");
             sb.append(clearKey).append("\n");
