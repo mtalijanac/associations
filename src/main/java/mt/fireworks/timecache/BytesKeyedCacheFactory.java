@@ -14,7 +14,7 @@ public class BytesKeyedCacheFactory<T> {
     @Setter SerDes<T> serdes;
     @Setter Boolean metricsEnabled = Boolean.TRUE;
 
-    @Setter Storage.Conf storageConf;
+    @Setter Storage.Conf storageConf = new Storage.Conf();
     Long startTimestamp;
     @Setter TimeKeys timeKeys = new TimeKeys();
 
@@ -54,12 +54,20 @@ public class BytesKeyedCacheFactory<T> {
         keyers.put(name, keyer);
     }
 
-    public void storageConf(
-        Integer historyWindowCount,
-        Integer futureWindowCount,
-        Long windowTimespanMs
-    ) {
-        storageConf = new Storage.Conf(historyWindowCount, futureWindowCount, windowTimespanMs);
+    public void setHistoryWindowsCount(Integer val) {
+        storageConf.setHistoryWindowCount(val);
+    }
+
+    public void setFutureWindowCount(Integer val) {
+        storageConf.setFutureWindowCount(val);
+    }
+
+    public void setWindowTimespanMs(Long val) {
+        storageConf.setWindowTimespanMs(val);
+    }
+
+    public void setWinCapacity(Integer val) {
+        storageConf.setWinCapacity(val);
     }
 
     public long setStartTimeMillis(Long startTimestamp) {

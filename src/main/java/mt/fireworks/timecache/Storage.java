@@ -12,8 +12,7 @@ import lombok.*;
 
 class Storage {
 
-    @AllArgsConstructor
-    @RequiredArgsConstructor
+    @Setter
     static class Conf {
         /** count of windows preceeding nowWindow */
         int historyWindowCount = 7;
@@ -23,6 +22,8 @@ class Storage {
 
         /** duration of window in ms */
         long windowTimespanMs = TimeUnit.DAYS.toMillis(1);
+
+        int winCapacity = 1 * 1024 * 1024;
     }
 
     static class Window {
@@ -36,7 +37,7 @@ class Storage {
         /** if closed do not write to it */
         final AtomicBoolean closed = new AtomicBoolean(false);
 
-        ByteList store = new ByteList();
+        ByteList store;
     }
 
 
@@ -72,6 +73,7 @@ class Storage {
             Window win = new Window();
             win.startTstamp = startDate + idx * st.conf.windowTimespanMs;
             win.endTstamp = win.startTstamp + st.conf.windowTimespanMs;
+            win.store = new ByteList(st.conf.winCapacity);
             st.windows.add(win);
 
             if (idx == 0) {
@@ -194,6 +196,7 @@ class Storage {
         Window win = new Window();
         win.startTstamp = lastWindow.endTstamp;
         win.endTstamp = win.startTstamp + conf.windowTimespanMs;
+        win.store = new ByteList(conf.winCapacity);
         windows.add(win);
 
         // move now window
@@ -247,14 +250,26 @@ class Storage {
             String windows = "[" + Storage.this.conf.historyWindowCount + "-1-" + Storage.this.conf.futureWindowCount + "]";
             String winSize =  Storage.this.conf.windowTimespanMs + " ms (" + TimeUtils.toReadable(Storage.this.conf.windowTimespanMs * 1000_000) + ")";
 
+            ArrayList<Window> wins = Storage.this.windows;
+            long totalAllocated = 0;
+            long totalUsed = 0;
+            for (Window w: wins) {
+                ByteList store = w.store;
+                long size = store.buckets.size() * (long) store.conf.bucketSize;
+                long used = store.size.get();
+                totalAllocated += size;
+                totalUsed += used;
+            }
 
             String text = "## " + name + " metric:\n"
                         + " bytesWritten: " + bytesWritten + " bytes, dur: " + durStr + " [" + speedStr + "]\n"
                         + " window count: " + Storage.this.windows.size() + " " + windows + "\n"
-                        + "  window size: " + winSize + "\n"
+                        + "  window span: " + winSize + "\n"
                         + "timespan from: " + from + "\n"
-                        + "           to: " + to;
-
+                        + "           to: " + to + "\n"
+                        + "    allocated: " + totalAllocated + " bytes\n"
+                        + "         used: " + totalUsed + " bytes\n"
+                        + " win capacity: " + conf.winCapacity + " bytes";
 
             return text;
         }

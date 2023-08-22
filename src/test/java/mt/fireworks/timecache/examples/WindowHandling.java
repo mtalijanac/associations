@@ -62,7 +62,9 @@ public class WindowHandling {
         BytesKeyedCacheFactory<Event> factory = new BytesKeyedCacheFactory<>();
         factory.setSerdes(new EventSerDes());
         factory.addKeyer("LEADING_FIVE_LETTERS", key);
-        factory.storageConf(pastWindowCount, futureWindowCount, windowDuration);
+        factory.setHistoryWindowsCount(pastWindowCount);
+        factory.setFutureWindowCount(futureWindowCount);
+        factory.setWindowTimespanMs(windowDuration);
         long start = factory.setStartTimeMillis(now);
         BytesKeyedCache<Event> cache = factory.getInstance();
 

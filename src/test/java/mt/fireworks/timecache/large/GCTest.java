@@ -31,7 +31,9 @@ public class GCTest {
         BytesKeyedCacheFactory<Trx> fact = new BytesKeyedCacheFactory<>();
         fact.setSerdes(serdes);
         fact.addKeyer("PAN", keyer);
-        fact.storageConf(pastWindowCount, futureWindowCount, windowDuration);
+        fact.setHistoryWindowsCount(pastWindowCount);
+        fact.setFutureWindowCount(futureWindowCount);
+        fact.setWindowTimespanMs(windowDuration);
         fact.setStartTimeMillis(now);
         cache = fact.getInstance();
 

@@ -105,7 +105,7 @@ public class RealUsageTest {
         long tenSec = TimeUnit.MILLISECONDS.convert(10, TimeUnit.SECONDS);
         long fiveSec = TimeUnit.MILLISECONDS.convert(5, TimeUnit.SECONDS);
         long iterDur = fiveSec;
-        int workerCount = 4;
+        int workerCount = 1;
 
         Function<Trx, byte[]> panIndex = (Trx t) -> t.getPan().getBytes(UTF_8);
         Function<Trx, byte[]> midIndex = (Trx t) -> t.getMerId().getBytes(UTF_8);
@@ -114,7 +114,10 @@ public class RealUsageTest {
         factory.setSerdes(new TrxSerDes());
         factory.addKeyer("PAN", panIndex);
         factory.addKeyer("MID", midIndex);
-        factory.storageConf(7, 1, iterDur);
+        factory.setHistoryWindowsCount(7);
+        factory.setFutureWindowCount(1);
+        factory.setWindowTimespanMs(iterDur);
+        factory.setWinCapacity(8 * 8 * 1024 * 1024);
 
         BytesKeyedCache<Trx> cache = factory.getInstance();
 
@@ -231,7 +234,6 @@ public class RealUsageTest {
             trx.setAmount(amount);
             trx.setTstamp(tstamp);
             trx.setTrxData(txt);
-
             return trx;
         }
     }
@@ -240,7 +242,14 @@ public class RealUsageTest {
 
     public static void main(String[] args) throws InterruptedException {
         RealUsageTest test = new RealUsageTest();
-        test.run();
+        for (int i = 0; i < 10; i++) {
+            test.run();
+            System.out.println("Ding");
+            System.out.println("Ding");
+            System.out.println("Ding");
+            System.out.println("Ding");
+            System.out.println("Ding");
+        }
     }
 
 }
