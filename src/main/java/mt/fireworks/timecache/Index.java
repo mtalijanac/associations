@@ -117,30 +117,14 @@ class Index<T> {
         }
     }
 
-    public void gc(long upperTstampExclusive) {
-        // TODO ukloni prazne ključeve
 
-        MutableLongList tmpBuffer = LongLists.mutable.empty();
-
-        for (MutableMap<byte[], MutableLongList> index: indexes)
-        index.forEachKeyValue((key, values) -> {
-            if (values == null) return;
-            if (values.size() == 0) return;
-
-            values.forEach(storageKey -> {
-                long tstamp = timeKeys.tstamp(storageKey);
-                if (tstamp < upperTstampExclusive)
-                    tmpBuffer.add(storageKey);
-            });
-
-            if (tmpBuffer.size() == 0) return;
-
-            values.removeAll(tmpBuffer);
-            tmpBuffer.clear();
-        });
-    }
-
-    public void clearKey(T val, long upperTstampExclusive) {
+    /**
+     * Clear index of all associated storage keys older than limit.
+     *
+     * @param val - associated value
+     * @param upperTstampExclusive - age limit
+     */
+    void clearKey(T val, long upperTstampExclusive) {
         long limit = upperTstampExclusive / 1000l * 1000l;
         metrics.clearKeyCount.incrementAndGet();
         long t = -System.nanoTime();
@@ -152,15 +136,18 @@ class Index<T> {
             if (keyData == null) return;
             if (keyData.isEmpty()) return;
 
-            MutableLongList tmpBuffer = LongLists.mutable.empty();
+            MutableLongList tmpBuffer = null;
 
-            keyData.forEach(storageKey -> {
+            for (int idx = 0; idx < keyData.size(); idx++) {
+                long storageKey = keyData.get(idx);
                 long tstamp = timeKeys.tstamp(storageKey);
                 if (tstamp < limit) {
+                    if (tmpBuffer == null) tmpBuffer = LongLists.mutable.empty();
                     tmpBuffer.add(storageKey);
                 }
-            });
+            }
 
+            if (tmpBuffer == null) return;
             if (tmpBuffer.size() == 0) return;
             keyData.removeAll(tmpBuffer);
         }
@@ -170,16 +157,19 @@ class Index<T> {
         }
     }
 
-    public void removeEmptyEntries() {
+    /**
+     * Remove all index entries without any storage keys.
+     */
+    void removeEmptyEntries() {
         long dur = -System.nanoTime();
         for(MutableMap<byte[], MutableLongList> index: indexes)
-        index.removeIf((key, val) -> {
-            if (val == null || val.isEmpty()) {
-                metrics.removeEmptyKeyCout.incrementAndGet();
-                return true;
-            }
-            return false;
-        });
+            index.removeIf((key, val) -> {
+                if (val == null || val.isEmpty()) {
+                    metrics.removeEmptyKeyCout.incrementAndGet();
+                    return true;
+                }
+                return false;
+            });
         dur += System.nanoTime();
         metrics.removeEmptyDuration.addAndGet(dur);
     }
