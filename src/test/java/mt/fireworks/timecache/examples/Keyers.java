@@ -47,6 +47,7 @@ public class Keyers {
         BytesKeyedCache<HTTPRequest> cache = factory.getInstance();
 
 
+
         // 2 POSTs and 1 GET, 2 Google and 1 Facebook
         long tstamp = System.currentTimeMillis();
         cache.add(new HTTPRequest(tstamp, "GET", "http://google.com/", "First request"));
@@ -74,6 +75,7 @@ public class Keyers {
 
         Assert.assertEquals(0, deleteRequests.size());
         Assert.assertEquals(2, googleRequests.size());
+
     }
 
 
@@ -100,3 +102,4 @@ public class Keyers {
     }
 
 }
+

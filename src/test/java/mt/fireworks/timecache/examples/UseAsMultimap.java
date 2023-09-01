@@ -81,7 +81,7 @@ public class UseAsMultimap {
 
         assertEquals(2, hillAssociated.size());
         assertEquals(2, hillAssociated.get("TWO_LETTERS").size()); // 2 events start with 'Hi'
-        assertEquals(0, hillAssociated.get("FOUR_LETTERS").size()); // 2 events start with 'Hi'
+        assertEquals(0, hillAssociated.get("FOUR_LETTERS").size()); // 0 events start with 'Hi'
     }
 
 

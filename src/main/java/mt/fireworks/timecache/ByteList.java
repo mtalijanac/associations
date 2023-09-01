@@ -6,9 +6,6 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ByteList {
 
     static class Conf {
-        /** Initial number of buckets in window **/
-        int initialNumberOfBucketsInWindow = 1;
-
         /** bucket size in bytes */
         int bucketSize = 1 * 1024 * 1024;
 
@@ -31,8 +28,10 @@ public class ByteList {
         buckets.add(new byte[conf.bucketSize]);
     }
 
-    public ByteList(int bucketSizeInBytes) {
-        this.conf.bucketSize = bucketSizeInBytes;
+    public ByteList(Integer bucketSizeInBytes) {
+        if (bucketSizeInBytes != null) {
+            this.conf.bucketSize = bucketSizeInBytes;
+        }
         buckets.add(new byte[conf.bucketSize]);
     }
 
