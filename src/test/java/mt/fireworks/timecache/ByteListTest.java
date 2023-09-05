@@ -4,13 +4,15 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Assert;
 import org.junit.Test;
 
-import mt.fireworks.timecache.ByteList.ForEachAction;
+import mt.fireworks.timecache.ByteList.*;
 
 public class ByteListTest {
 
@@ -121,6 +123,35 @@ public class ByteListTest {
 
         assertEquals(N, objCount.get());
         assertEquals(data_written, objLen.get());
+    }
+
+
+    @Test
+    public void testDataIterator() {
+        ArrayList<byte[]> randomData = new ArrayList<>();
+        for (long len = 0; len < 1l * 1152 * 1152 * 1152;) {
+            byte[] data = randomData(250, 500);
+            randomData.add(data);
+            len += data.length;
+        }
+
+        ByteList byteList = new ByteList();
+        for (byte[] d: randomData)
+            byteList.add(d);
+
+        AtomicInteger counter = new AtomicInteger();
+        DataIterator<byte[]> iterator = byteList.iterator(
+            (objPos, bucket, pos, len) -> Arrays.copyOfRange(bucket, pos, pos + len)
+        );
+
+        while (iterator.hasNext()) {
+            byte[] read = iterator.next();
+            byte[] expected = randomData.get(counter.get());
+            Assert.assertArrayEquals(expected, read);
+            counter.incrementAndGet();
+        }
+
+        Assert.assertEquals(randomData.size(), counter.get());
     }
 
 }

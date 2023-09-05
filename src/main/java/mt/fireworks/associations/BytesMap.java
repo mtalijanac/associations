@@ -17,7 +17,7 @@ import mt.fireworks.timecache.ByteList;
 
 public class BytesMap<T> implements AssociationMap<T> {
 
-    final AssociationMap.SerDes<T> serdes;
+    final SerDes<T> serdes;
     final ArrayList<Index<T>> indexes = new ArrayList<>();
     final ByteList byteList;
     final List<String> keys;
@@ -36,7 +36,7 @@ public class BytesMap<T> implements AssociationMap<T> {
     }
 
 
-    BytesMap(AssociationMap.SerDes<T> serdes, ArrayList<Index<T>> indexes, Integer allocationSize) {
+    BytesMap(SerDes<T> serdes, ArrayList<Index<T>> indexes, Integer allocationSize) {
         this.serdes = serdes;
         this.indexes.addAll(indexes);
         this.keys = indexes.stream().map(Index::getName).collect(Collectors.toUnmodifiableList());
@@ -64,7 +64,7 @@ public class BytesMap<T> implements AssociationMap<T> {
                 storageKey = byteList.add(data);
             }
 
-            MutableLongList keyData = index.map.getIfAbsentPut(key, () -> LongLists.mutable.empty());
+            MutableLongList keyData = index.map.getIfAbsentPut(key, () -> LongLists.mutable.withInitialCapacity(1));
             keyData.add(storageKey);
         }
 
@@ -74,17 +74,21 @@ public class BytesMap<T> implements AssociationMap<T> {
 
     @Override
     public List<T> get(String indexName, T query) {
-        Index<T> index = null;
-        for (int i = 0; i < indexes.size(); i++) {
-            index = indexes.get(i);
-            if (indexName.equals(index.getName())) {
-                break;
-            }
-        }
-
+        Index<T> index = index(indexName);
         if (index == null) return Collections.emptyList();
         List<T> res = readIndex(index, query);
         return res;
+    }
+
+
+    Index<T> index(String indexName) {
+        for (int i = 0; i < indexes.size(); i++) {
+            Index<T> index = indexes.get(i);
+            if (indexName.equals(index.getName())) {
+                return index;
+            }
+        }
+        return null;
     }
 
 
@@ -139,6 +143,87 @@ public class BytesMap<T> implements AssociationMap<T> {
         }
 
         return result;
+    }
+
+
+    /**
+     * Iterator of stored values in this map.
+     */
+    @Override
+    public Iterator<T> values() {
+        return byteList.iterator((objPos, bucket, pos, len) -> serdes.unmarshall(bucket, pos, len));
+    }
+
+    /**
+     * Return all values stored within index, grouped by associations.
+     * Each invocation returns next associated group.
+     */
+    @Override
+    public Iterator<List<T>> indexAssociations(String keyName) {
+        Index<T> index = index(keyName);
+        Collection<MutableLongList> values = index.map.values();
+        Iterator<MutableLongList> valuesIter = values.iterator();
+
+        Iterator<List<T>> result = new Iterator<List<T>>() {
+            public boolean hasNext() {
+                return valuesIter.hasNext();
+            }
+
+            @Override
+            public List<T> next() {
+                MutableLongList strKeys = valuesIter.next();
+                if (strKeys == null)   return Collections.emptyList();
+                if (strKeys.isEmpty()) return Collections.emptyList();
+
+                ArrayList<T> result = new ArrayList<>(strKeys.size());
+                for (int jdx = 0; jdx < strKeys.size(); jdx++) {
+                    long strKey = strKeys.get(jdx);
+                    byte[] data = byteList.get(strKey);
+                    T res = serdes.unmarshall(data);
+                    if (res == null) {
+                        continue;
+                    }
+                    result.add(res);
+                }
+
+                return result;
+            }
+        };
+
+        return result;
+    }
+
+
+    /**
+     * Return all values stored within index. Each invocation returns next value.
+     */
+    @Override
+    public Iterator<T> indexValues(String keyName) {
+        return new Iterator<T>() {
+            Iterator<List<T>> indexAssociations = indexAssociations(keyName);
+            Iterator<T> association;
+
+            public boolean hasNext() {
+                if (association == null && !indexAssociations.hasNext()) {
+                    return false;
+                }
+
+                if (association != null && association.hasNext()) {
+                    return true;
+                }
+
+                while (indexAssociations.hasNext()) {
+                    association = indexAssociations.next().iterator();
+                    if (association.hasNext()) return true;
+                }
+
+                return false;
+            }
+
+            public T next() {
+                return association.next();
+            }
+        };
     }
 
 }

@@ -5,7 +5,8 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.function.Function;
 
-import mt.fireworks.associations.AssociationMap.SerDes;
+import lombok.AllArgsConstructor;
+import lombok.Setter;
 import mt.fireworks.associations.BytesMap.Index;
 
 /**
@@ -23,6 +24,12 @@ class BytesMapBuilder  {
          * Set {@code SerDes} underlying this map.
          */
         AddAssociation<T> withSerdes(SerDes<T> serdes);
+
+        AddUnmarshaller<T> usingMarshaller(Function<T, byte[]> marshaller);
+    }
+
+    public static interface AddUnmarshaller<T> {
+        AddAssociation<T> usingUnmarshaller(Function<byte[], T> unmarshaller);
     }
 
     public static interface AddAssociation<T> {
@@ -48,11 +55,14 @@ class BytesMapBuilder  {
     }
 
 
-
-    static class Builder<T> implements AddSerdes<T>, AddAssociationOrBuild<T> {
+    static class Builder<T> implements AddSerdes<T>, AddAssociationOrBuild<T>, AddUnmarshaller<T> {
         SerDes<T> serdes;
         HashMap<String, Function<T, byte[]>> keyers = new HashMap<>();
         Integer allocationSize;
+
+        Function<T, byte[]> marshaller;
+        Function<byte[], T> unmarshaller;
+
 
         public AddAssociation<T> withSerdes(SerDes<T> serdes) {
             this.serdes = serdes;
@@ -78,7 +88,37 @@ class BytesMapBuilder  {
                 indexes.add(index);
             }
 
+            if (marshaller != null && unmarshaller != null) {
+                this.serdes = new EmbeddedSerdes(marshaller, unmarshaller);
+            }
+
             return new BytesMap<>(serdes, indexes, allocationSize);
+        }
+
+
+        public AddAssociation<T> usingUnmarshaller(Function<byte[], T> unmarshaller) {
+            this.unmarshaller = unmarshaller;
+            return this;
+        }
+
+        public AddUnmarshaller<T> usingMarshaller(Function<T, byte[]> marshaller) {
+            this.marshaller = marshaller;
+            return this;
+        }
+    }
+
+
+    @AllArgsConstructor
+    static class EmbeddedSerdes<T> implements SerDes<T> {
+        @Setter Function<T, byte[]> marshaller;
+        @Setter Function<byte[], T> unmarshaller;
+
+        public byte[] marshall(T val) {
+            return marshaller.apply(val);
+        }
+
+        public T unmarshall(byte[] data) {
+            return unmarshaller.apply(data);
         }
     }
 

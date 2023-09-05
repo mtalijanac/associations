@@ -1,7 +1,10 @@
 package mt.fireworks.timecache;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicLong;
+
+import lombok.AllArgsConstructor;
 
 public class ByteList {
 
@@ -14,7 +17,7 @@ public class ByteList {
     }
 
     @FunctionalInterface
-    interface Peeker<T> {
+    public interface Peeker<T> {
         T peek(long objPos, byte[] bucket, int pos, int len);
     }
 
@@ -177,72 +180,92 @@ public class ByteList {
         });
     }
 
-    enum ForEachAction {
+    public enum ForEachAction {
         CONTINUE, BREAK
     }
 
-
     public void forEach(Peeker<ForEachAction> userPeeker) {
-        long objPos = 0;
-        while (true) {
-            final int bucketIdx = (int) (objPos / conf.bucketSize);
-            if (bucketIdx >= buckets.size()) break;
-
-            final byte[] startBucket = buckets.get(bucketIdx);
-            final int objIdx = (int) (objPos % conf.bucketSize);
-            final int freeSpace = startBucket.length - objIdx;
-
-            // split header
-            if (freeSpace == 1) {
-                if (buckets.size() == bucketIdx + 1) return;
-                short dataLen = BitsAndBytes.readSplitShort(startBucket, buckets.get(bucketIdx + 1));
-                if (dataLen == 0) return;
-                byte[] endBucket = buckets.get(bucketIdx + 1);
-
-                ForEachAction res = userPeeker.peek(objPos, endBucket, 1, dataLen);
-                if (ForEachAction.BREAK.equals(res)) break;
-                objPos += conf.dataHeaderSize + dataLen;
-                continue;
-            }
-
-            // header here, data in next bucket
-            if (freeSpace == 2) {
-                if (buckets.size() == bucketIdx + 1) return;
-                short dataLen = BitsAndBytes.readShort(startBucket, objIdx);
-                if (dataLen == 0) return;
-                byte[] endBucket = buckets.get(bucketIdx + 1);
-
-                ForEachAction res = userPeeker.peek(objPos, endBucket, 0, dataLen);
-                if (ForEachAction.BREAK.equals(res)) break;
-                objPos += conf.dataHeaderSize + dataLen;
-                continue;
-            }
-
-
-            short dataLen = BitsAndBytes.readShort(startBucket, objIdx);
-            if (dataLen == 0)
+        DataIterator<ForEachAction> iterator = iterator(userPeeker);
+        while (iterator.hasNext()) {
+            ForEachAction res = iterator.next();
+            if (ForEachAction.BREAK.equals(res)) {
                 break;
-
-            if (objIdx + conf.dataHeaderSize + dataLen > startBucket.length) {
-
-                byte[] data = new byte[dataLen + 2];
-                BitsAndBytes.writeShort((short) dataLen, data, 0);
-
-                int toReadFromStartBucket = Math.min(startBucket.length - objIdx - 2, dataLen);
-                System.arraycopy(startBucket, objIdx + conf.dataHeaderSize, data, 2, toReadFromStartBucket);
-                byte[] endBucket = buckets.get(bucketIdx + 1);
-                int toReadFromEndBucket = dataLen - toReadFromStartBucket;
-                System.arraycopy(endBucket, 0, data, 2 + toReadFromStartBucket, toReadFromEndBucket);
-
-                ForEachAction res = userPeeker.peek(objPos, data, 2, dataLen);
-                objPos += conf.dataHeaderSize + dataLen;
-                if (ForEachAction.BREAK.equals(res)) break;
-                continue;
             }
+        }
+    }
 
-            ForEachAction res = userPeeker.peek(objPos, startBucket, objIdx + conf.dataHeaderSize, dataLen);
-            if (ForEachAction.BREAK.equals(res)) break;
-            objPos += conf.dataHeaderSize + dataLen;
+
+
+
+    //
+    // Iteration objects
+    //
+
+    public <T> DataIterator<T> iterator(Peeker<T> peeker) {
+        return new DataIterator<>(peeker, 0, -1);
+    }
+
+    int objectLength(final long objPos) {
+        final int bucketIdx = (int) (objPos / conf.bucketSize);
+        if (bucketIdx >= buckets.size()) return -1;
+
+        final byte[] startBucket = buckets.get(bucketIdx);
+        final int objIdx = (int) (objPos % conf.bucketSize);
+        final int freeSpace = startBucket.length - objIdx;
+
+        if (freeSpace < conf.dataHeaderSize) {
+            if (buckets.size() == bucketIdx + 1) return -1;
+            short dataLen = BitsAndBytes.readSplitShort(startBucket, buckets.get(bucketIdx + 1));
+            return dataLen;
+        }
+
+        short dataLen = BitsAndBytes.readShort(startBucket, objIdx);
+        return dataLen;
+    }
+
+    <T> T readObject(final long objPos, final int dataLen, Peeker<T> userPeeker) {
+        final long dataPos = objPos + conf.dataHeaderSize;
+        final int bucketIdx = (int) (dataPos / conf.bucketSize);
+        final byte[] startBucket = buckets.get(bucketIdx);
+        final int dataIdx = (int) (dataPos % conf.bucketSize);
+        final int endingPosition = dataIdx + dataLen;
+
+        // data is fully contained within one bucket
+        if (endingPosition < startBucket.length) {
+            return userPeeker.peek(objPos, startBucket, dataIdx, dataLen);
+        }
+
+        // data is split a between two buckets
+        final byte[] data = new byte[conf.dataHeaderSize + dataLen];
+        BitsAndBytes.writeShort((short) dataLen, data, 0);
+
+        final int len1 = startBucket.length - dataIdx;
+        System.arraycopy(startBucket, dataIdx, data, conf.dataHeaderSize, len1);
+
+        final int len2 = dataLen - len1;
+        final byte[] endBucket = buckets.get(bucketIdx + 1);
+        System.arraycopy(endBucket, 0, data, len1 + conf.dataHeaderSize, len2);
+
+        return userPeeker.peek(objPos, data, conf.dataHeaderSize, dataLen);
+    }
+
+
+    @AllArgsConstructor
+    public class DataIterator<T> implements Iterator<T> {
+        Peeker<T> peeker;
+        long objPostion = 0;
+        int objLength = -1;
+
+        public boolean hasNext() {
+            objLength = objectLength(objPostion);
+            return objLength > 0;
+        }
+
+        public T next() {
+            if (objLength <= 0) throw new RuntimeException();
+            T res = readObject(objPostion, objLength, peeker);
+            objPostion += conf.dataHeaderSize + objLength;
+            return res;
         }
     }
 

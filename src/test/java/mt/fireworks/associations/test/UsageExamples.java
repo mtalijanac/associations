@@ -4,14 +4,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
+import org.junit.Assert;
 import org.junit.Test;
 
-import mt.fireworks.associations.BytesMap;
-import mt.fireworks.associations.StringSerDes;
+import lombok.AllArgsConstructor;
+import mt.fireworks.associations.*;
 
 public class UsageExamples {
 
@@ -45,7 +45,7 @@ public class UsageExamples {
         };
 
         BytesMap<String> map = BytesMap.newInstance(String.class)
-                .withSerdes(new StringSerDes())
+                .withSerdes(Associations.stringSerDes())
                 .associate("word_count", wordCounter)
                 .associate("ending", endingPunctutation)
                 .allocationSize(64 * 1024)
@@ -119,5 +119,110 @@ public class UsageExamples {
             "Love is what we were born with. Fear is what we learned here.", // - Marianne Williamson
             "The greatest wisdom is in simplicity. Love, respect, tolerance, sharing, gratitude." // - Meher Baba
     };
+
+    @Test
+    public void iterationExample() {
+        @AllArgsConstructor
+        class HasWord implements Function<String, byte[]> {
+            String word;
+            public byte[] apply(String quote) {
+                String q = quote.toLowerCase();
+                if (!q.contains(word)) return null;
+                int len = q.split(word).length;
+                return BigInteger.valueOf(len).toByteArray();
+            }
+        };
+
+        BytesMap<String> map = BytesMap.newInstance(String.class)
+                 .withSerdes(Associations.stringSerDes())
+                 .associate("love", new HasWord("love"))
+                 .associate("fear", new HasWord("fear"))
+                 .associate("wisdom", new HasWord("wisdom"))
+                 .allocationSize(64 * 1024)
+                 .build();
+
+        for (String q: loveFearWisdomQuotes)
+            map.add(q);
+
+        Iterator<List<String>> loveIterator = map.indexAssociations("love");
+        while(loveIterator.hasNext()) {
+            List<String> quotesWithSameHash = loveIterator.next();
+            for (String q: quotesWithSameHash) {
+                System.out.println(q);
+            }
+            System.out.println();
+        }
+
+        System.out.println("Iterator 2");
+        Iterator<String> loveValues = map.indexValues("love");
+        while (loveValues.hasNext()) {
+            System.out.println(loveValues.next());
+        }
+    }
+
+    @Test
+    public void iterating_numbers() {
+
+        Function<Integer, byte[]> divBy3 = (Integer n) -> {
+            return BigInteger.valueOf(n % 3).toByteArray();
+        };
+
+        BytesMap<Integer> map = BytesMap.newInstance(Integer.class)
+                .usingMarshaller((Integer val) -> BigInteger.valueOf(val).toByteArray())
+                .usingUnmarshaller((byte[] data) -> new BigInteger(data).intValue())
+                .associate("divBy3", divBy3)
+                .build();
+
+        for (int num = 1; num <= 10; num++)
+            map.add(num);
+
+
+        //
+        // values() is iterator of all stored values
+        //
+        // Output:
+        //   Values: 1 2 3 4 5 6 7 8 9 10
+        //
+        Iterator<Integer> values = map.values();
+        StringBuilder sb = new StringBuilder("Values: ");
+        while (values.hasNext()) {
+            sb.append(values.next()).append(" ");
+        }
+        String res = sb.toString();
+        Assert.assertEquals("Values: 1 2 3 4 5 6 7 8 9 10 ", res);
+
+
+        //
+        // indexValues() is iterator of all values indexed under given index
+        //
+        // Output:
+        //   Index values: 1 4 7 10 2 5 8 3 6 9
+        //
+        Iterator<Integer> indexValues = map.indexValues("divBy3");
+        sb = new StringBuilder("Index values: ");
+        while (indexValues.hasNext()) {
+            sb.append(indexValues.next()).append(" ");
+        }
+        res = sb.toString();
+        Assert.assertEquals("Index values: 1 4 7 10 2 5 8 3 6 9 ", res);
+
+
+        //
+        // indexAssociations() is iterator of all associations in given index,
+        // association is list of associated values. In this example those
+        // are reminders by division with number 3.
+        //
+        // Output:
+        //   Associations: [1, 4, 7, 10][2, 5, 8][3, 6, 9]
+        //
+        Iterator<List<Integer>> indexAssociations = map.indexAssociations("divBy3");
+        sb = new StringBuilder("Associations: ");
+        while (indexAssociations.hasNext()) {
+            List<Integer> integers = indexAssociations.next();
+            sb.append(integers);
+        }
+        res = sb.toString();
+        Assert.assertEquals("Associations: [1, 4, 7, 10][2, 5, 8][3, 6, 9]", res);
+    }
 
 }

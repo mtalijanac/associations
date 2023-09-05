@@ -96,31 +96,22 @@ public interface AssociationMap<T> {
     }
 
 
+    /**
+     * Iterator of stored values in this map.
+     */
+    Iterator<T> values();
+
 
     /**
-     * T.B.D.
-     *
-     * @param <T>
+     * Return all values stored within index. Each invocation returns next value.
      */
-    public interface SerDes<T> {
-
-        /**
-         * Write an object to data array.
-         *
-         * @return data array with marshalled object
-         * @see #unmarshall(byte[])
-         */
-        byte[] marshall(T val);
+    Iterator<T> indexValues(String keyName);
 
 
-        /**
-         * Read object T from data array.
-         *
-         * @param marshalled object
-         * @return unmarshalled object
-         * @see #marshall(Object)
-         */
-        T unmarshall(byte[] data);
-    }
+    /**
+     * Return all values stored within index, grouped by associations.
+     * Each invocation returns next associated group.
+     */
+    Iterator<List<T>> indexAssociations(String keyName);
 
 }
