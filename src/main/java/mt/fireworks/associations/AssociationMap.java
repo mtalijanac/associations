@@ -80,7 +80,7 @@ public interface AssociationMap<T> {
      * @return data associated to passed query, organizied in multiple list,
      *         one fore each index. Lists are stored under key names.
      */
-    Map<String, List<T>> getAsMap(T query);
+    Map<String /*keyName*/, List<T>> getAsMap(T query);
 
 
     /**
@@ -90,7 +90,7 @@ public interface AssociationMap<T> {
      * @param value to be added
      * @return associated values, or empty map.
      */
-    default Map<String, List<T>> addAndGet(T value) {
+    default Map<String /*keyName*/, List<T>> addAndGet(T value) {
         return add(value) ? getAsMap(value)
                           : Collections.emptyMap();
     }
