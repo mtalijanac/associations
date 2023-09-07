@@ -11,7 +11,6 @@ import org.eclipse.collections.impl.map.mutable.UnifiedMap;
 
 import lombok.*;
 import mt.fireworks.associations.AssociationCache;
-import mt.fireworks.timecache.ByteList.ForEachAction;
 import mt.fireworks.timecache.Storage.Window;
 
 @RequiredArgsConstructor
@@ -190,8 +189,9 @@ public class BytesKeyedCache<T> implements AssociationCache<T> {
             for(Index<T> idx: indexes) {
                 idx.clearKey(obj, endTstamp);
             }
-            return ForEachAction.CONTINUE;
+            return null;
         });
+
 
         for(Index<T> idx: indexes) {
             idx.removeEmptyEntries();

@@ -70,10 +70,7 @@ public class ByteListTest {
 
         // forEach example, count objects:
         AtomicInteger objCount = new AtomicInteger();
-        byteList.forEach((objPos, bucket, pos, len) -> {
-            objCount.incrementAndGet();
-            return ForEachAction.CONTINUE;
-        });
+        byteList.forEach((objPos, bucket, pos, len) -> objCount.incrementAndGet());
         assertEquals(2, objCount.get());
     }
 
@@ -118,7 +115,7 @@ public class ByteListTest {
         bl.forEach((objPos, bucket, pos, len) -> {
             objCount.incrementAndGet();
             objLen.addAndGet(len);
-            return ForEachAction.CONTINUE;
+            return null;
         });
 
         assertEquals(N, objCount.get());

@@ -190,29 +190,18 @@ public class ByteList {
         });
     }
 
-    public enum ForEachAction {
-        CONTINUE, BREAK
+    public <T> DataIterator<T> iterator(Peeker<T> peeker) {
+        return new DataIterator<>(peeker, 0, -1);
     }
 
-    public void forEach(Peeker<ForEachAction> userPeeker) {
-        DataIterator<ForEachAction> iterator = iterator(userPeeker);
+    public void forEach(Peeker<?> userPeeker) {
+        DataIterator<?> iterator = iterator(userPeeker);
         while (iterator.hasNext()) {
-            ForEachAction res = iterator.next();
-            if (ForEachAction.BREAK.equals(res)) {
-                break;
-            }
+            iterator.next();
         }
     }
 
 
-
-    //
-    // Iteration objects
-    //
-
-    public <T> DataIterator<T> iterator(Peeker<T> peeker) {
-        return new DataIterator<>(peeker, 0, -1);
-    }
 
     @AllArgsConstructor
     public class DataIterator<T> implements Iterator<T> {
