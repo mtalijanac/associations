@@ -10,27 +10,27 @@ import org.eclipse.collections.impl.factory.primitive.LongLists;
 import org.eclipse.collections.impl.map.mutable.UnifiedMap;
 
 import lombok.*;
-import lombok.extern.slf4j.Slf4j;
+import mt.fireworks.associations.AssociationCache;
 import mt.fireworks.timecache.ByteList.ForEachAction;
 import mt.fireworks.timecache.Storage.Window;
 
-@Slf4j
 @RequiredArgsConstructor
-public class BytesKeyedCache<T> implements TimeCache<T> {
+public class BytesKeyedCache<T> implements AssociationCache<T> {
 
     @NonNull Storage storage;
     @NonNull Index<T>[] indexes;
     @NonNull SerDes<T> serdes2;
     @NonNull TimeKeys timeKeys;
 
+    List<String> keys;
+
+
     /** enabled/disable check if data is already stored in cache */
     @Setter boolean checkForDuplicates = false;
 
+    @Getter
     final BytesKeyedCacheMetrics metrics = new BytesKeyedCacheMetrics();
 
-    public Metrics getMetrics() {
-        return metrics;
-    }
 
     @Override
     public boolean add(T val) {
@@ -67,6 +67,12 @@ public class BytesKeyedCache<T> implements TimeCache<T> {
     }
 
     @Override
+    public List<T> get(String keyName, T query) {
+        return get(keyName, query, null,  null);
+    }
+
+
+    @Override
     public List<T> get(String indexName, T query, Long fromInclusive, Long toExclusive) {
         metrics.getCount.incrementAndGet();
 
@@ -85,6 +91,13 @@ public class BytesKeyedCache<T> implements TimeCache<T> {
         return result;
     }
 
+
+    @Override
+    public Map<String, List<T>> getAsMap(T query) {
+        return getAsMap(query, null, null);
+    }
+
+
     @Override
     public Map<String, List<T>> getAsMap(T query, Long fromInclusive, Long toExclusive) {
         metrics.getCount.incrementAndGet();
@@ -101,6 +114,7 @@ public class BytesKeyedCache<T> implements TimeCache<T> {
 
         return result;
     }
+
 
     List<T> readIndex(Index<T> index, T query, Long fromInclusive, Long toExclusive) {
         byte[] key = index.getKeyer().apply(query);
@@ -189,6 +203,50 @@ public class BytesKeyedCache<T> implements TimeCache<T> {
         long duration = end - start;
         metrics.lastTickDuration.set( duration );
     }
+
+
+    @Override
+    public long startTimeMillis() {
+        return storage.nowWindow.startTstamp;
+    }
+
+
+    @Override
+    public List<String> keys() {
+        if (keys != null)
+            return keys;
+
+        ArrayList<String> list = new ArrayList<>();
+        for (Index<T> idx: indexes) {
+            list.add(idx.getName());
+        }
+        keys = Collections.unmodifiableList(list);
+        return keys;
+    }
+
+
+    @Override
+    public Iterator<T> values() {
+        Iterator<T> valueIter = storage.iterator((objPos, bucket, pos, len) -> serdes2.unmarshall(bucket, pos, len));
+        return valueIter;
+    }
+
+
+    @Override
+    public Iterator<T> indexValues(String keyName) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+
+    @Override
+    public Iterator<List<T>> indexAssociations(String keyName) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+
+
 
 
     @Data
@@ -290,10 +348,4 @@ public class BytesKeyedCache<T> implements TimeCache<T> {
 
         return sb.toString();
     }
-
-
-    public long startTimeMillis() {
-        return storage.nowWindow.startTstamp;
-    }
-
 }

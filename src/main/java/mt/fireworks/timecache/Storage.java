@@ -1,6 +1,6 @@
 package mt.fireworks.timecache;
 
-import java.util.ArrayList;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -9,6 +9,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import lombok.*;
+import mt.fireworks.timecache.ByteList.DataIterator;
+import mt.fireworks.timecache.ByteList.Peeker;
 
 class Storage {
 
@@ -39,7 +41,6 @@ class Storage {
 
         ByteList store;
     }
-
 
 
 
@@ -211,6 +212,55 @@ class Storage {
 
         return oldestWin;
     }
+
+
+    public <T> Iterator<T> iterator(Peeker<T> peeker) {
+        return new StorageIterator<>(windows, peeker);
+    }
+
+    public static class StorageIterator<T> implements Iterator<T> {
+        Peeker<T> peeker;
+        Iterator<DataIterator<T>> higherIterator;
+        DataIterator<T> lowerIterator;
+
+        public StorageIterator(List<Window> windows, Peeker<T> peeker) {
+            ArrayList<Window> winCopy = new ArrayList<>(windows);
+            ArrayList<DataIterator<T>> dataIterators = new ArrayList<>();
+            for (Window win: winCopy) {
+                DataIterator<T> dataIterator = win.store.iterator(peeker);;
+                dataIterators.add(dataIterator);
+            }
+            higherIterator = dataIterators.iterator();
+        }
+
+        public boolean hasNext() {
+            if (lowerIterator == null) {
+                if (!higherIterator.hasNext()) {
+                    return false;
+                }
+                lowerIterator = higherIterator.next();
+            }
+
+            if (lowerIterator.hasNext()) {
+                return true;
+            }
+
+            while (higherIterator.hasNext()) {
+                lowerIterator = higherIterator.next();
+                if (lowerIterator.hasNext()) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public T next() {
+            return lowerIterator.next();
+        }
+    }
+
+
 
     @Override
     public String toString() {

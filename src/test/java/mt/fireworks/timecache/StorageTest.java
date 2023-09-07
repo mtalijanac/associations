@@ -1,15 +1,21 @@
 package mt.fireworks.timecache;
 
-import static org.junit.Assert.assertArrayEquals;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.junit.Assert.*;
 
 import java.nio.ByteBuffer;
-import java.util.HashMap;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import org.junit.Assert;
 import org.junit.Test;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import mt.fireworks.timecache.ByteList.Peeker;
 
 
 public class StorageTest {
@@ -153,6 +159,106 @@ public class StorageTest {
 
             byte[] readData = storage.getEntry(key);
             Assert.assertArrayEquals(orgData, readData);
+        }
+    }
+
+
+    @Data @AllArgsConstructor
+    static class Event {
+        long tstamp;
+        String data;
+    }
+
+    static class EventSerDes implements SerDes<Event> {
+        public byte[] marshall(Event val) {
+            return ByteBuffer.allocate(val.data.length() + 8)
+                           .putLong(val.tstamp)
+                           .put(val.data.getBytes(UTF_8))
+                           .array();
+        }
+
+        public Event unmarshall(byte[] data) {
+            String strData = new String(data, 8,  data.length - 8, UTF_8);
+            long tstamp = ByteBuffer.wrap(data).getLong();
+            return new Event(tstamp, strData);
+        }
+
+        public long timestampOfT(Event val) {
+            return val.tstamp;
+        }
+    }
+
+    @Test
+    public void testIterator() {
+
+        final long oneMinute    = TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);
+        final long twoMinutes   = TimeUnit.MILLISECONDS.convert(2, TimeUnit.MINUTES);
+
+        long now = System.currentTimeMillis();
+        long windowDuration = oneMinute;
+        int  pastWindowCount = 2;
+        int  futureWindowCount = 2;
+
+        Function<Event, byte[]> key = (Event e) -> e.data.substring(0, 5).getBytes(UTF_8);
+
+        BytesKeyedCacheFactory<Event> factory = new BytesKeyedCacheFactory<>();
+        factory.setSerdes(new EventSerDes());
+        factory.addKeyer("LEADING_FIVE_LETTERS", key);
+        factory.setHistoryWindowsCount(pastWindowCount);
+        factory.setFutureWindowCount(futureWindowCount);
+        factory.setWindowTimespanMs(windowDuration);
+        long start = factory.setStartTimeMillis(now);
+        BytesKeyedCache<Event> cache = factory.getInstance();
+
+        assertTrue(  cache.add( new Event(start, "Event now")));
+        assertTrue(  cache.add( new Event(start + oneMinute,  "Event in one minute")));
+        assertTrue(  cache.add( new Event(start + twoMinutes, "Event in two minutes")));
+        assertTrue(  cache.add( new Event(start - oneMinute, "Event before one minute")));
+        assertTrue(  cache.add( new Event(start - twoMinutes, "Event before two minutes")));
+
+        EventSerDes serDes = new EventSerDes();
+
+        Iterator<Event> storageIterator = cache.storage.iterator(new Peeker<Event>() {
+            public Event peek(long objPos, byte[] bucket, int pos, int len) {
+                return serDes.unmarshall(bucket, pos, len);
+            }
+        });
+
+
+        boolean hasNext = storageIterator.hasNext();
+        Event event1 = storageIterator.next();
+        assertEquals("Event before two minutes", event1.data);
+
+        boolean hasNext2 = storageIterator.hasNext();
+        Event event2 = storageIterator.next();
+        assertEquals("Event before one minute", event2.data);
+
+        boolean hasNext3 = storageIterator.hasNext();
+        Event event3 = storageIterator.next();
+        assertEquals("Event now", event3.data);
+
+        boolean hasNext4 = storageIterator.hasNext();
+        Event event4 = storageIterator.next();
+        assertEquals("Event in one minute", event4.data);
+
+        boolean hasNext5 = storageIterator.hasNext();
+        Event event5 = storageIterator.next();
+        assertEquals("Event in two minutes", event5.data);
+
+
+
+        List<Event> events = cache.get("LEADING_FIVE_LETTERS", new Event(start, "Event"));
+
+        HashSet<String> eventData = new HashSet<>();
+        Iterator<Event> eventIterator = cache.values();
+        while(eventIterator.hasNext()) {
+            eventData.add(eventIterator.next().data);
+        }
+
+        Assert.assertEquals(events.size(), eventData.size());
+        for (Event e: events) {
+            String d = e.getData();
+            assertTrue(eventData.contains(d));
         }
     }
 
