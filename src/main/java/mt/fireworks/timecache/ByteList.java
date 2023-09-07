@@ -89,15 +89,15 @@ public class ByteList {
         throw new IllegalStateException("If you can see this, it is a bug withing TimeCache implementation. freeSapce == " + freeSpace);
     }
 
-    byte[] bucketForPosition(long writePos) {
+    byte[] bucketForPosition(long objPos) {
         try {
-            int bucketIndex = (int) (writePos / conf.bucketSize);
+            int bucketIndex = (int) (objPos / conf.bucketSize);
             byte[] bucket = buckets.get(bucketIndex);
             return bucket;
         }
         catch (IndexOutOfBoundsException exc) {
             synchronized (this) {
-                int bucketIndex = (int) (writePos / conf.bucketSize);
+                int bucketIndex = (int) (objPos / conf.bucketSize);
                 while (bucketIndex >= buckets.size())
                     buckets.add(new byte[conf.bucketSize]);
                 byte[] bucket = buckets.get(bucketIndex);
@@ -107,47 +107,56 @@ public class ByteList {
     }
 
 
-
-    <T> T peek(long key, Peeker<T> peeker) {
-        int bucketIndex = (int) (key / conf.bucketSize);
-        byte[] startBucket = buckets.get(bucketIndex);
-
-        int objIdx = (int) (key % conf.bucketSize);
-        int freeSpace = startBucket.length - objIdx;
-
-        if (freeSpace == 1) {
-            byte[] endBucket = buckets.get(bucketIndex + 1);
-            short dataLen = BitsAndBytes.readSplitShort(startBucket, endBucket);
-            T res = peeker.peek(key, endBucket, 1, dataLen);
-            return res;
-        }
-
-        if (freeSpace == 2) {
-            byte[] endBucket = buckets.get(bucketIndex + 1);
-            int dataLen = BitsAndBytes.readUnsignedShort(startBucket, objIdx);
-            T res = peeker.peek(key, endBucket, 0, dataLen);
-            return res;
-        }
-
-        int dataLen = BitsAndBytes.readUnsignedShort(startBucket, objIdx);
-
-        if (objIdx + conf.dataHeaderSize + dataLen > startBucket.length) {
-            byte[] data = new byte[dataLen + 2];
-            BitsAndBytes.writeShort((short) dataLen, data, 0);
-
-            int toReadFromStartBucket = Math.min(startBucket.length - objIdx - 2, dataLen);
-            System.arraycopy(startBucket, objIdx + conf.dataHeaderSize, data, 2, toReadFromStartBucket);
-            byte[] endBucket = buckets.get(bucketIndex + 1);
-            int toReadFromEndBucket = dataLen - toReadFromStartBucket;
-            System.arraycopy(endBucket, 0, data, 2 + toReadFromStartBucket, toReadFromEndBucket);
-
-            T res = peeker.peek(key, data, 2, dataLen);
-            return res;
-        }
-
-        T res = peeker.peek(key, startBucket, objIdx + conf.dataHeaderSize, dataLen);
+    <T> T peek(long objPos, Peeker<T> peeker) {
+        final int objLength = objectLength(objPos);
+        T res = readObject(objPos, objLength, peeker);
         return res;
+    }
 
+
+    int objectLength(final long objPos) {
+        final int bucketIdx = (int) (objPos / conf.bucketSize);
+        if (bucketIdx >= buckets.size()) return -1;
+
+        final byte[] startBucket = buckets.get(bucketIdx);
+        final int objIdx = (int) (objPos % conf.bucketSize);
+        final int freeSpace = startBucket.length - objIdx;
+
+        if (freeSpace < conf.dataHeaderSize) {
+            if (buckets.size() == bucketIdx + 1) return -1;
+            short dataLen = BitsAndBytes.readSplitShort(startBucket, buckets.get(bucketIdx + 1));
+            return dataLen;
+        }
+
+        short dataLen = BitsAndBytes.readShort(startBucket, objIdx);
+        return dataLen;
+    }
+
+
+    <T> T readObject(final long objPos, final int dataLen, Peeker<T> userPeeker) {
+        final long dataPos = objPos + conf.dataHeaderSize;
+        final int bucketIdx = (int) (dataPos / conf.bucketSize);
+        final byte[] startBucket = buckets.get(bucketIdx);
+        final int dataIdx = (int) (dataPos % conf.bucketSize);
+        final int endingPosition = dataIdx + dataLen;
+
+        // data is fully contained within one bucket
+        if (endingPosition <= startBucket.length) {
+            return userPeeker.peek(objPos, startBucket, dataIdx, dataLen);
+        }
+
+        // data is split a between two buckets
+        final byte[] data = new byte[conf.dataHeaderSize + dataLen];
+        BitsAndBytes.writeShort((short) dataLen, data, 0);
+
+        final int len1 = startBucket.length - dataIdx;
+        System.arraycopy(startBucket, dataIdx, data, conf.dataHeaderSize, len1);
+
+        final int len2 = dataLen - len1;
+        final byte[] endBucket = buckets.get(bucketIdx + 1);
+        System.arraycopy(endBucket, 0, data, len1 + conf.dataHeaderSize, len2);
+
+        return userPeeker.peek(objPos, data, conf.dataHeaderSize, dataLen);
     }
 
 
@@ -166,6 +175,7 @@ public class ByteList {
         });
         return data;
     }
+
 
     /** Copy data under key to dest array at given idx.
      * @throws RuntimeException when there is no space in destination */
@@ -196,7 +206,6 @@ public class ByteList {
 
 
 
-
     //
     // Iteration objects
     //
@@ -204,51 +213,6 @@ public class ByteList {
     public <T> DataIterator<T> iterator(Peeker<T> peeker) {
         return new DataIterator<>(peeker, 0, -1);
     }
-
-    int objectLength(final long objPos) {
-        final int bucketIdx = (int) (objPos / conf.bucketSize);
-        if (bucketIdx >= buckets.size()) return -1;
-
-        final byte[] startBucket = buckets.get(bucketIdx);
-        final int objIdx = (int) (objPos % conf.bucketSize);
-        final int freeSpace = startBucket.length - objIdx;
-
-        if (freeSpace < conf.dataHeaderSize) {
-            if (buckets.size() == bucketIdx + 1) return -1;
-            short dataLen = BitsAndBytes.readSplitShort(startBucket, buckets.get(bucketIdx + 1));
-            return dataLen;
-        }
-
-        short dataLen = BitsAndBytes.readShort(startBucket, objIdx);
-        return dataLen;
-    }
-
-    <T> T readObject(final long objPos, final int dataLen, Peeker<T> userPeeker) {
-        final long dataPos = objPos + conf.dataHeaderSize;
-        final int bucketIdx = (int) (dataPos / conf.bucketSize);
-        final byte[] startBucket = buckets.get(bucketIdx);
-        final int dataIdx = (int) (dataPos % conf.bucketSize);
-        final int endingPosition = dataIdx + dataLen;
-
-        // data is fully contained within one bucket
-        if (endingPosition < startBucket.length) {
-            return userPeeker.peek(objPos, startBucket, dataIdx, dataLen);
-        }
-
-        // data is split a between two buckets
-        final byte[] data = new byte[conf.dataHeaderSize + dataLen];
-        BitsAndBytes.writeShort((short) dataLen, data, 0);
-
-        final int len1 = startBucket.length - dataIdx;
-        System.arraycopy(startBucket, dataIdx, data, conf.dataHeaderSize, len1);
-
-        final int len2 = dataLen - len1;
-        final byte[] endBucket = buckets.get(bucketIdx + 1);
-        System.arraycopy(endBucket, 0, data, len1 + conf.dataHeaderSize, len2);
-
-        return userPeeker.peek(objPos, data, conf.dataHeaderSize, dataLen);
-    }
-
 
     @AllArgsConstructor
     public class DataIterator<T> implements Iterator<T> {
