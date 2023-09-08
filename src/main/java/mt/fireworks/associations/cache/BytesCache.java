@@ -1,4 +1,4 @@
-package mt.fireworks.timecache;
+package mt.fireworks.associations.cache;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -11,7 +11,7 @@ import org.eclipse.collections.impl.map.mutable.UnifiedMap;
 
 import lombok.*;
 import mt.fireworks.associations.AssociationCache;
-import mt.fireworks.timecache.Storage.Window;
+import mt.fireworks.associations.cache.Storage.Window;
 
 @RequiredArgsConstructor
 public class BytesCache<T> implements AssociationCache<T> {

@@ -13,7 +13,7 @@ import org.eclipse.collections.impl.map.strategy.mutable.UnifiedMapWithHashingSt
 import lombok.*;
 import mt.fireworks.associations.BytesMapBuilder.AddSerdes;
 import mt.fireworks.associations.BytesMapBuilder.Builder;
-import mt.fireworks.timecache.ByteList;
+import mt.fireworks.associations.cache.ByteList;
 
 public class BytesMap<T> implements AssociationMap<T> {
 

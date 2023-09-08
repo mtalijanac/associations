@@ -1,6 +1,6 @@
-package mt.fireworks.timecache;
+package mt.fireworks.associations.cache;
 
-import static mt.fireworks.timecache.TimeUtils.info;
+import static mt.fireworks.associations.cache.TimeUtils.info;
 
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;

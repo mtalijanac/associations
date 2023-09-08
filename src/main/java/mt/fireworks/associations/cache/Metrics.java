@@ -1,4 +1,4 @@
-package mt.fireworks.timecache;
+package mt.fireworks.associations.cache;
 
 public interface Metrics {
 

@@ -1,4 +1,4 @@
-package mt.fireworks.timecache;
+package mt.fireworks.associations.cache;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -12,7 +12,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
 import org.junit.Test;
 
-import mt.fireworks.timecache.ByteList.*;
+import mt.fireworks.associations.cache.BitsAndBytes;
+import mt.fireworks.associations.cache.ByteList;
+import mt.fireworks.associations.cache.ByteList.*;
 
 public class ByteListTest {
 

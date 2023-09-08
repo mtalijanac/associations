@@ -1,4 +1,4 @@
-package mt.fireworks.timecache.examples;
+package mt.fireworks.associations.examples;
 
 import java.util.List;
 import java.util.Map;
@@ -9,7 +9,7 @@ import org.junit.Test;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import mt.fireworks.timecache.*;
+import mt.fireworks.associations.cache.*;
 
 /**
  * Example of keyer usage.

@@ -1,4 +1,4 @@
-package mt.fireworks.timecache.examples;
+package mt.fireworks.associations.examples;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
@@ -11,7 +11,7 @@ import org.junit.Test;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import mt.fireworks.timecache.*;
+import mt.fireworks.associations.cache.*;
 
 /**
  * Simplest example of cache usage. Add bunch of simple Events to cache.

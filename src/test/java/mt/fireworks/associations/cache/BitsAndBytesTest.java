@@ -1,6 +1,6 @@
-package mt.fireworks.timecache;
+package mt.fireworks.associations.cache;
 
-import static mt.fireworks.timecache.BitsAndBytes.*;
+import static mt.fireworks.associations.cache.BitsAndBytes.*;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Random;
@@ -8,7 +8,7 @@ import java.util.Random;
 import org.junit.Assert;
 import org.junit.Test;
 
-import mt.fireworks.timecache.BitsAndBytes;
+import mt.fireworks.associations.cache.BitsAndBytes;
 
 public class BitsAndBytesTest {
 

@@ -1,4 +1,4 @@
-package mt.fireworks.timecache;
+package mt.fireworks.associations.cache;
 
 import static org.junit.Assert.assertEquals;
 
@@ -12,6 +12,7 @@ import org.junit.Test;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import mt.fireworks.associations.cache.*;
 
 public class BytesCacheTest {
 

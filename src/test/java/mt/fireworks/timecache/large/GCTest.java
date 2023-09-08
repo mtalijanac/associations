@@ -11,7 +11,7 @@ import org.junit.Assert;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import mt.fireworks.timecache.*;
+import mt.fireworks.associations.cache.*;
 
 /**
  * Test proper clearing of index.

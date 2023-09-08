@@ -1,4 +1,4 @@
-package mt.fireworks.timecache;
+package mt.fireworks.associations.cache;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -9,8 +9,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import lombok.*;
-import mt.fireworks.timecache.ByteList.DataIterator;
-import mt.fireworks.timecache.ByteList.Peeker;
+import mt.fireworks.associations.cache.ByteList.DataIterator;
+import mt.fireworks.associations.cache.ByteList.Peeker;
 
 class Storage {
 

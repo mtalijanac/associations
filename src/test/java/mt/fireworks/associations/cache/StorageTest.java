@@ -1,4 +1,4 @@
-package mt.fireworks.timecache;
+package mt.fireworks.associations.cache;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.*;
@@ -15,7 +15,8 @@ import org.junit.Test;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import mt.fireworks.timecache.ByteList.Peeker;
+import mt.fireworks.associations.cache.*;
+import mt.fireworks.associations.cache.ByteList.Peeker;
 
 
 public class StorageTest {

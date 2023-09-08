@@ -1,4 +1,4 @@
-package mt.fireworks.timecache;
+package mt.fireworks.associations.cache;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

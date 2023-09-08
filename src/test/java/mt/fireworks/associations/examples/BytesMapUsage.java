@@ -1,4 +1,4 @@
-package mt.fireworks.associations.test;
+package mt.fireworks.associations.examples;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -13,7 +13,7 @@ import org.junit.Test;
 import lombok.AllArgsConstructor;
 import mt.fireworks.associations.*;
 
-public class UsageExamples {
+public class BytesMapUsage {
 
 
     //

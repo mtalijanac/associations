@@ -13,7 +13,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import mt.fireworks.timecache.*;
+import mt.fireworks.associations.cache.*;
 
 public class RealUsageTest {
 

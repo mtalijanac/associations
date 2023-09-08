@@ -1,8 +1,10 @@
-package mt.fireworks.timecache;
+package mt.fireworks.associations.cache;
 
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
+
+import mt.fireworks.associations.cache.TimeKeys;
 
 public class TimeKeysTest {
 
