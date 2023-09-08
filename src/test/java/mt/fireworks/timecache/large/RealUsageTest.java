@@ -119,7 +119,7 @@ public class RealUsageTest {
         factory.setWindowTimespanMs(iterDur);
         factory.setWinCapacity(8 * 8 * 1024 * 1024);
 
-        BytesKeyedCache<Trx> cache = factory.getInstance();
+        BytesCache<Trx> cache = factory.getInstance();
 
         ArrayList<String> pans = new ArrayList<>();
         for (int i = 0; i < 200_000; i++) {
@@ -175,7 +175,7 @@ public class RealUsageTest {
     @Data @AllArgsConstructor
     static class Producer implements Callable<Long> {
         String name;
-        BytesKeyedCache<Trx> cache;
+        BytesCache<Trx> cache;
         ArrayList<String> pans;
         ArrayList<String> mids;
         ArrayList<String> data;

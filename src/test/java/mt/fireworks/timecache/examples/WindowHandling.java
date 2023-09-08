@@ -66,7 +66,7 @@ public class WindowHandling {
         factory.setFutureWindowCount(futureWindowCount);
         factory.setWindowTimespanMs(windowDuration);
         long start = factory.setStartTimeMillis(now);
-        BytesKeyedCache<Event> cache = factory.getInstance();
+        BytesCache<Event> cache = factory.getInstance();
 
         // startTimestamp is rounded to lowest second
         assertEquals(now / 1000l * 1000l, start);

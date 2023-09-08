@@ -208,7 +208,7 @@ public class StorageTest {
         factory.setFutureWindowCount(futureWindowCount);
         factory.setWindowTimespanMs(windowDuration);
         long start = factory.setStartTimeMillis(now);
-        BytesKeyedCache<Event> cache = factory.getInstance();
+        BytesCache<Event> cache = factory.getInstance();
 
         assertTrue(  cache.add( new Event(start, "Event now")));
         assertTrue(  cache.add( new Event(start + oneMinute,  "Event in one minute")));

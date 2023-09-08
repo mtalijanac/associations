@@ -14,7 +14,7 @@ import mt.fireworks.associations.AssociationCache;
 import mt.fireworks.timecache.Storage.Window;
 
 @RequiredArgsConstructor
-public class BytesKeyedCache<T> implements AssociationCache<T> {
+public class BytesCache<T> implements AssociationCache<T> {
 
     @NonNull Storage storage;
     @NonNull Index<T>[] indexes;

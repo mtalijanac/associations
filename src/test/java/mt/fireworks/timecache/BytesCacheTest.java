@@ -13,7 +13,7 @@ import org.junit.Test;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-public class BytesKeyedCacheTest {
+public class BytesCacheTest {
 
     @Data
     @AllArgsConstructor
@@ -22,7 +22,7 @@ public class BytesKeyedCacheTest {
         int val;
     }
 
-    SerDes<TstTrx> serdes2 = new SerDes<BytesKeyedCacheTest.TstTrx>() {
+    SerDes<TstTrx> serdes2 = new SerDes<BytesCacheTest.TstTrx>() {
 
         public byte[] marshall(TstTrx t) {
             ByteBuffer bb = ByteBuffer.allocate(12);
@@ -58,7 +58,7 @@ public class BytesKeyedCacheTest {
         BytesKeyedCacheFactory<TstTrx> factory = new BytesKeyedCacheFactory<>();
         factory.setSerdes(serdes2);
         factory.addKeyer("key", keyer);
-        BytesKeyedCache<TstTrx> cache = factory.getInstance();
+        BytesCache<TstTrx> cache = factory.getInstance();
 
         long now = System.currentTimeMillis();
         TstTrx t1 = new TstTrx(now, 1);
@@ -90,7 +90,7 @@ public class BytesKeyedCacheTest {
         factory.setSerdes(serdes2);
         factory.addKeyer("Example", keyer);
 
-        BytesKeyedCache<TstTrx> cache = factory.getInstance();
+        BytesCache<TstTrx> cache = factory.getInstance();
         cache.setCheckForDuplicates(true);
 
         long now = System.currentTimeMillis();
@@ -113,7 +113,7 @@ public class BytesKeyedCacheTest {
         BytesKeyedCacheFactory<TstTrx> factory = new BytesKeyedCacheFactory<>();
         factory.setSerdes(serdes2);
         factory.addKeyer("key", keyer);
-        BytesKeyedCache<TstTrx> cache = factory.getInstance();
+        BytesCache<TstTrx> cache = factory.getInstance();
 
         long t = System.currentTimeMillis();
         cache.add( new TstTrx(t, 1) );

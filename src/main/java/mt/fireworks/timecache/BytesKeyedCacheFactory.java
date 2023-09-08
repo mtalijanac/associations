@@ -20,7 +20,7 @@ public class BytesKeyedCacheFactory<T> {
 
     @Setter boolean checkForDuplicates = false;
 
-    public BytesKeyedCache<T> getInstance() {
+    public BytesCache<T> getInstance() {
         if (serdes == null)
             throw new RuntimeException("Serdes not set");
 
@@ -40,7 +40,7 @@ public class BytesKeyedCacheFactory<T> {
         @SuppressWarnings("unchecked")
         Index<T>[] indexes = indexList.toArray(new Index[indexList.size()]);
         Storage storage = Storage.init(storageConf, startTimestamp, timeKeys);
-        BytesKeyedCache<T> cache = new BytesKeyedCache<>(storage, indexes, ser, timeKeys);
+        BytesCache<T> cache = new BytesCache<>(storage, indexes, ser, timeKeys);
         cache.setCheckForDuplicates(checkForDuplicates);
         return cache;
     }

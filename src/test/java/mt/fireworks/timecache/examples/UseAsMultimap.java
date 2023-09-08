@@ -40,7 +40,7 @@ public class UseAsMultimap {
         factory.setSerdes(new EventSerDes());
         factory.addKeyer("TWO_LETTERS", twoLetterKey);
         factory.addKeyer("FOUR_LETTERS", fourLetterKey);
-        BytesKeyedCache<Event> cache = factory.getInstance();
+        BytesCache<Event> cache = factory.getInstance();
 
 
         //

@@ -44,7 +44,7 @@ public class Keyers {
         factory.setSerdes(new HTTPSerdes());
         factory.addKeyer("METHOD", method);
         factory.addKeyer("URI", uri);
-        BytesKeyedCache<HTTPRequest> cache = factory.getInstance();
+        BytesCache<HTTPRequest> cache = factory.getInstance();
 
 
 

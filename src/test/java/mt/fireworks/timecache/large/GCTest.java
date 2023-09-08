@@ -18,7 +18,7 @@ import mt.fireworks.timecache.*;
  */
 public class GCTest {
 
-    BytesKeyedCache<Trx> cache;
+    BytesCache<Trx> cache;
 
     void run() {
         final long oneMinute    = TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);
@@ -72,7 +72,7 @@ public class GCTest {
     }
 
 
-    long addOneDay(BytesKeyedCache<Trx> cache, int panRangeFrom, int panRangeTo) {
+    long addOneDay(BytesCache<Trx> cache, int panRangeFrom, int panRangeTo) {
         long start = cache.startTimeMillis();
         long sum = 0;
         for (int i = panRangeFrom; i < panRangeTo; i++) {
@@ -85,7 +85,7 @@ public class GCTest {
         return sum;
     }
 
-    long amountSum(BytesKeyedCache<Trx> cache, int panRangeFrom, int panRangeTo) {
+    long amountSum(BytesCache<Trx> cache, int panRangeFrom, int panRangeTo) {
         long sum = 0;
         long start = cache.startTimeMillis();
         Trx query = new Trx(start, 0, 0);
