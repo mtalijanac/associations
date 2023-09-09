@@ -1,4 +1,4 @@
-package mt.fireworks.associations.cache;
+package mt.fireworks.associations;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -6,7 +6,7 @@ import static org.junit.Assert.assertEquals;
 import java.text.DecimalFormat;
 import java.util.Random;
 
-import mt.fireworks.associations.cache.ByteList;
+import mt.fireworks.associations.ByteList;
 
 public class ByteListBenchmark {
 

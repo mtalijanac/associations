@@ -9,8 +9,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import lombok.*;
-import mt.fireworks.associations.cache.ByteList.DataIterator;
-import mt.fireworks.associations.cache.ByteList.Peeker;
+import mt.fireworks.associations.ByteList;
+import mt.fireworks.associations.ByteList.DataIterator;
+import mt.fireworks.associations.ByteList.Peeker;
 
 class Storage {
 
@@ -305,10 +306,8 @@ class Storage {
             long totalUsed = 0;
             for (Window w: wins) {
                 ByteList store = w.store;
-                long size = store.buckets.size() * (long) store.conf.bucketSize;
-                long used = store.size.get();
-                totalAllocated += size;
-                totalUsed += used;
+                totalAllocated += store.getAllocatedSize();
+                totalUsed += store.getUsedSize();
             }
 
             String text = "## " + name + " metric:\n"

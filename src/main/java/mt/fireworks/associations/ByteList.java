@@ -1,4 +1,4 @@
-package mt.fireworks.associations.cache;
+package mt.fireworks.associations;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -6,6 +6,17 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import lombok.AllArgsConstructor;
 
+/**
+ * This list stores byte arrays in a form of [length of data, data].
+ * For each stored array index into list is returned. Index is of long type
+ * so max capacity of list is  {@code Long.MAX_VALUE} bytes, which is
+ * for practical purposes unlimited.
+ *
+ * <p>Current storage limitation is 64kb size limit for stored array.
+ * Default allocation size is 1 Mb, the value of it can be changed using
+ * constructor.
+ *
+ */
 public class ByteList {
 
     static class Conf {
@@ -22,10 +33,10 @@ public class ByteList {
     }
 
 
-
     AtomicLong size = new AtomicLong();
     Conf conf = new Conf();
     ArrayList<byte[]> buckets = new ArrayList<byte[]>();
+
 
     public ByteList() {
         buckets.add(new byte[conf.bucketSize]);
@@ -107,14 +118,14 @@ public class ByteList {
     }
 
 
-    <T> T peek(long objPos, Peeker<T> peeker) {
+    public <T> T peek(long objPos, Peeker<T> peeker) {
         final int objLength = objectLength(objPos);
         T res = readObject(objPos, objLength, peeker);
         return res;
     }
 
 
-    int objectLength(final long objPos) {
+    public int objectLength(final long objPos) {
         final int bucketIdx = (int) (objPos / conf.bucketSize);
         if (bucketIdx >= buckets.size()) return -1;
 
@@ -222,4 +233,13 @@ public class ByteList {
         }
     }
 
+
+
+    public long getUsedSize() {
+        return size.get();
+    }
+
+    public long getAllocatedSize() {
+        return buckets.size() * (long) conf.bucketSize;
+    }
 }

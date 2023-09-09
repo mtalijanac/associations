@@ -1,14 +1,15 @@
-package mt.fireworks.associations.cache;
+package mt.fireworks.associations;
 
-class BitsAndBytes {
+/** Utility manipulation of bits and bytes. */
+public class BitsAndBytes {
 
 
-    static void writeShort(short val, byte[] arr, int idx) {
+    public static void writeShort(short val, byte[] arr, int idx) {
         arr[idx]     = (byte) (val >>> 8);
         arr[idx + 1] = (byte) val;
     }
 
-    static short readShort(byte[] arr, int idx) {
+    public static short readShort(byte[] arr, int idx) {
         /* same code as:
             byte hb = src[pos];
             int hi = (0xff & hb) << 8;
@@ -27,12 +28,15 @@ class BitsAndBytes {
         return res;
     }
 
-    static void splitShort(short val, byte[] top, byte[] bottom) {
+    /** Write short to two arrays. High byte at end of {@code top} array, low byte at start of {@code bottom}. */
+    public static void splitShort(short val, byte[] top, byte[] bottom) {
         top[top.length - 1] = (byte) (val >>> 8);
         bottom[0]           = (byte) val;
     }
 
-    static short readSplitShort(byte[] top, byte[] bottom) {
+
+    /** Read short written by {@code #splitShort(short, byte[], byte[])}. */
+    public static short readSplitShort(byte[] top, byte[] bottom) {
         short res = (short) (	           // low two bytes of int composed
                 (0xff & top[top.length - 1]) << 8    // from high byte
               | (0xff & bottom[0])     // and low byte
@@ -41,38 +45,26 @@ class BitsAndBytes {
     }
 
 
-
-    static int readUnsignedShort(byte[] arr, int idx) {
+    public static int readUnsignedShort(byte[] arr, int idx) {
         return 0xFFFF & readShort(arr, idx);
     }
 
-    static short toUnsignedShort(long val) {
+    public static short toUnsignedShort(long val) {
         return (short) (0xFFFFl & val);
     }
 
-    static short toUnsignedShort(int val) {
+    public static short toUnsignedShort(int val) {
         return (short) (0xFFFFl & val);
     }
 
-    static long byteLenToWordLen(long byteOffset, int wordSize) {
-        if (wordSize == 0) return byteOffset;
-        long words = byteOffset / wordSize;
-        return words;
-    }
 
-    static long wordLenToByteLen(long words, int wordSize) {
-        if (wordSize == 0) return words;
-        return words * wordSize;
-    }
-
-
-    static int imask(int bits) {
+    public static int imask(int bits) {
         if (bits == 32)
             return 0xFFFF_FFFF;
         return (1 << bits) - 1;
     }
 
-    static long lmask(int bits) {
+    public static long lmask(int bits) {
         if (bits == 64)
             return 0xFFFF_FFFF_FFFF_FFFFl;
         return (1l << bits) - 1l;

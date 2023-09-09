@@ -2,6 +2,8 @@ package mt.fireworks.associations.cache;
 
 import java.time.*;
 
+import mt.fireworks.associations.BitsAndBytes;
+
 /**
  * Enkodiranje ključeva za keš. Ključ sadrži tstamp podatka i njegov index.
  * Tstamp je u ključu pohranjen kao 29 bitni offset u sekundama od

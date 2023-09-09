@@ -1,6 +1,6 @@
-package mt.fireworks.associations.cache;
+package mt.fireworks.associations;
 
-import static mt.fireworks.associations.cache.BitsAndBytes.*;
+import static mt.fireworks.associations.BitsAndBytes.*;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Random;
@@ -8,7 +8,7 @@ import java.util.Random;
 import org.junit.Assert;
 import org.junit.Test;
 
-import mt.fireworks.associations.cache.BitsAndBytes;
+import mt.fireworks.associations.BitsAndBytes;
 
 public class BitsAndBytesTest {
 
