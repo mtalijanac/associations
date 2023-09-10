@@ -90,4 +90,32 @@ public class BitsAndBytes {
         return 0;
     }
 
+
+    /** @return number of bytes needed to store value */
+    public static int byteSize(long value) {
+        if (value >= -0x80              && value <= 0x7F) return 1;
+        if (value >= -0x8000            && value <= 0x7FFF) return 2;
+        if (value >= -0x800000          && value <= 0x7FFFFF) return 3;
+        if (value >= -0x80000000        && value <= 0x7FFFFFFF) return 4;
+        if (value >= -0x8000000000L     && value <= 0x7FFFFFFFFFL) return 5;
+        if (value >= -0x800000000000L   && value <= 0x7FFFFFFFFFFFL) return 6;
+        if (value >= -0x80000000000000L && value <= 0x7FFFFFFFFFFFFFL) return 7;
+        return 8; // Value can be stored in 8 bytes (long range)
+    }
+
+
+
+    public static String toHexString(byte[] arr) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("[");
+        for (byte b: arr) {
+            String hex = Integer.toHexString(0xff & b);
+            if (hex.length() == 1) sb.append("0");
+            sb.append(hex).append(" ");
+        }
+        sb.setLength(sb.length() - 1);
+        sb.append("]");
+        return sb.toString();
+    }
 }
+

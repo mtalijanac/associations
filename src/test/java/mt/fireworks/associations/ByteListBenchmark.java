@@ -6,27 +6,24 @@ import static org.junit.Assert.assertEquals;
 import java.text.DecimalFormat;
 import java.util.Random;
 
-import mt.fireworks.associations.ByteList;
-
 public class ByteListBenchmark {
 
 
 //    int min_data_size = 1024;
 //    int max_data_size = 0xFFFF;
-    int min_data_size = 260;
-    int max_data_size = 320;
+    int min_data_size = 2600;
+    int max_data_size = 32000;
     long time_x = 10;
     long sleep_start = 5 * time_x;
     long sleep_after_benchmark = 20 * time_x;
-    long mb = 1024 * 1024;
+    long limit = 1024 * 1024 * 1024;
 
     public static void main(String[] args) throws InterruptedException {
         ByteListBenchmark blb = new ByteListBenchmark();
         Thread.sleep(blb.sleep_start);
-        long limit = 1024 * blb.mb;
-        blb.benchmark(limit);
+        blb.benchmark(blb.limit);
         System.gc();
-        blb.benchmark(limit);
+        blb.benchmark(blb.limit);
     }
 
     Random rng = new Random();
@@ -40,7 +37,7 @@ public class ByteListBenchmark {
 
 
      void benchmark(final long limit) throws InterruptedException {
-        ByteList bl = new ByteList();
+        ByteList bl = new ByteList(32 * 1024 * 1024);
 
         // generate data
         int data_set_size = 1000;
@@ -89,7 +86,7 @@ public class ByteListBenchmark {
         System.out.println("Storage size: " + storageSize + " bytes");
         System.out.println("Efficency:    " + df.format(efficency));
         int bucketCount = bl.buckets.size();
-        long bucketSize = bl.conf.bucketSize * bucketCount;
+        long bucketSize = bl.bucketSize * bucketCount;
         double efficency2 = (double) bucketSize / data_written;
         System.out.println("bucketSize:   " + bucketSize + " bytes");
         System.out.println("Efficency 2:  " + df.format(efficency2));

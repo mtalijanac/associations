@@ -12,9 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
 import org.junit.Test;
 
-import mt.fireworks.associations.BitsAndBytes;
-import mt.fireworks.associations.ByteList;
-import mt.fireworks.associations.ByteList.*;
+import mt.fireworks.associations.ByteList.DataIterator;
 
 public class ByteListTest {
 
