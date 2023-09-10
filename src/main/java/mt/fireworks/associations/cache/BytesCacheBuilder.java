@@ -19,6 +19,9 @@ public class BytesCacheBuilder {
 
     public static interface AddUnmarshaller<T> {
         AddAssociation<T> usingUnmarshaller(Function<byte[], T> unmarshaller);
+
+        // FIXME add timestamp functions
+        // FIXME add default timestamp function which assoicates timestamp of entry to value
     }
 
     public static interface AddAssociation<T> {
