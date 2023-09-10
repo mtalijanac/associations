@@ -21,7 +21,7 @@ class BytesMapBuilder  {
 
     public static interface AddSerdes<T> {
         /**
-         * Set {@code SerDes} underlying this map.
+         * Set {@code CacheSerDes} underlying this map.
          */
         AddAssociation<T> withSerdes(SerDes<T> serdes);
 

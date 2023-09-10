@@ -152,9 +152,9 @@ class Storage {
      * Read data stored under key, and unmarshall it using provided serdes.
      * Reading data will not allocate new byte array.
      * @return unmarshalled object or null if data not present.
-     * @see SerDes#unmarshall(byte[], int, int)
+     * @see CacheSerDes#unmarshall(byte[], int, int)
      */
-    public <T> T getEntry2(long key, SerDes<T> serdes) {
+    public <T> T getEntry2(long key, CacheSerDes<T> serdes) {
         long tstamp = timeKeys.tstamp(key);
         long index = timeKeys.index(key);
         Window window = windowForTstamp(tstamp);
@@ -164,7 +164,7 @@ class Storage {
     }
 
     /** @return true if value under key equal to passed data? */
-    public boolean equal(long key, byte[] data, SerDes<?> serdes) {
+    public boolean equal(long key, byte[] data, CacheSerDes<?> serdes) {
         long tstamp = timeKeys.tstamp(key);
         long index = timeKeys.index(key);
         Window window = windowForTstamp(tstamp);

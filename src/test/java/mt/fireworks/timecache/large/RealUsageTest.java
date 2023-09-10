@@ -26,7 +26,7 @@ public class RealUsageTest {
         String trxData;
     }
 
-    static class TrxSerDes implements SerDes<Trx> {
+    static class TrxSerDes implements CacheSerDes<Trx> {
 
         public byte[] marshall(Trx trx) {
             ByteBuffer bb = ByteBuffer.allocate(1000);

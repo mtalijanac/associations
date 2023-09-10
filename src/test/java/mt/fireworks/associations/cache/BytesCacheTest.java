@@ -23,7 +23,7 @@ public class BytesCacheTest {
         int val;
     }
 
-    SerDes<TstTrx> serdes2 = new SerDes<BytesCacheTest.TstTrx>() {
+    CacheSerDes<TstTrx> serdes2 = new CacheSerDes<BytesCacheTest.TstTrx>() {
 
         public byte[] marshall(TstTrx t) {
             ByteBuffer bb = ByteBuffer.allocate(12);

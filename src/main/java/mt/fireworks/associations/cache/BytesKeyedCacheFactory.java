@@ -11,7 +11,7 @@ public class BytesKeyedCacheFactory<T> {
 
     @Setter HashMap<String, Function<T, byte[]>> keyers = new HashMap<>();
 
-    @Setter SerDes<T> serdes;
+    @Setter CacheSerDes<T> serdes;
     @Setter Boolean metricsEnabled = Boolean.TRUE;
 
     @Setter Storage.Conf storageConf = new Storage.Conf();
@@ -24,7 +24,7 @@ public class BytesKeyedCacheFactory<T> {
         if (serdes == null)
             throw new RuntimeException("Serdes not set");
 
-        SerDes<T> ser = serdes;
+        CacheSerDes<T> ser = serdes;
         if (metricsEnabled) {
             ser = new MetricSerDes2<>(serdes);
         }

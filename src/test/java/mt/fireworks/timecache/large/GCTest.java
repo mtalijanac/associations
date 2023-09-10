@@ -108,7 +108,7 @@ public class GCTest {
     }
 
 
-    SerDes<Trx> serdes = new SerDes<GCTest.Trx>() {
+    CacheSerDes<Trx> serdes = new CacheSerDes<GCTest.Trx>() {
         public byte[] marshall(Trx val) {
             ByteBuffer bb = ByteBuffer.allocate(3*8);
             bb.putLong(val.getTstamp());

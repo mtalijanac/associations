@@ -80,7 +80,7 @@ public class Keyers {
 
 
 
-    static class HTTPSerdes implements SerDes<HTTPRequest> {
+    static class HTTPSerdes implements CacheSerDes<HTTPRequest> {
         public byte[] marshall(HTTPRequest val) {
             String res = val.tstamp + "\n"
                        + val.method + "\n"

@@ -18,7 +18,7 @@ public class BytesCache<T> implements AssociationCache<T> {
 
     @NonNull Storage storage;
     @NonNull Index<T>[] indexes;
-    @NonNull SerDes<T> serdes2;
+    @NonNull CacheSerDes<T> serdes2;
     @NonNull TimeKeys timeKeys;
 
     List<String> keys;

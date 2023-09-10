@@ -14,11 +14,11 @@ import lombok.Getter;
  *
  */
 @AllArgsConstructor
-class MetricSerDes2<T> implements SerDes<T>, Metrics {
+class MetricSerDes2<T> implements CacheSerDes<T>, Metrics {
 
-    @Getter final String name = "SerDes";
+    @Getter final String name = "CacheSerDes";
 
-    SerDes<T> delegate;
+    CacheSerDes<T> delegate;
 
 
 

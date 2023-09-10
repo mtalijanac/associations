@@ -85,7 +85,7 @@ public class UseAsMultimap {
     }
 
 
-    static class EventSerDes implements SerDes<Event> {
+    static class EventSerDes implements CacheSerDes<Event> {
         public byte[] marshall(Event val) {
             return ByteBuffer.allocate(val.data.length() + 8)
                            .putLong(val.tstamp)
