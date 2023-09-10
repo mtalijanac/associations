@@ -12,7 +12,6 @@ import org.junit.Test;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import mt.fireworks.associations.cache.*;
 
 public class BytesCacheTest {
 
@@ -56,7 +55,7 @@ public class BytesCacheTest {
 
     @Test
     public void usageExample() throws InterruptedException {
-        BytesKeyedCacheFactory<TstTrx> factory = new BytesKeyedCacheFactory<>();
+        BytesCacheFactory<TstTrx> factory = new BytesCacheFactory<>();
         factory.setSerdes(serdes2);
         factory.addKeyer("key", keyer);
         BytesCache<TstTrx> cache = factory.getInstance();
@@ -87,7 +86,7 @@ public class BytesCacheTest {
 
     @Test
     public void duplicateTest() {
-        BytesKeyedCacheFactory<TstTrx> factory = new BytesKeyedCacheFactory<>();
+        BytesCacheFactory<TstTrx> factory = new BytesCacheFactory<>();
         factory.setSerdes(serdes2);
         factory.addKeyer("Example", keyer);
 
@@ -111,10 +110,10 @@ public class BytesCacheTest {
 
     @Test
     public void timeLogicTEst() {
-        BytesKeyedCacheFactory<TstTrx> factory = new BytesKeyedCacheFactory<>();
-        factory.setSerdes(serdes2);
-        factory.addKeyer("key", keyer);
-        BytesCache<TstTrx> cache = factory.getInstance();
+        BytesCache<TstTrx> cache = BytesCache.newInstance(TstTrx.class)
+             .withSerdes(serdes2)
+             .associate("key", keyer)
+             .build();
 
         long t = System.currentTimeMillis();
         cache.add( new TstTrx(t, 1) );

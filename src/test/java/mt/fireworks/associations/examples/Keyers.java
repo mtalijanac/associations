@@ -40,7 +40,7 @@ public class Keyers {
         Function<HTTPRequest, byte[]> method = req -> req.method.getBytes();
         Function<HTTPRequest, byte[]> uri = req -> req.uri.toString().getBytes();
 
-        BytesKeyedCacheFactory<HTTPRequest> factory = new BytesKeyedCacheFactory<>();
+        BytesCacheFactory<HTTPRequest> factory = new BytesCacheFactory<>();
         factory.setSerdes(new HTTPSerdes());
         factory.addKeyer("METHOD", method);
         factory.addKeyer("URI", uri);

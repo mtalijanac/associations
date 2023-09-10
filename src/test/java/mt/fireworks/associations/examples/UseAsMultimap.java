@@ -36,7 +36,7 @@ public class UseAsMultimap {
         Function<Event, byte[]> twoLetterKey  = (Event e) -> e.data.substring(0, 2).getBytes(UTF_8);
         Function<Event, byte[]> fourLetterKey = (Event e) -> e.data.substring(0, 4).getBytes(UTF_8);
 
-        BytesKeyedCacheFactory<Event> factory = new BytesKeyedCacheFactory<>();
+        BytesCacheFactory<Event> factory = new BytesCacheFactory<>();
         factory.setSerdes(new EventSerDes());
         factory.addKeyer("TWO_LETTERS", twoLetterKey);
         factory.addKeyer("FOUR_LETTERS", fourLetterKey);

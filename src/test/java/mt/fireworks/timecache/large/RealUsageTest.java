@@ -110,14 +110,14 @@ public class RealUsageTest {
         Function<Trx, byte[]> panIndex = (Trx t) -> t.getPan().getBytes(UTF_8);
         Function<Trx, byte[]> midIndex = (Trx t) -> t.getMerId().getBytes(UTF_8);
 
-        BytesKeyedCacheFactory<Trx> factory = new BytesKeyedCacheFactory<>();
+        BytesCacheFactory<Trx> factory = new BytesCacheFactory<>();
         factory.setSerdes(new TrxSerDes());
         factory.addKeyer("PAN", panIndex);
         factory.addKeyer("MID", midIndex);
         factory.setHistoryWindowsCount(7);
         factory.setFutureWindowCount(1);
         factory.setWindowTimespanMs(iterDur);
-        factory.setWinCapacity(8 * 8 * 1024 * 1024);
+        factory.setAllocationSize(8 * 8 * 1024 * 1024);
 
         BytesCache<Trx> cache = factory.getInstance();
 

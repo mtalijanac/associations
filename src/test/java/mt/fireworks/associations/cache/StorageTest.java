@@ -30,7 +30,7 @@ public class StorageTest {
 
     @Test
     public void debug() {
-        Storage storage = Storage.init();
+        Storage storage = new Storage(new TimeKeys());
 
         byte[] someData_1 = randomData(250, 500);
         ByteBuffer.wrap(someData_1).putInt(0x5ca1ab1e);
@@ -57,7 +57,7 @@ public class StorageTest {
 
 
         // init storage
-        Storage storage = Storage.init();
+        Storage storage = new Storage(new TimeKeys());
 
 
         // write data
@@ -75,7 +75,7 @@ public class StorageTest {
 
     @Test
     public void testWithLotOfData() {
-        Storage storage = Storage.init();
+        Storage storage = new Storage(new TimeKeys());
         long[] timespan = storage.timespan();
 
         for (int i = 0; i < 2_000_000; i++) {
@@ -89,7 +89,7 @@ public class StorageTest {
 
     @Test
     public void testWithLotOfData2() {
-        Storage storage = Storage.init();
+        Storage storage = new Storage(new TimeKeys());
         long[] timespan = storage.timespan();
 
         long[] counter = new long[8];
@@ -108,7 +108,7 @@ public class StorageTest {
 
     @Test
     public void windowAllocationTest() {
-        Storage storage = Storage.init();
+        Storage storage = new Storage(new TimeKeys());
         int winSize = storage.windows.size();
         int expectedWinSize = storage.conf.historyWindowCount + 1 + storage.conf.futureWindowCount;
         Assert.assertEquals(expectedWinSize, winSize);
@@ -116,7 +116,7 @@ public class StorageTest {
 
     @Test
     public void testInsertsOutsideWindow() {
-        Storage storage = Storage.init();
+        Storage storage = new Storage(new TimeKeys());
         byte[] data = new byte[100];
         ThreadLocalRandom.current().nextBytes(data);
 
@@ -138,7 +138,7 @@ public class StorageTest {
 
     @Test
     public void testInsertsInEachWindow() {
-        Storage storage = Storage.init();
+        Storage storage = new Storage(new TimeKeys());
 
         final long now = System.currentTimeMillis();
         HashMap<Long, byte[]> storedDat = new HashMap<>();
@@ -202,7 +202,7 @@ public class StorageTest {
 
         Function<Event, byte[]> key = (Event e) -> e.data.substring(0, 5).getBytes(UTF_8);
 
-        BytesKeyedCacheFactory<Event> factory = new BytesKeyedCacheFactory<>();
+        BytesCacheFactory<Event> factory = new BytesCacheFactory<>();
         factory.setSerdes(new EventSerDes());
         factory.addKeyer("LEADING_FIVE_LETTERS", key);
         factory.setHistoryWindowsCount(pastWindowCount);

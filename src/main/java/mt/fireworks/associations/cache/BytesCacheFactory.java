@@ -7,7 +7,7 @@ import java.util.function.Function;
 
 import lombok.Setter;
 
-public class BytesKeyedCacheFactory<T> {
+public class BytesCacheFactory<T> {
 
     @Setter HashMap<String, Function<T, byte[]>> keyers = new HashMap<>();
 
@@ -15,10 +15,10 @@ public class BytesKeyedCacheFactory<T> {
     @Setter Boolean metricsEnabled = Boolean.TRUE;
 
     @Setter Storage.Conf storageConf = new Storage.Conf();
-    Long startTimestamp;
-    @Setter TimeKeys timeKeys = new TimeKeys();
+    Long startTimestamp = System.currentTimeMillis();
 
     @Setter boolean checkForDuplicates = false;
+    @Setter int indexMapCount = 128;
 
     public BytesCache<T> getInstance() {
         if (serdes == null)
@@ -29,18 +29,21 @@ public class BytesKeyedCacheFactory<T> {
             ser = new MetricSerDes2<>(serdes);
         }
 
+        TimeKeys timeKeys = new TimeKeys();
+
         ArrayList<Index<T>> indexList = new ArrayList<>();
         for (Entry<String, Function<T, byte[]>> e: keyers.entrySet()) {
             String name = e.getKey();
             Function<T, byte[]> keyer = e.getValue();
-            Index<T> i = new Index<T>(name, keyer, timeKeys);
+            Index<T> i = new Index<>(name, keyer, timeKeys, indexMapCount);
             indexList.add(i);
         }
 
+
         @SuppressWarnings("unchecked")
         Index<T>[] indexes = indexList.toArray(new Index[indexList.size()]);
-        Storage storage = Storage.init(storageConf, startTimestamp, timeKeys);
-        BytesCache<T> cache = new BytesCache<>(storage, indexes, ser, timeKeys);
+        Storage storage = new Storage(storageConf, startTimestamp, timeKeys);
+        BytesCache<T> cache = new BytesCache<>(timeKeys, storage, indexes, ser);
         cache.setCheckForDuplicates(checkForDuplicates);
         return cache;
     }
@@ -66,8 +69,8 @@ public class BytesKeyedCacheFactory<T> {
         storageConf.setWindowTimespanMs(val);
     }
 
-    public void setWinCapacity(Integer val) {
-        storageConf.setWinCapacity(val);
+    public void setAllocationSize(int sizeInBytes) {
+        storageConf.setAllocationSize(sizeInBytes);
     }
 
     public long setStartTimeMillis(Long startTimestamp) {

@@ -2,7 +2,6 @@ package mt.fireworks.associations.cache;
 
 import static mt.fireworks.associations.cache.TimeUtils.info;
 
-import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
@@ -14,41 +13,52 @@ import org.eclipse.collections.impl.map.strategy.mutable.UnifiedMapWithHashingSt
 
 import lombok.Data;
 import lombok.Getter;
+import mt.fireworks.associations.Associations;
 
 @Data
 class Index<T> {
 
+    final static HashingStrategy<byte[]> bytesHashing = Associations.bytesHashingStrategy();
+
+
+    /** index name */
     String name;
-    MutableMap<byte[], MutableLongList>[] indexes;
-    Function<T, byte[]> keyer;
+
+    /** function which maps data to association key */
+    Function<T, byte[] /**association key*/> keyer;
+
+    /** multimap of association key to keys in storage */
+    MutableMap<byte[] /**association key*/, MutableLongList /*storage keys*/>[] indexes;
+
+    /** stores key epoch, shared across cache */
     TimeKeys timeKeys;
 
+    @Getter
     final IndexMetrics metrics = new IndexMetrics();
 
-    public Metrics getMetrics() {
-        return metrics;
-    }
 
-    IndexHashCode hasher = new IndexHashCode();
-    MutableMap<byte[], MutableLongList> index(byte[] key) {
-        int idx = Math.abs( hasher.computeHashCode(key) ) % indexes.length;
-        return indexes[idx];
-    }
-
-
-    Index(String name, Function<T, byte[]> keyer, TimeKeys tk) {
+    Index(String name, Function<T, byte[]> keyer, TimeKeys tk, int mapCount) {
         this.name = name;
         this.keyer = keyer;
         this.timeKeys = tk;
 
-        MutableMap<byte[], MutableLongList>[] maps = new MutableMap[128];
-        indexes = maps;
+        this.indexes = new MutableMap[mapCount];
+
         for (int idx = 0; idx < indexes.length; idx++) {
-            UnifiedMapWithHashingStrategy<byte[], MutableLongList> map = new UnifiedMapWithHashingStrategy<>(new IndexHashCode());
+            UnifiedMapWithHashingStrategy<byte[], MutableLongList> map = new UnifiedMapWithHashingStrategy<>(bytesHashing);
             MutableMap<byte[], MutableLongList> mmap = map.asSynchronized();
-            maps[idx] = mmap;
+            this.indexes[idx] = mmap;
         }
     }
+
+
+    /** fetch index based on key */
+    MutableMap<byte[], MutableLongList> index(byte[] key) {
+        int idx = Math.abs( bytesHashing.computeHashCode(key) ) % indexes.length;
+        return indexes[idx];
+    }
+
+
 
 
     public boolean put(T val, long storageKey) {
@@ -174,26 +184,6 @@ class Index<T> {
         metrics.removeEmptyDuration.addAndGet(dur);
     }
 
-
-    static class IndexHashCode implements HashingStrategy<byte[]> {
-        @Override
-        public int computeHashCode(byte[] a) {
-            if (a == null) return 0;
-
-            int result = 1;
-            for (int idx = 0; idx < a.length; idx++) {
-                byte element = a[idx];
-                result = 31 * result + element;
-            }
-
-            return result;
-        }
-
-        @Override
-        public boolean equals(byte[] object1, byte[] object2) {
-            return Arrays.equals(object1, object2);
-        }
-    }
 
 
     class IndexMetrics implements Metrics {

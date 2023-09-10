@@ -11,15 +11,16 @@ import org.eclipse.collections.impl.map.mutable.UnifiedMap;
 
 import lombok.*;
 import mt.fireworks.associations.AssociationCache;
+import mt.fireworks.associations.cache.BytesCacheBuilder.AddSerdes;
 import mt.fireworks.associations.cache.Storage.Window;
 
 @RequiredArgsConstructor
 public class BytesCache<T> implements AssociationCache<T> {
 
-    @NonNull Storage storage;
-    @NonNull Index<T>[] indexes;
-    @NonNull CacheSerDes<T> serdes2;
-    @NonNull TimeKeys timeKeys;
+    @NonNull TimeKeys timeKeys;	    	// stores key epoch
+    @NonNull Storage storage;			// stores data
+    @NonNull Index<T>[] indexes;		// stores associations
+    @NonNull CacheSerDes<T> serdes2;	// does data manipulation
 
     List<String> keys;
 
@@ -29,6 +30,10 @@ public class BytesCache<T> implements AssociationCache<T> {
 
     @Getter
     final BytesKeyedCacheMetrics metrics = new BytesKeyedCacheMetrics();
+
+    public static <T> AddSerdes<T> newInstance(Class<T> klazz) {
+        return new BytesCacheBuilder.Builder<T>();
+    }
 
 
     @Override

@@ -59,7 +59,7 @@ public class WindowHandling {
         int  pastWindowCount = 2;
         int  futureWindowCount = 2;
 
-        BytesKeyedCacheFactory<Event> factory = new BytesKeyedCacheFactory<>();
+        BytesCacheFactory<Event> factory = new BytesCacheFactory<>();
         factory.setSerdes(new EventSerDes());
         factory.addKeyer("LEADING_FIVE_LETTERS", key);
         factory.setHistoryWindowsCount(pastWindowCount);

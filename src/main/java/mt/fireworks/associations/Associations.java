@@ -3,6 +3,8 @@ package mt.fireworks.associations;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
+import org.eclipse.collections.api.block.HashingStrategy;
+
 import lombok.AllArgsConstructor;
 
 public class Associations {
@@ -36,4 +38,8 @@ public class Associations {
         return new StringSerDes(charset);
     }
 
+
+    public static HashingStrategy<byte[]> bytesHashingStrategy() {
+        return new BytesHashingStrategy();
+    }
 }

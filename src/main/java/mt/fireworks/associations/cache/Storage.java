@@ -15,76 +15,50 @@ import mt.fireworks.associations.ByteList.Peeker;
 
 class Storage {
 
-    @Setter
-    static class Conf {
-        /** count of windows preceeding nowWindow */
-        int historyWindowCount = 7;
+    // config parameters for this storage
+    final Conf conf;
 
-        /** count of window following nowWindow */
-        int futureWindowCount = 1;
+    // stores key epoch, shared across cache
+    final TimeKeys timeKeys;
 
-        /** duration of window in ms */
-        long windowTimespanMs = TimeUnit.DAYS.toMillis(1);
+    // cache time windows, each window store one timespan
+    final ArrayList<Window> windows = new ArrayList<>();
 
-        int winCapacity = 1 * 1024 * 1024;
-    }
+    // window where events happening at currentTime would enter
+    Window nowWindow;
 
-    static class Window {
-
-        /** inclusive tstamp of oldest data in window */
-        long startTstamp;
-
-        /** exclusive tstamp of newest data in window */
-        long endTstamp;
-
-        /** if closed do not write to it */
-        final AtomicBoolean closed = new AtomicBoolean(false);
-
-        ByteList store;
-    }
-
-
-
+    // lock for windows access
     final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
-    Conf conf = new Conf();
-    ArrayList<Window> windows = new ArrayList<>();
-    Window nowWindow;	// window where events happening at currentTime would enter
-    TimeKeys timeKeys;
 
     @Getter
-    StorageMetric metric = new StorageMetric();
+    final StorageMetric metric = new StorageMetric();
 
-    static Storage init() {
-        return init(null, null, new TimeKeys());
+
+    Storage(TimeKeys timeKeys) {
+        this(new Conf(), System.currentTimeMillis(), timeKeys);
     }
 
-    static Storage init(Conf conf, Long start, TimeKeys timeKeys) {
-        Storage st = new Storage();
-        st.timeKeys = timeKeys;
 
-        if (conf != null) {
-            st.conf = conf;
-        }
+    Storage(Conf conf, Long startDate, TimeKeys timeKeys) {
+        this.conf = conf == null ? new Conf() : conf;
+        this.timeKeys = timeKeys;
 
-        long startDate = (System.currentTimeMillis() / 1000l) * 1000l;
-        if (start != null) {
-            startDate = (start / 1000l) * 1000l;
-        }
+        long start = startDate != null ? TimeKeys.normalizieTimestamp(startDate)
+                                       : TimeKeys.normalizieTimestamp(System.currentTimeMillis());
 
-        for (int idx = -1 * st.conf.historyWindowCount; idx <= st.conf.futureWindowCount; idx++) {
+        for (int idx = -1 * this.conf.historyWindowCount; idx <= this.conf.futureWindowCount; idx++) {
             Window win = new Window();
-            win.startTstamp = startDate + idx * st.conf.windowTimespanMs;
-            win.endTstamp = win.startTstamp + st.conf.windowTimespanMs;
-            win.store = new ByteList(st.conf.winCapacity);
-            st.windows.add(win);
+            win.startTstamp = start + idx * this.conf.windowTimespanMs;
+            win.endTstamp = win.startTstamp + this.conf.windowTimespanMs;
+            win.store = new ByteList(this.conf.allocationSize);
+            this.windows.add(win);
 
             if (idx == 0) {
-                st.nowWindow = win;
+                this.nowWindow = win;
             }
         }
-
-        return st;
     }
+
 
 
     /** return unsafe index of window to which this tstamp belong */
@@ -198,7 +172,7 @@ class Storage {
         Window win = new Window();
         win.startTstamp = lastWindow.endTstamp;
         win.endTstamp = win.startTstamp + conf.windowTimespanMs;
-        win.store = new ByteList(conf.winCapacity);
+        win.store = new ByteList(conf.allocationSize);
         windows.add(win);
 
         // move now window
@@ -318,7 +292,7 @@ class Storage {
                         + "           to: " + to + "\n"
                         + "    allocated: " + totalAllocated + " bytes\n"
                         + "         used: " + totalUsed + " bytes\n"
-                        + " win capacity: " + conf.winCapacity + " bytes";
+                        + " win capacity: " + conf.allocationSize + " bytes";
 
             return text;
         }
@@ -332,4 +306,32 @@ class Storage {
         }
     }
 
+
+    @Setter
+    static class Conf {
+        /** duration of window in ms */
+        long windowTimespanMs = TimeUnit.DAYS.toMillis(1);
+
+        /** count of windows preceding nowWindow */
+        int historyWindowCount = 7;
+
+        /** count of window following nowWindow */
+        int futureWindowCount = 1;
+
+        int allocationSize = 1 * 1024 * 1024;
+    }
+
+    static class Window {
+
+        /** inclusive tstamp of oldest data in window */
+        long startTstamp;
+
+        /** exclusive tstamp of newest data in window */
+        long endTstamp;
+
+        /** if closed do not write to it */
+        final AtomicBoolean closed = new AtomicBoolean(false);
+
+        ByteList store;
+    }
 }

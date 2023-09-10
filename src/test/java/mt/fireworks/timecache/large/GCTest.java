@@ -28,7 +28,7 @@ public class GCTest {
         int  pastWindowCount = 1;
         int  futureWindowCount = 1;
 
-        BytesKeyedCacheFactory<Trx> fact = new BytesKeyedCacheFactory<>();
+        BytesCacheFactory<Trx> fact = new BytesCacheFactory<>();
         fact.setSerdes(serdes);
         fact.addKeyer("PAN", keyer);
         fact.setHistoryWindowsCount(pastWindowCount);

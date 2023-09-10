@@ -30,6 +30,14 @@ public class ByteList {
 
 
     public long add(byte[] data) {
+        if (data.length > bucketSize) {
+            String msg = "Illegal data size. "
+                       + "Adding data of size: " + data.length + " bytes, "
+                       + "while allocationSize is set to: " + bucketSize + " bytes. "
+                       + "To add data this big increase allocation size.";
+            throw new RuntimeException(msg);
+        }
+
         final int headerSize = ObjHeader.headerSize(data.length);
         final int objectSize = headerSize + data.length;
         final long objStartPos = newObject(objectSize);

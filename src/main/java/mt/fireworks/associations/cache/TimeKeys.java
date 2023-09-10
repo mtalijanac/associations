@@ -23,6 +23,7 @@ class TimeKeys {
     final long mask = BitsAndBytes.lmask(35);
 
 
+
     /** @return tstamp of current new year, unless if current month is January. Than it is last new year */
     long startingYear() {
         Year y = Year.now(ZoneId.of("UTC"));
@@ -76,4 +77,15 @@ class TimeKeys {
         return key & mask;
     }
 
+
+    /**
+     * Rounds down timestamp to lower second.
+     *
+     * @param tstamp in millis since epoch
+     * @return timestamp with milliseconds set to 0.
+     */
+    static long  normalizieTimestamp(long tstamp) {
+        long t = (tstamp / 1000l) * 1000l;
+        return t;
+    }
 }
