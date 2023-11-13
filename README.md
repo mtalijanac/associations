@@ -12,7 +12,7 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/mtalijanac/timecache.git">
+  <a href="https://github.com/mtalijanac/associations.git">
     <img src="images/logo.png" alt="Logo" width="80" height="80">
   </a>
 
@@ -21,14 +21,14 @@
   <p align="center">
     An awesome MultiMap for caching events!
     <br />
-    <a href="https://github.com/mtalijanac/timecache"><strong>Explore the docs »</strong></a>
+    <a href="https://github.com/mtalijanac/associations"><strong>Explore the docs »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/mtalijanac/timecache/blob/main/src/test/java/mt/fireworks/timecache/examples/UseAsMutlimap.java">View Demo</a>
+    <a href="https://github.com/mtalijanac/associations/blob/main/src/test/java/mt/fireworks/associations/examples/UseAsMutlimap.java">View Demo</a>
     ·
-    <a href="https://github.com/mtalijanac/timecache/issues">Report Bug</a>
+    <a href="https://github.com/mtalijanac/associations/issues">Report Bug</a>
     ·
-    <a href="https://github.com/mtalijanac/timecache/issues">Request Feature</a>
+    <a href="https://github.com/mtalijanac/associations/issues">Request Feature</a>
   </p>
 </div>
 
@@ -75,12 +75,12 @@ Here's when you should use TimeCache:
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-Test folder contains many [examples](https://github.com/mtalijanac/timecache/blob/main/src/test/java/mt/fireworks/timecache/examples)
+Test folder contains many [examples](https://github.com/mtalijanac/associations/blob/main/src/test/java/mt/fireworks/associations/examples)
 of usage.
 
 Most important:
- - using Timecache as [multimap](https://github.com/mtalijanac/timecache/blob/main/src/test/java/mt/fireworks/timecache/examples/UseAsMultimap.java)
- - passing Time and [handling time windows](https://github.com/mtalijanac/timecache/blob/main/src/test/java/mt/fireworks/timecache/examples/WindowHandling.java)
+ - using Timecache as [multimap](https://github.com/mtalijanac/associations/blob/main/src/test/java/mt/fireworks/associations/examples/UseAsMultimap.java)
+ - passing Time and [handling time windows](https://github.com/mtalijanac/associations/blob/main/src/test/java/mt/fireworks/associations/examples/WindowHandling.java)
 
 
 <!-- IMPLEMENTATION -->
@@ -89,7 +89,7 @@ Most important:
 Under the hood TimeCache is bunch of Java 8 wrappers for byte arrays and
 some Eclipse Collections magic.
 
-Refer do [implementation docs](https://github.com/mtalijanac/timecache/blob/main/docs/Implementation.md)
+Refer do [implementation docs](https://github.com/mtalijanac/associations/blob/main/docs/Implementation.md)
 for deeper understanding of individual components.
 
 <!-- LICENSE -->
@@ -106,7 +106,7 @@ Distributed under the GPL3 License. See `LICENSE` for more information.
 
 Marko Talijanac - marko.talijanac@remove.gmail.com
 
-Project Link: [https://github.com/mtalijanac/timecache](https://github.com/mtalijanac/timecache)
+Project Link: [https://github.com/mtalijanac/associations](https://github.com/mtalijanac/associations)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

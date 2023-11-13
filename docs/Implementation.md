@@ -12,7 +12,7 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/mtalijanac/timecache.git">
+  <a href="https://github.com/mtalijanac/associations.git">
     <img src="../images/logo.png" alt="Logo" width="80" height="80">
   </a>
 
@@ -67,7 +67,7 @@ same key.
   - **You can have more than one keyer in cache**.
 
 
-See [Keyers example](https://github.com/mtalijanac/timecache/blob/main/src/test/java/mt/fireworks/timecache/examples/Keyers.java)
+See [Keyers example](https://github.com/mtalijanac/associations/blob/main/src/test/java/mt/fireworks/associations/examples/Keyers.java)
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -90,7 +90,7 @@ Simple usage example:
 
 Important thing to notice is that returned index is of **long** type.
 Because of this, actual maximum size of list is enormous. For richer
-examples see [usageExample](https://github.com/mtalijanac/timecache/blob/main/src/test/java/mt/fireworks/timecache/ByteListTest.java).
+examples see [usageExample](https://github.com/mtalijanac/associations/blob/main/src/test/java/mt/fireworks/associations/ByteListTest.java).
 
 Under the hood ByteList is implemented as ArrayList of byte arrays, called buckets.
 When data is added, length of data is written to a free position in
