@@ -38,7 +38,8 @@ public class BytesMap<T> implements AssociationMap<T> {
     BytesMap(SerDes<T> serdes, ArrayList<Index<T>> indexes, Integer allocationSize) {
         this.serdes = serdes;
         this.indexes.addAll(indexes);
-        this.keys = indexes.stream().map(Index::getName).collect(Collectors.toUnmodifiableList());
+        List<@NonNull String> keys = indexes.stream().map(Index::getName).collect(Collectors.toList());
+        this.keys = Collections.unmodifiableList(keys);
         this.byteList = allocationSize != null ? new ByteList(allocationSize) : new ByteList();
     }
 

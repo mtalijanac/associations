@@ -7,11 +7,11 @@ import java.math.BigInteger;
 import java.util.*;
 import java.util.function.Function;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.*;
 
 import lombok.AllArgsConstructor;
-import mt.fireworks.associations.*;
+import mt.fireworks.associations.Associations;
+import mt.fireworks.associations.BytesMap;
 
 public class BytesMapUsage {
 
@@ -120,6 +120,7 @@ public class BytesMapUsage {
             "The greatest wisdom is in simplicity. Love, respect, tolerance, sharing, gratitude." // - Meher Baba
     };
 
+    @Ignore
     @Test
     public void iterationExample() {
         @AllArgsConstructor

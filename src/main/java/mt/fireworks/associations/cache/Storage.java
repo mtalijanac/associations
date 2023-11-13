@@ -27,7 +27,7 @@ class Storage {
     // window where events happening at currentTime would enter
     Window nowWindow;
 
-    // lock for windows access
+    // windows access lock
     final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
 
     @Getter

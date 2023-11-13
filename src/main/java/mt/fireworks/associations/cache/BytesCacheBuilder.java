@@ -115,6 +115,11 @@ public class BytesCacheBuilder {
             return this;
         }
 
+        public Build<T> enableDuplicateCheck() {
+            factory.setCheckForDuplicates(true);
+            return this;
+        }
+
         public Build<T> indexMapCount(int val) {
             factory.setIndexMapCount(val);
             return this;

@@ -71,8 +71,8 @@ public class UseAsMultimap {
         //
         // Pretty print output, and assert correctness
         //
-        System.out.println(hellAssociated);
-        System.out.println(hillAssociated);
+        // System.out.println(hellAssociated);
+        // System.out.println(hillAssociated);
 
         // order of entries in response is determined by order of keyers
         assertEquals(2, hellAssociated.size());

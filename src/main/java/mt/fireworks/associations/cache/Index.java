@@ -60,14 +60,16 @@ class Index<T> {
 
 
 
-
     public boolean put(T val, long storageKey) {
         metrics.putCount.incrementAndGet();
         long t = -System.nanoTime();
         try {
             byte[] key = keyer.apply(val);
             if (key == null) return false;
-            MutableLongList keyData = index(key).getIfAbsentPut(key, () -> LongLists.mutable.empty().asSynchronized());
+            MutableLongList keyData = index(key).getIfAbsentPut(key,
+                    () -> LongLists.mutable
+                                    .withInitialCapacity(1)
+                                    .asSynchronized());
             keyData.add(storageKey);
             return true;
         }

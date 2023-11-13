@@ -42,4 +42,21 @@ public class Associations {
     public static HashingStrategy<byte[]> bytesHashingStrategy() {
         return new BytesHashingStrategy();
     }
+
+
+
+    public static class BytesSerDes implements SerDes<byte[]> {
+        public byte[] marshall(byte[] val) {
+            return val;
+        }
+
+        public byte[] unmarshall(byte[] data) {
+            return data;
+        }
+    }
+
+
+    public static SerDes<byte[]> bytesSerDes() {
+        return new BytesSerDes();
+    }
 }

@@ -15,10 +15,10 @@ public class BytesCacheFactory<T> {
     @Setter Boolean metricsEnabled = Boolean.TRUE;
 
     @Setter Storage.Conf storageConf = new Storage.Conf();
-    Long startTimestamp = System.currentTimeMillis();
 
     @Setter boolean checkForDuplicates = false;
     @Setter int indexMapCount = 128;
+    Long startTimestamp;
 
     public BytesCache<T> getInstance() {
         if (serdes == null)
@@ -38,7 +38,6 @@ public class BytesCacheFactory<T> {
             Index<T> i = new Index<>(name, keyer, timeKeys, indexMapCount);
             indexList.add(i);
         }
-
 
         @SuppressWarnings("unchecked")
         Index<T>[] indexes = indexList.toArray(new Index[indexList.size()]);
@@ -74,7 +73,7 @@ public class BytesCacheFactory<T> {
     }
 
     public long setStartTimeMillis(Long startTimestamp) {
-        this.startTimestamp = (startTimestamp / 1000l) * 1000l;
+        this.startTimestamp = TimeKeys.normalizieTimestamp(startTimestamp);
         return this.startTimestamp;
     }
 
