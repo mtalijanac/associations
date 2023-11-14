@@ -56,12 +56,11 @@ public class ByteList_Example1 {
         //
 
 
+        //
+        // Get is simplest method: for index passed, stored array is returned.
+        // In order to use get, indexes are stored in 'storeIndexes' array.
+        //
         using_get: {
-            //
-            // Get is simplest method: for index passed, stored array is returned.
-            // In order to use get, indexes are stored in 'storeIndexes' array.
-            //
-
             for (int i = 0; i < n; i++) {
                 long dataIdx = storeIndexes[i];
                 byte[] data = endlessListOfBytes.get(dataIdx);
@@ -74,13 +73,13 @@ public class ByteList_Example1 {
             }
         }
 
-        using_peek: {
-            //
-            // Peek is similar to get but uses Peeker interface to access data
-            // Peeker can directly access bytes of storage, without
-            // allocating intermediate byte array as when using get method.
-            //
 
+        //
+        // Peek is similar to get but uses Peeker interface to access data
+        // Peeker can directly access bytes of storage, without
+        // allocating intermediate byte array as when using get method.
+        //
+        using_peek: {
             for (int i = 0; i < n; i++) {
                 long dataIdx = storeIndexes[i];
                 String quoteFromList = endlessListOfBytes.peek(dataIdx,
@@ -94,11 +93,10 @@ public class ByteList_Example1 {
         }
 
 
-
+        //
+        // Using dataIterator we can iterate trough list without using indexes.
+        //
         using_iterator: {
-            //
-            // Using dataIterator we can iterate trough list without using indexes.
-            //
             DataIterator<String> dataIterator = endlessListOfBytes.iterator(
                 (objPos, bucket, pos, len) ->
                     new String(bucket, pos, len, StandardCharsets.UTF_8)
@@ -115,10 +113,10 @@ public class ByteList_Example1 {
         }
 
 
+        //
+        // forEach is similar to dataIterator without
+        //
         using_foreach: {
-            //
-            // forEach is similar to dataIterator without
-            //
 
             AtomicInteger loopCounter = new AtomicInteger();
 
