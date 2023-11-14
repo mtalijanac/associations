@@ -27,7 +27,7 @@ public class BytesMap_Example2 {
         // Two numbers, a and b, are congruent in "modulo n" when
         // they have same remainder when divided by n:
         //
-        //     a ≡ b (mod n)     ( a % n == b % n )
+        //     a ≡ b (mod n)     <-->    a % n == b % n
         //
 
         Function<Integer, byte[]> mod3 = (Integer n) -> {
@@ -50,6 +50,9 @@ public class BytesMap_Example2 {
 
 
 
+        //
+        // Test association of numbers based on modulo 3
+        //
 
         modulo_3: {
             Integer[][] mod3ExpectedGrouping = {
@@ -73,20 +76,22 @@ public class BytesMap_Example2 {
             // associated data under given index. In this example numbers
             // are associated by remainder when divided with 3.
             //
-            Iterator<List<Integer>> associationIter = map.indexAssociations("modulo 3");
-            while (associationIter.hasNext()) {
-                List<Integer> congruentGroup = associationIter.next();
-                Integer[] congruent = congruentGroup.toArray(new Integer[0]);
+            Iterator<List<Integer>> associationIterator = map.indexAssociations("modulo 3");
+            while (associationIterator.hasNext()) {
+                List<Integer> associatedValues = associationIterator.next();
+                Integer[] congruentNumbers = associatedValues.toArray(new Integer[0]);
 
-                int idx = congruentGroup.get(0) % 3;
+                int idx = congruentNumbers[0] % 3;
                 Integer[] expected = mod3ExpectedGrouping[idx];
 
-                assertArrayEquals(expected, congruent);
+                assertArrayEquals(expected, congruentNumbers);
             }
         }
 
 
-
+        //
+        // Same as before but modulo 5
+        //
         modulo_5: {
             Integer[][] mod5ExpectedGrouping = {
                     { 5, 10, 15, 20}, 		// this group is divisible by 5
@@ -117,15 +122,15 @@ public class BytesMap_Example2 {
             // associated data under given index. In this example numbers
             // are associated by remainder when divided with 5.
             //
-            Iterator<List<Integer>> associationIter = map.indexAssociations("modulo 5");
-            while (associationIter.hasNext()) {
-                List<Integer> congruentGroup = associationIter.next();
-                Integer[] congruent = congruentGroup.toArray(new Integer[0]);
+            Iterator<List<Integer>> associationIterator = map.indexAssociations("modulo 5");
+            while (associationIterator.hasNext()) {
+                List<Integer> associatedValues = associationIterator.next();
+                Integer[] congruentNumbers = associatedValues.toArray(new Integer[0]);
 
-                int idx = congruentGroup.get(0) % 5;
+                int idx = congruentNumbers[0] % 5;
                 Integer[] expected = mod5ExpectedGrouping[idx];
 
-                assertArrayEquals(expected, congruent);
+                assertArrayEquals(expected, congruentNumbers);
             }
         }
     }
