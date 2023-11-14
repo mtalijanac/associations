@@ -237,10 +237,10 @@ public class ByteList {
 
         /** @return value encoded as header */
         static int header(int value) {
-            if (value <= 0x3F) return value; 	                   // 63 bytes
-            if (value <= 0x3FFF) return 0x4000 | (0x3FFF & value); // 16 kb - 1 byte
-            if (value <= 0x3FFFFF) return 0x80_0000 | (0x3F_FFFF & value); // 4mb - 1 byte
-            return 0xC000_0000 | (0x3FFF_FFFF & value); //
+            if (value <= 0x3F) return value;                       // 63 bytes data, 1 byte header
+            if (value <= 0x3FFF) return 0x4000 | (0x3FFF & value); // 16 kb, 2 byte header
+            if (value <= 0x3FFFFF) return 0x80_0000 | (0x3F_FFFF & value); // 4mb, 3 byte header
+            return 0xC000_0000 | (0x3FFF_FFFF & value);            // 1gb, 4 byte header
         }
 
         static void writeHeader(int val, byte[] top, byte[] bottom, int pos) {

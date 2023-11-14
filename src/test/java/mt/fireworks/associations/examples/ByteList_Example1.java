@@ -11,6 +11,22 @@ import org.junit.Test;
 import mt.fireworks.associations.ByteList;
 import mt.fireworks.associations.ByteList.DataIterator;
 
+/**
+ * <h1>ByteList example 1: using a list</h1>
+ *
+ * BytesList is a list which stores bytes. For each stored byte array
+ * an index is returned. Index points to location of stored data
+ * within list. <br>
+ *
+ * As index is of long type, there there is no practical size limit
+ * how much this list can grow. Under the hood BytesList is heap
+ * allocated, and uses segmented list to store data.
+ * Default size of segment is 1 mb. <br>
+ *
+ * Each stored byte array is prefixed with header containg length
+ * of data. This header is of variable size between 1 and 4 bytes
+ * limiting size of array to 1gb.
+ */
 public class ByteList_Example1 {
 
     @Test
@@ -33,6 +49,8 @@ public class ByteList_Example1 {
 
         //
         // Randomly select one million quotes, store them all to endlessListOfBytes.
+        // After data is prepared, this example will iterate trough endlessListOfBytes
+        // using methods: get, peek, iterator and forEach.
         //
 
         int n = 1_000_000;
@@ -49,11 +67,6 @@ public class ByteList_Example1 {
             storeIndexes[i] = storeIdx;
         }
 
-
-        //
-        // We will iterate trough endlessListOfBytes using
-        // methods: get, peek, iterator and forEach.
-        //
 
 
         //
@@ -117,7 +130,6 @@ public class ByteList_Example1 {
         // forEach is similar to dataIterator without
         //
         using_foreach: {
-
             AtomicInteger loopCounter = new AtomicInteger();
 
             endlessListOfBytes.forEach((objPos, bucket, pos, len) -> {
