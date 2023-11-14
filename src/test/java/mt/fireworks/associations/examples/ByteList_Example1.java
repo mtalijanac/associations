@@ -1,8 +1,8 @@
 package mt.fireworks.associations.examples;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -42,7 +42,7 @@ public class ByteList_Example1 {
         for (int i = 0; i < n; i++) {
             int quoteIdx = ThreadLocalRandom.current().nextInt(quotes.length);
             String selectedQuote = quotes[quoteIdx];
-            byte[] data = selectedQuote.getBytes(StandardCharsets.UTF_8);
+            byte[] data = selectedQuote.getBytes(UTF_8);
             long storeIdx = endlessListOfBytes.add(data);
 
             randomQuoteIndexes[i] = quoteIdx;
@@ -64,7 +64,7 @@ public class ByteList_Example1 {
             for (int i = 0; i < n; i++) {
                 long dataIdx = storeIndexes[i];
                 byte[] data = endlessListOfBytes.get(dataIdx);
-                String quoteFromList = new String(data, StandardCharsets.UTF_8);
+                String quoteFromList = new String(data, UTF_8);
 
                 int quoteIdx = randomQuoteIndexes[i];
                 String selectedQuote = quotes[quoteIdx];
@@ -83,7 +83,7 @@ public class ByteList_Example1 {
             for (int i = 0; i < n; i++) {
                 long dataIdx = storeIndexes[i];
                 String quoteFromList = endlessListOfBytes.peek(dataIdx,
-                        (objPos, bucket, pos, len) -> new String(bucket, pos, len));
+                        (objPos, bucket, pos, len) -> new String(bucket, pos, len, UTF_8));
 
                 int quoteIdx = randomQuoteIndexes[i];
                 String selectedQuote = quotes[quoteIdx];
@@ -99,7 +99,7 @@ public class ByteList_Example1 {
         using_iterator: {
             DataIterator<String> dataIterator = endlessListOfBytes.iterator(
                 (objPos, bucket, pos, len) ->
-                    new String(bucket, pos, len, StandardCharsets.UTF_8)
+                    new String(bucket, pos, len, UTF_8)
             );
 
             for (int i = 0; dataIterator.hasNext(); i++) {
@@ -121,7 +121,7 @@ public class ByteList_Example1 {
             AtomicInteger loopCounter = new AtomicInteger();
 
             endlessListOfBytes.forEach((objPos, bucket, pos, len) -> {
-                String quoteFromList = new String(bucket, pos, len, StandardCharsets.UTF_8);
+                String quoteFromList = new String(bucket, pos, len, UTF_8);
 
                 int i = loopCounter.getAndIncrement();
                 int quoteIdx = randomQuoteIndexes[i];
