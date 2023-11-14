@@ -12,7 +12,7 @@ import mt.fireworks.associations.Associations;
 import mt.fireworks.associations.BytesMap;
 
 /**
- * <h1>Example 3: Advance iterators</h1>
+ * <h1>Example 3: Advanced iterators</h1>
  *
  * This examples will show advance usage of associated data.<br>
  *
@@ -108,7 +108,7 @@ public class BytesMap_Example3 {
         // And three additional quotes have word 'love' on third position.
         // Within fear index two quotes start with word 'fear'.
         //
-        advance_iteration: {
+        advanced_iterators: {
             List<String> loveStartingQuotes = map.get("love", "Love query");
             List<String> fearStartingQuotes = map.get("fear", "Fear query");
             List<String> asLoveQuotes = map.get("love", "As love");
@@ -116,7 +116,6 @@ public class BytesMap_Example3 {
             assertEquals(3, loveStartingQuotes.size()); // Love .....
             assertEquals(2, fearStartingQuotes.size()); // Fear ...
             assertEquals(3, asLoveQuotes.size());       // two "In love ..", one "To love..." quote
-
 
             //
             // Iterate trough all associated love quotes
@@ -130,7 +129,6 @@ public class BytesMap_Example3 {
             //   - 3 quotes have love on third place -> key is 3
             //   - 1 quote has love at 40th place    -> key is 40
             assertEquals(3, loveAssociations.size());
-
 
             //
             // Iterate trough all associated fear quotes
