@@ -14,11 +14,13 @@ import lombok.Data;
 import mt.fireworks.associations.cache.*;
 
 /**
+ * <h1>Cache example 2: Multimap</h1>
+ *
  * Simplest example of cache usage. Add bunch of simple Events to cache.
  * Fetch back associated events. Print output and assert correctness.
  * Ignore all time logic, and use cache as simple multimap.
  */
-public class UseAsMultimap {
+public class Cache_Example2_Multimap {
 
     @Data @AllArgsConstructor
     static class Event {
@@ -36,11 +38,11 @@ public class UseAsMultimap {
         Function<Event, byte[]> twoLetterKey  = (Event e) -> e.data.substring(0, 2).getBytes(UTF_8);
         Function<Event, byte[]> fourLetterKey = (Event e) -> e.data.substring(0, 4).getBytes(UTF_8);
 
-        BytesCacheFactory<Event> factory = new BytesCacheFactory<>();
-        factory.setSerdes(new EventSerDes());
-        factory.addKeyer("TWO_LETTERS", twoLetterKey);
-        factory.addKeyer("FOUR_LETTERS", fourLetterKey);
-        BytesCache<Event> cache = factory.getInstance();
+        BytesCache<Event> cache = BytesCache.newInstance(Event.class)
+            .withSerdes(new EventSerDes())
+            .associate("TWO_LETTERS", twoLetterKey)
+            .associate("FOUR_LETTERS", fourLetterKey)
+            .build();
 
 
         //
@@ -67,14 +69,9 @@ public class UseAsMultimap {
         Event hill_event = new Event(System.currentTimeMillis(), "Hill by a house");
         Map<String, List<Event>> hillAssociated = cache.getAsMap(hill_event);
 
-
         //
-        // Pretty print output, and assert correctness
-        //
-        // System.out.println(hellAssociated);
-        // System.out.println(hillAssociated);
-
         // order of entries in response is determined by order of keyers
+        //
         assertEquals(2, hellAssociated.size());
         assertEquals(5, hellAssociated.get("TWO_LETTERS").size()); // 5 events start with 'He'
         assertEquals(3, hellAssociated.get("FOUR_LETTERS").size()); // 3 events start with 'Hell'

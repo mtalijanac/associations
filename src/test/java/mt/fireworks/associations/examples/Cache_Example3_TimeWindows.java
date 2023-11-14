@@ -16,25 +16,27 @@ import lombok.Data;
 import mt.fireworks.associations.cache.*;
 
 /**
- * Example of handling time. <br>
+ * <h1>Cache Example 3: Using Time windows</h1>
+ *
+ * This example shows passage of time in BytesCache. <br>
  *
  * Cache in this example will group events in five time slots aka. windows.
- * Duration of window is set to one minute. In this example cache  is
- * organized in two past windows, one current window, and two future windows. <br>
+ * Duration of window is set to one minute. Cache is organized in
+ * two past windows, one current window, and two future windows. <br>
  *
  * Events are stored to matching window based on their tstamp. If event tstamp
  * is too old or is too new, and matching window can not be found, event will
  * be ignored and not stored to cache. <br>
  *
- * Cache time passing is invoked by invoking {@code Cache#tick()}. Thick will
- * shift all windows one step in past, and newest window will be added.
+ * Time passing is invoked by invoking {@code Cache#tick()}. Thick will
+ * shift all windows one step in past, and newest window will be added to cache.
  * Oldest window will be removed, and stored events removed. <br>
  *
  * This example will start by adding five events, one for each cache window.
  * As time passes, by calling {@code Cache#tick()}, oldest events will be
  * forgotten. After  ticking five times no more events will be stored in the cache.
  */
-public class WindowHandling {
+public class Cache_Example3_TimeWindows {
 
     @Data @AllArgsConstructor
     static class Event {
@@ -59,6 +61,7 @@ public class WindowHandling {
         int  pastWindowCount = 2;
         int  futureWindowCount = 2;
 
+        // Create Cache using factory, which is alternative to using builder interface
         BytesCacheFactory<Event> factory = new BytesCacheFactory<>();
         factory.setSerdes(new EventSerDes());
         factory.addKeyer("LEADING_FIVE_LETTERS", key);
@@ -66,6 +69,7 @@ public class WindowHandling {
         factory.setFutureWindowCount(futureWindowCount);
         factory.setWindowTimespanMs(windowDuration);
         long start = factory.setStartTimeMillis(now);
+
         BytesCache<Event> cache = factory.getInstance();
 
         // startTimestamp is rounded to lowest second

@@ -45,6 +45,7 @@ public class BytesMap_Example2 {
                 .associate("modulo 5", mod5)
                 .build();
 
+
         for (int num = 1; num <= 20; num++)
             map.add(num);
 
