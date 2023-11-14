@@ -56,7 +56,7 @@ public class BytesMap_Example2 {
 
         modulo_3: {
             Integer[][] mod3ExpectedGrouping = {
-                {3, 6, 9, 12, 15, 18},			// this group is divisible by 3
+                {3, 6, 9, 12, 15, 18},          // this group is divisible by 3
                 {1, 4, 7, 10, 13, 16, 19},      // this group has reminder 1
                 {2, 5, 8, 11, 14, 17, 20},      // this group has reminder 2
             };
@@ -94,11 +94,11 @@ public class BytesMap_Example2 {
         //
         modulo_5: {
             Integer[][] mod5ExpectedGrouping = {
-                    { 5, 10, 15, 20}, 		// this group is divisible by 5
-                    { 1,  6, 11, 16}, 		// this group has reminder 1
-                    { 2,  7, 12, 17}, 		// this group has reminder 2
-                    { 3,  8, 13, 18}, 		// this group has reminder 3
-                    { 4,  9, 14, 19}, 		// this group has reminder 4
+                    { 5, 10, 15, 20},         // this group is divisible by 5
+                    { 1,  6, 11, 16},         // this group has reminder 1
+                    { 2,  7, 12, 17},         // this group has reminder 2
+                    { 3,  8, 13, 18},         // this group has reminder 3
+                    { 4,  9, 14, 19},         // this group has reminder 4
             };
 
             List<Integer> congruentTo5 = map.get("modulo 5", 5);
