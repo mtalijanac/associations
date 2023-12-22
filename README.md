@@ -16,7 +16,7 @@
     <img src="images/logo.png" alt="Logo" width="80" height="80">
   </a>
 
-  <h3 align="center">Timecache</h3>
+  <h3 align="center">Associations</h3>
 
   <p align="center">
     An awesome MultiMap for caching events!
@@ -24,7 +24,7 @@
     <a href="https://github.com/mtalijanac/associations"><strong>Explore the docs »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/mtalijanac/associations/blob/main/src/test/java/mt/fireworks/associations/examples/UseAsMutlimap.java">View Demo</a>
+    <a href="https://github.com/mtalijanac/associations/blob/main/src/test/java/mt/fireworks/associations/examples/">View Examples</a>
     ·
     <a href="https://github.com/mtalijanac/associations/issues">Report Bug</a>
     ·
@@ -53,6 +53,9 @@
 
 <!-- ABOUT THE PROJECT -->
 ## About The Project
+
+Associations is collection of maps used to store large amounts of
+data in memory.
 
 TimeCache is data structure used to store related events with expiry.
 TimeCache is a form of multimap, as it stores multiple entries under the same key.

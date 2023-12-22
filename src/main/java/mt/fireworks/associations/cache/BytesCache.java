@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 import org.eclipse.collections.api.collection.primitive.MutableLongCollection;
-import org.eclipse.collections.api.list.primitive.MutableLongList;
+import org.eclipse.collections.api.list.primitive.*;
 import org.eclipse.collections.impl.factory.primitive.LongLists;
 import org.eclipse.collections.impl.map.mutable.UnifiedMap;
 
@@ -17,10 +17,10 @@ import mt.fireworks.associations.cache.Storage.Window;
 @RequiredArgsConstructor
 public class BytesCache<T> implements AssociationCache<T> {
 
-    @NonNull TimeKeys timeKeys;	    	// stores key epoch
-    @NonNull Storage storage;			// stores data
-    @NonNull Index<T>[] indexes;		// stores associations
-    @NonNull CacheSerDes<T> serdes2;	// does data manipulation
+    @NonNull TimeKeys timeKeys;         // stores key epoch
+    @NonNull Storage storage;           // stores data
+    @NonNull Index<T>[] indexes;        // stores associations
+    @NonNull CacheSerDes<T> serdes2;    // does data manipulation
 
     List<String> keys;
 
@@ -78,6 +78,12 @@ public class BytesCache<T> implements AssociationCache<T> {
 
     @Override
     public List<T> get(String indexName, T query, Long fromInclusive, Long toExclusive) {
+        return getLast(indexName, query, -1, fromInclusive, toExclusive);
+    }
+
+
+    @Override
+    public List<T> getLast(String indexName, T query, Integer count, Long fromInclusive, Long toExclusive) {
         metrics.getCount.incrementAndGet();
 
         Index<T> index = null;
@@ -90,7 +96,7 @@ public class BytesCache<T> implements AssociationCache<T> {
 
         if (index == null) return Collections.emptyList();
 
-        List<T> result = readIndex(index, query, fromInclusive, toExclusive);
+        List<T> result = readIndex(index, query, count, fromInclusive, toExclusive);
         metrics.trxGetCount.addAndGet(result.size());
         return result;
     }
@@ -121,18 +127,31 @@ public class BytesCache<T> implements AssociationCache<T> {
 
 
     List<T> readIndex(Index<T> index, T query, Long fromInclusive, Long toExclusive) {
+        return readIndex(index, query, -1, fromInclusive, toExclusive);
+    }
+
+    List<T> readIndex(Index<T> index, T query, int countLast, Long fromInclusive, Long toExclusive) {
         byte[] key = index.getKeyer().apply(query);
         if (key == null) return Collections.emptyList();
 
-        MutableLongList strKeys = index.get(query);
-        if (strKeys == null)   return Collections.emptyList();
-        if (strKeys.isEmpty()) return Collections.emptyList();
 
+        //
+        // FIXME index should already have immutable long list
+        //       which is updated on put. Move cost of thread
+        //       safety to put side of index
+        //
+        MutableLongList storageKeysMut = index.get(query);
+        if (storageKeysMut == null)   return Collections.emptyList();
+        if (storageKeysMut.isEmpty()) return Collections.emptyList();
+        LongList strKeys = storageKeysMut.toImmutable();
+
+        int size = strKeys.size();
+        int startIdx = countLast > size ? size - countLast : 0;
 
         MutableLongList keysForRemoval = null;
-        ArrayList<T> result = new ArrayList<>(strKeys.size());
+        ArrayList<T> result = new ArrayList<>(countLast > 0 ? countLast : size);
 
-        for (int jdx = 0; jdx < strKeys.size(); jdx++) {
+        for (int jdx = startIdx; jdx < size; jdx++) {
             long strKey = strKeys.get(jdx);
             long tstamp = timeKeys.tstamp(strKey);
 
@@ -164,15 +183,12 @@ public class BytesCache<T> implements AssociationCache<T> {
         }
 
         if (keysForRemoval != null && keysForRemoval.size() > 0) {
-            strKeys.removeAll(keysForRemoval);
+            storageKeysMut.removeAll(keysForRemoval);
             keysForRemoval.clear();
         }
 
         return result;
     }
-
-
-
 
 
 

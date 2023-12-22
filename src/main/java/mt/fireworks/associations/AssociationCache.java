@@ -16,6 +16,8 @@ public interface AssociationCache<T> extends AssociationMap<T> {
 
     List<T> get(String indexName, T query, Long fromInclusive, Long toExclusive);
 
+    /** Same as get, but fetches only {@code count} last objects. */
+    List<T> getLast(String indexName, T query, Integer count, Long fromInclusive, Long toExclusive);
 
     Map<String, List<T>> getAsMap(T query, Long fromInclusive, Long toExclusive);
 
