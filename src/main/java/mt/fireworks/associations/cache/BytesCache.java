@@ -118,6 +118,7 @@ public class BytesCache<T> implements AssociationCache<T> {
         for (int i = 0; i < indexes.length; i++) {
             Index<T> index = indexes[i];
             List<T> res = readIndex(index, query, fromInclusive, toExclusive);
+            if (res == null) continue;
             result.put(index.getName(), res);
             metrics.trxGetCount.addAndGet(res.size());
         }
@@ -132,7 +133,7 @@ public class BytesCache<T> implements AssociationCache<T> {
 
     List<T> readIndex(Index<T> index, T query, int countLast, Long fromInclusive, Long toExclusive) {
         byte[] key = index.getKeyer().apply(query);
-        if (key == null) return Collections.emptyList();
+        if (key == null) return null;
 
 
         //

@@ -186,6 +186,10 @@ public class ByteList {
         long objPos = 0;
 
         public boolean hasNext() {
+            if (ByteList.this.buckets.size() == 0) {
+                return false;
+            }
+
             final int dataLength = dataLength(objPos);
             return dataLength > 0;
         }
