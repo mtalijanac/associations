@@ -5,7 +5,7 @@
 
   <groupId>mt.fireworks</groupId>
   <artifactId>associations</artifactId>
-  <version>1.0.4</version>
+  <version>1.0.9</version>
   <packaging>jar</packaging>
 
   <name>timecache</name>
@@ -59,7 +59,7 @@
       <version>4.13.2</version>
       <scope>test</scope>
     </dependency>
-    
+
     <dependency>
       <groupId>org.openjdk.jmh</groupId>
       <artifactId>jmh-core</artifactId>

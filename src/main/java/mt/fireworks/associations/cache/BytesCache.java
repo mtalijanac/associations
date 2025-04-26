@@ -97,9 +97,10 @@ public class BytesCache<T> implements AssociationCache<T> {
         }
 
         if (index == null) return Collections.emptyList();
-
-        List<T> result = readIndex(index, query, count, fromInclusive, toExclusive);
-        metrics.trxGetCount.addAndGet(result.size());
+        
+        int keyCapacity = count > 0 ? count : index.getKeyCapacity();
+        List<T> result = readIndex(index, query, keyCapacity, fromInclusive, toExclusive);
+        if (result != null) metrics.trxGetCount.addAndGet(result.size());
         return result;
     }
     
@@ -171,7 +172,8 @@ public class BytesCache<T> implements AssociationCache<T> {
 
         for (int i = 0; i < indexes.length; i++) {
             Index<T> index = indexes[i];
-            List<T> res = readIndex(index, query, fromInclusive, toExclusive);
+            int keyCapacity = index.getKeyCapacity();
+            List<T> res = readIndex(index, query, keyCapacity, fromInclusive, toExclusive);
             if (res == null) continue;
             result.put(index.getName(), res);
             metrics.trxGetCount.addAndGet(res.size());
@@ -180,10 +182,6 @@ public class BytesCache<T> implements AssociationCache<T> {
         return result;
     }
 
-
-    List<T> readIndex(Index<T> index, T query, Long fromInclusive, Long toExclusive) {
-        return readIndex(index, query, -1, fromInclusive, toExclusive);
-    }
 
     List<T> readIndex(Index<T> index, T query, int countLast, Long fromInclusive, Long toExclusive) {
         byte[] key = index.getKeyer().apply(query);
@@ -201,13 +199,14 @@ public class BytesCache<T> implements AssociationCache<T> {
         LongList strKeys = storageKeysMut.toImmutable();
 
         final int size = strKeys.size();
-        final int startIdx = countLast > size ? size - countLast : 0;
 
         MutableLongList keysForRemoval = null;
         final ArrayList<T> result = new ArrayList<>(countLast > 0 ? countLast : size);
         
         final long from = fromInclusive != null ? fromInclusive.longValue() / 1000l * 1000l : 0;
         final long to = toExclusive != null ? toExclusive.longValue()     / 1000l * 1000l + 1000l : 0;
+        
+        final int startIdx = countLast > 0 && countLast < size ? size - countLast : 0;
         
         for (int jdx = startIdx; jdx < size; jdx++) {
             long strKey = strKeys.get(jdx);
