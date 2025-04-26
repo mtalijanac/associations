@@ -3,6 +3,22 @@ package mt.fireworks.associations;
 /** Utility manipulation of bits and bytes. */
 public class BitsAndBytes {
 
+    public static void writeInt(int val, byte[] arr, int idx) {
+        arr[idx]     = (byte) (val >>> 24);
+        arr[idx + 1] = (byte) (val >>> 16);
+        arr[idx + 2] = (byte) (val >>> 8);
+        arr[idx + 3] = (byte) val;
+    }
+    
+    public static int readInt(byte[] arr, int idx) {
+        int res = (int) (
+                (0xff & arr[idx])     << 24
+              | (0xff & arr[idx + 1]) << 16
+              | (0xff & arr[idx + 2]) << 8
+              | (0xff & arr[idx + 3])
+        );
+       return res;
+    }
 
     public static void writeShort(short val, byte[] arr, int idx) {
         arr[idx]     = (byte) (val >>> 8);

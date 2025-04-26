@@ -11,8 +11,7 @@ import org.eclipse.collections.api.map.MutableMap;
 import org.eclipse.collections.impl.factory.primitive.LongLists;
 import org.eclipse.collections.impl.map.strategy.mutable.UnifiedMapWithHashingStrategy;
 
-import lombok.Data;
-import lombok.Getter;
+import lombok.*;
 import mt.fireworks.associations.Associations;
 
 @Data
@@ -35,12 +34,16 @@ class Index<T> {
 
     @Getter
     final IndexMetrics metrics = new IndexMetrics();
+    
+    /** Max number of values stored under a key. Default is unlimited (-1). */
+    int keyCapacity = -1;
 
 
-    Index(String name, Function<T, byte[]> keyer, TimeKeys tk, int mapCount) {
+    Index(String name, Function<T, byte[]> keyer, TimeKeys tk, int mapCount, int keyCapacity) {
         this.name = name;
         this.keyer = keyer;
         this.timeKeys = tk;
+        this.keyCapacity = keyCapacity;
 
         this.indexes = new MutableMap[mapCount];
 
@@ -59,7 +62,6 @@ class Index<T> {
     }
 
 
-
     public boolean put(T val, long storageKey) {
         metrics.putCount.incrementAndGet();
         long t = -System.nanoTime();
@@ -71,6 +73,7 @@ class Index<T> {
                                     .withInitialCapacity(1)
                                     .asSynchronized());
             keyData.add(storageKey);
+            removedOldestKeys(keyData);
             return true;
         }
         finally {
@@ -78,6 +81,15 @@ class Index<T> {
             metrics.putDuration.addAndGet(t);
         }
     }
+    
+    void removedOldestKeys(MutableLongList keys) {
+        if (keyCapacity <= 0) return;
+        while (keys.size() > keyCapacity) {
+            long min = keys.min();
+            keys.remove(min);
+        }
+    }
+
 
     public MutableLongList get(T val) {
         metrics.getCount.incrementAndGet();

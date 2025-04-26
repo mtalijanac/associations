@@ -166,7 +166,9 @@ class MetricSerDes2<T> implements CacheSerDes<T>, Metrics {
                    + inPlaceTst + "\n"
                    + equalsT + "\n"
                    + equalsD + "\n"
-                   + inPlaceEqu;
+                   + inPlaceEqu + "\n"
+                   + delegate.toString();
+        
         return res;
     }
 

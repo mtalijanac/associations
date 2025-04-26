@@ -15,6 +15,9 @@ public class BytesCacheFactory<T> {
     @Setter Boolean metricsEnabled = Boolean.TRUE;
 
     @Setter Storage.Conf storageConf = new Storage.Conf();
+    
+    /** Max number of values stored under a key. Default is unlimited (-1). */
+    @Setter int keyCapacity = -1;
 
     @Setter boolean checkForDuplicates = false;
     @Setter int indexMapCount = 128;
@@ -26,16 +29,16 @@ public class BytesCacheFactory<T> {
 
         CacheSerDes<T> ser = serdes;
         if (metricsEnabled) {
-            ser = new MetricSerDes2<>(serdes);
+            ser = serdes.withMetric();
         }
 
         TimeKeys timeKeys = new TimeKeys();
-
+        
         ArrayList<Index<T>> indexList = new ArrayList<>();
         for (Entry<String, Function<T, byte[]>> e: keyers.entrySet()) {
             String name = e.getKey();
             Function<T, byte[]> keyer = e.getValue();
-            Index<T> i = new Index<>(name, keyer, timeKeys, indexMapCount);
+            Index<T> i = new Index<>(name, keyer, timeKeys, indexMapCount, keyCapacity);
             indexList.add(i);
         }
 
@@ -71,10 +74,10 @@ public class BytesCacheFactory<T> {
     public void setAllocationSize(int sizeInBytes) {
         storageConf.setAllocationSize(sizeInBytes);
     }
-
+    
     public long setStartTimeMillis(Long startTimestamp) {
         this.startTimestamp = TimeKeys.normalizieTimestamp(startTimestamp);
         return this.startTimestamp;
     }
-
+    
 }

@@ -5,7 +5,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 import org.eclipse.collections.api.collection.primitive.MutableLongCollection;
-import org.eclipse.collections.api.list.primitive.*;
+import org.eclipse.collections.api.list.primitive.LongList;
+import org.eclipse.collections.api.list.primitive.MutableLongList;
 import org.eclipse.collections.impl.factory.primitive.LongLists;
 import org.eclipse.collections.impl.map.mutable.UnifiedMap;
 
@@ -58,18 +59,19 @@ public class BytesCache<T> implements AssociationCache<T> {
             }
         }
 
-        long storageIdx = storage.addEntry(tstamp, data);
-        if (storageIdx == 0) {
+        long key = storage.addEntry(tstamp, data);
+        if (key == 0) {
             return false;
         }
 
         for (Index<T> i: indexes) {
-            i.put(val, storageIdx);
+            boolean added = i.put(val, key);
         }
-
+        
         return true;
     }
-
+    
+    
     @Override
     public List<T> get(String keyName, T query) {
         return get(keyName, query, null,  null);
@@ -100,6 +102,58 @@ public class BytesCache<T> implements AssociationCache<T> {
         metrics.trxGetCount.addAndGet(result.size());
         return result;
     }
+    
+    
+    @Override
+    public Map<String, List<T>> getByName(T query, Long fromInclusive, Long toExclusive, String indexName) {
+        return getByName(query, fromInclusive, toExclusive, indexName, null, null);
+    }
+
+    @Override
+    public Map<String, List<T>> getByName(T query, Long fromInclusive, Long toExclusive, String indexName1, String indexName2) {
+        return getByName(query, fromInclusive, toExclusive, indexName1, indexName2, null);
+    }
+    
+    @Override
+    public Map<String, List<T>> getByName(T query, Long fromInclusive, Long toExclusive, String indexName1, String indexName2, String indexName3) {
+        UnifiedMap<String, List<T>> result = new UnifiedMap<>(5);
+        
+        if (indexName1 != null) {
+            List<T> res = get(indexName1, query, fromInclusive, toExclusive);
+            if (res != null) result.put(indexName1, res);
+        }
+        
+        if (indexName2 != null) {
+            List<T> res = get(indexName2, query, fromInclusive, toExclusive);
+            if (res != null) result.put(indexName2, res);
+        }
+        
+        if (indexName3 != null) {
+            List<T> res = get(indexName3, query, fromInclusive, toExclusive);
+            if (res != null) result.put(indexName3, res);
+        }
+        
+        return result;
+    }
+    
+    
+
+
+    @Override
+    public Map<String, List<T>> getByName(T query, Long fromInclusive, Long toExclusive, String... indexNames) {
+        if (indexNames == null) return Collections.emptyMap();
+        if (indexNames.length == 0) return Collections.emptyMap();
+        
+        int capacity = Math.round(indexes.length / 0.75f) + 1;
+        UnifiedMap<String, List<T>> result = new UnifiedMap<>(capacity);
+        for (String indexName: indexNames) {
+            List<T> res = get(indexName, query, fromInclusive, toExclusive);
+            if (res != null) result.put(indexName, res);
+        }
+        
+        return result;
+    }
+    
 
 
     @Override
@@ -146,24 +200,21 @@ public class BytesCache<T> implements AssociationCache<T> {
         if (storageKeysMut.isEmpty()) return Collections.emptyList();
         LongList strKeys = storageKeysMut.toImmutable();
 
-        int size = strKeys.size();
-        int startIdx = countLast > size ? size - countLast : 0;
+        final int size = strKeys.size();
+        final int startIdx = countLast > size ? size - countLast : 0;
 
         MutableLongList keysForRemoval = null;
-        ArrayList<T> result = new ArrayList<>(countLast > 0 ? countLast : size);
-
+        final ArrayList<T> result = new ArrayList<>(countLast > 0 ? countLast : size);
+        
+        final long from = fromInclusive != null ? fromInclusive.longValue() / 1000l * 1000l : 0;
+        final long to = toExclusive != null ? toExclusive.longValue()     / 1000l * 1000l + 1000l : 0;
+        
         for (int jdx = startIdx; jdx < size; jdx++) {
             long strKey = strKeys.get(jdx);
             long tstamp = timeKeys.tstamp(strKey);
 
-            if (fromInclusive != null) {
-                long from = fromInclusive.longValue() / 1000l * 1000l;
-                if (tstamp < from) continue;
-            }
-            if (toExclusive != null) {
-                long to = toExclusive.longValue()     / 1000l * 1000l + 1000l;
-                if (tstamp > to) continue;
-            }
+            if (fromInclusive != null && tstamp < from) continue;
+            if (toExclusive != null && tstamp > to) continue;
 
             T res = storage.getEntry2(strKey, serdes2);
             if (res == null) {
@@ -370,4 +421,7 @@ public class BytesCache<T> implements AssociationCache<T> {
 
         return sb.toString();
     }
+
+
+
 }

@@ -43,5 +43,10 @@ public interface SerDes<T> {
         System.arraycopy(data, position, d, 0, length);
         return unmarshall(d);
     }
+    
+    
+    default SerDes<T> withMetric() {
+        return new MetricSerDes<>(this);
+    }
 
 }

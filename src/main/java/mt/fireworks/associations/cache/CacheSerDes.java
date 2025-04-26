@@ -92,4 +92,9 @@ public interface CacheSerDes<T> extends SerDes<T>{
         return true;
     }
 
+    
+    @Override
+    default CacheSerDes<T> withMetric() {
+        return new MetricSerDes2<>(this);
+    }
 }

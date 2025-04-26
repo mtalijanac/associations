@@ -4,7 +4,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicLong;
 
-class TimeUtils {
+public class TimeUtils {
 
     private TimeUtils() {}
 
@@ -15,7 +15,7 @@ class TimeUtils {
         return String.format("%.2f s", nano / 1_000_000_000d);
     }
 
-    static String info(String name, AtomicLong countRef, AtomicLong timeRef) {
+    public static String info(String name, AtomicLong countRef, AtomicLong timeRef) {
         long count = countRef.get();
         long time = timeRef.get();
         String sec = toReadable(time);
