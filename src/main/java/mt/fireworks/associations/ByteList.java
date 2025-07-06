@@ -29,6 +29,17 @@ public class ByteList {
     }
 
 
+	public long add(byte[] data, int offset, int length) {
+		// FIXME implement direct writing into bucket, without copying data
+		if (data.length < offset + length) {
+			throw new IllegalArgumentException("Data is too short for given offset and length.");
+		}
+		byte[] copy = new byte[length];
+		System.arraycopy(data, offset, copy, 0, length);
+		return add(copy);
+	}
+
+
     public long add(byte[] data) {
         if (data.length > bucketSize) {
             String msg = "Illegal data size. "
