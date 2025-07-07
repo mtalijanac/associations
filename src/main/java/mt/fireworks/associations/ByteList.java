@@ -29,41 +29,35 @@ public class ByteList {
     }
 
 
-	public long add(byte[] data, int offset, int length) {
-		// FIXME implement direct writing into bucket, without copying data
-		if (data.length < offset + length) {
-			throw new IllegalArgumentException("Data is too short for given offset and length.");
-		}
-		byte[] copy = new byte[length];
-		System.arraycopy(data, offset, copy, 0, length);
-		return add(copy);
+    public long add(byte[] data) {
+		return add(data, 0, data.length);
 	}
 
 
-    public long add(byte[] data) {
-        if (data.length > bucketSize) {
+    public long add(final byte[] srcData, final int srcOffset, final int srcLength) {
+        if (srcLength > bucketSize) {
             String msg = "Illegal data size. "
-                       + "Adding data of size: " + data.length + " bytes, "
+                       + "Adding data of size: " + srcLength + " bytes, "
                        + "while allocationSize is set to: " + bucketSize + " bytes. "
                        + "To add data this big increase allocation size.";
             throw new RuntimeException(msg);
         }
 
-        final int headerSize = ObjHeader.headerSize(data.length);
-        final int objectSize = headerSize + data.length;
+        final int headerSize = ObjHeader.headerSize(srcLength);
+        final int objectSize = headerSize + srcLength;
         final long objStartPos = newObject(objectSize);
 
         final byte[] startBuck = bucketForPosition(objStartPos);
         final byte[] endBuck = bucketForPosition(objStartPos + objectSize);
 
         final int headerIdx = (int) (objStartPos % bucketSize);
-        ObjHeader.writeHeader(data.length, startBuck, endBuck, headerIdx);
+        ObjHeader.writeHeader(srcLength, startBuck, endBuck, headerIdx);
 
         final int dataOffset = (int)((objStartPos + headerSize) % bucketSize);
 
         // everything fits in top bucket
         if (startBuck == endBuck) {
-            System.arraycopy(data, 0, startBuck, dataOffset, data.length);
+            System.arraycopy(srcData, srcOffset, startBuck, dataOffset, srcLength);
             return objStartPos;
         }
 
@@ -71,16 +65,16 @@ public class ByteList {
 
         // split header, data is fully in bottom bucket
         if (dataStartBucket == endBuck) {
-            System.arraycopy(data, 0, endBuck, dataOffset, data.length);
+            System.arraycopy(srcData, srcOffset, endBuck, dataOffset, srcLength);
             return objStartPos;
         }
 
         // split data, data goes to top, then it pours to bottom
         int len = bucketSize - dataOffset;
-        System.arraycopy(data, 0, startBuck, dataOffset, len);
-        System.arraycopy(data, len, endBuck, 0, data.length - len);
+        System.arraycopy(srcData, srcOffset, startBuck, dataOffset, len);
+        System.arraycopy(srcData, srcOffset + len, endBuck, 0, srcLength - len);
         return objStartPos;
-    }
+	}
 
 
     byte[] bucketForPosition(long objPos) {
