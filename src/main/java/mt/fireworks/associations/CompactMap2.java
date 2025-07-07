@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
+import org.eclipse.collections.api.block.HashingStrategy;
 import org.eclipse.collections.api.factory.primitive.ObjectLongHashingStrategyMaps;
 import org.eclipse.collections.api.map.primitive.MutableObjectLongMap;
 
@@ -73,6 +74,16 @@ public class CompactMap2<T> {
     }
 
     public CompactMap2(int segCount, int segAllocationSize, SerDes<T> serdes, Function<T, byte[]> keyer) {
+        this(segCount, segAllocationSize, serdes, keyer, new BytesHashingStrategy());
+    }
+
+    public CompactMap2(
+            int segCount,
+            int segAllocationSize,
+            SerDes<T> serdes,
+            Function<T, byte[]> keyer,
+            HashingStrategy<byte[]> hashingStrategy
+    ) {
         this.segmentAllocationSize = segAllocationSize;
         this.segments = new ByteList[segCount + 1];
         for (int i = 0; i < segCount; i++)
@@ -85,7 +96,7 @@ public class CompactMap2<T> {
         this.serdes = serdes;
         this.keyer = keyer;
         this.index = ObjectLongHashingStrategyMaps.mutable
-                .of(new BytesHashingStrategy())
+                .of(hashingStrategy)
                 .asSynchronized();
     }
 
