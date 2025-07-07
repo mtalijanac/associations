@@ -5,6 +5,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
+import org.eclipse.collections.api.block.HashingStrategy;
 import org.eclipse.collections.api.block.procedure.Procedure;
 import org.eclipse.collections.api.factory.primitive.ObjectLongHashingStrategyMaps;
 import org.eclipse.collections.api.map.primitive.MutableObjectLongMap;
@@ -30,11 +31,11 @@ public class CompactMap<T> {
 
 
     public CompactMap(SerDes<T> serdes, Function<T, byte[]> keyer) {
-        this(3, serdes, keyer);
+        this(3, serdes, keyer, new BytesHashingStrategy());
     }
 
 
-    public CompactMap(int segmentCount, SerDes<T> serdes, Function<T, byte[]> keyer) {
+    public CompactMap(int segmentCount, SerDes<T> serdes, Function<T, byte[]> keyer,  HashingStrategy<byte[]> hashingStrategy) {
         if (serdes instanceof Metrics) {
             this.serdes = serdes;
         }
@@ -50,7 +51,7 @@ public class CompactMap<T> {
 
         this.closedSegmentIndex = segments.length - 1;
         this.index = ObjectLongHashingStrategyMaps.mutable
-                        .of(new BytesHashingStrategy())
+                        .of(hashingStrategy)
                         .asSynchronized();
     }
 
@@ -118,8 +119,6 @@ public class CompactMap<T> {
         long position = (0x00FFFFFF_FFFFFFFFl) & pointer;
 
         ByteList byteList = segments[segementIndex];
-        byte[] data = byteList.get(position);
-
         T result = byteList.peek(position, (objPos, bucket, pos, len) -> serdes.unmarshall(bucket, pos, len));
         return result;
     }
