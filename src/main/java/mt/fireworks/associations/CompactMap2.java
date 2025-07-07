@@ -3,6 +3,8 @@ package mt.fireworks.associations;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.eclipse.collections.api.block.HashingStrategy;
@@ -78,10 +80,8 @@ public class CompactMap2<T> {
     }
 
     public CompactMap2(
-            int segCount,
-            int segAllocationSize,
-            SerDes<T> serdes,
-            Function<T, byte[]> keyer,
+            int segCount, int segAllocationSize,
+            SerDes<T> serdes, Function<T, byte[]> keyer,
             HashingStrategy<byte[]> hashingStrategy
     ) {
         this.segmentAllocationSize = segAllocationSize;
@@ -154,29 +154,40 @@ public class CompactMap2<T> {
     public T get(T query) {
         metrics.totalGetQueryCount.incrementAndGet();
         byte[] key = keyer.apply(query);
-        T res = peekInner(key, (objPos, bucket, pos, len) -> serdes.unmarshall(bucket, pos, len));
+        T res = peekWithKey(key, (objPos, bucket, pos, len) -> serdes.unmarshall(bucket, pos, len));
         return res;
     }
 
     /** Query map by key. */
     public T get(byte[] key) {
         metrics.totalGetKeyCount.incrementAndGet();
-        T res = peekInner(key, (objPos, bucket, pos, len) -> serdes.unmarshall(bucket, pos, len));
+        T res = peekWithKey(key, (objPos, bucket, pos, len) -> serdes.unmarshall(bucket, pos, len));
         return res;
     }
 
+
     /** Peek into map for a value */
-    public T peek(byte[] key, Peeker<T> peeker) {
-        metrics.totalPeekCount.incrementAndGet();
-        return peekInner(key, peeker);
+    public T peek(T query, Peeker<T> peeker) {
+        byte[] key = keyer.apply(query);
+        return peekWithKey(key, peeker);
     }
 
 
-    T peekInner(byte[] key, Peeker<T> peeker) {
+    public T peekWithKey(final byte[] key, final Peeker<T> peeker) {
         final int acquired = rwBarrier; // volatile read = acquire
 
         final long pointer = index.getIfAbsent(key, -1);
         if (pointer == -1) return null; // not found
+
+        final T res = peekWithPointer(pointer, peeker);
+        return res;
+    }
+
+
+    T peekWithPointer(final long pointer, final Peeker<T> peeker) {
+        metrics.totalPeekCount.incrementAndGet();
+
+        final int acquired = rwBarrier; // volatile read = acquire
 
         final int segementIndex = segementIndex(pointer);
         final long objPos = objPos(pointer);
@@ -200,6 +211,24 @@ public class CompactMap2<T> {
         return index.containsKey(key);
     }
 
+
+    public void forEachKey(Consumer<byte[] /*key*/> on) {
+        index.forEachKeyValue((key, pointer) -> on.accept(key));
+    }
+
+    public void forEachKeyValue(BiConsumer<byte[] /*key*/, T /*value*/> on) {
+        index.forEachKeyValue((key, pointer) -> {
+            T res = peekWithPointer(pointer, (objPos, bucket, pos, len) -> serdes.unmarshall(bucket, pos, len));
+            on.accept(key, res);
+        });
+    }
+
+    public void forEachValue(Consumer<T> on) {
+        index.forEachKeyValue((key, pointer) -> {
+            T res = peekWithPointer(pointer, (objPos, bucket, pos, len) -> serdes.unmarshall(bucket, pos, len));
+            on.accept(res);
+        });
+    }
 
 
     final private ReentrantLock _compactionLock = new ReentrantLock();
@@ -315,6 +344,7 @@ public class CompactMap2<T> {
     }
 
 
+    @Deprecated
     public void tick() {
         compact();
     }
