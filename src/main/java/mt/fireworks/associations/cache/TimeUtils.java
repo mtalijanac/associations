@@ -8,7 +8,7 @@ public class TimeUtils {
 
     private TimeUtils() {}
 
-    static String toReadable(long nano) {
+    public static String toReadable(long nano) {
         if (nano < 1_000l) return nano + " ns";
         if (nano < 1_000_000l) return (nano / 1_000l) + " μs";
         if (nano < 1_000_000_000l) return (nano / 1_000_000l) + " ms";
@@ -25,7 +25,7 @@ public class TimeUtils {
         return res;
     }
 
-    static String readableTstamp(long tstamp) {
+    public static String readableTstamp(long tstamp) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
         String res = sdf.format(new Date(tstamp));
         return res;
