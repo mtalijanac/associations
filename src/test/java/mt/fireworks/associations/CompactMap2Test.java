@@ -23,10 +23,10 @@ public class CompactMap2Test {
 
     @Test
     public void testAddAngGetUsingKey() {
-    	TestSerDes serDes = new TestSerDes();
-    	CompactMap2<TestObject> compactMap = new CompactMap2<>(serDes, TestObject::getIdBytes);
+        TestSerDes serDes = new TestSerDes();
+        CompactMap2<TestObject> compactMap = new CompactMap2<>(serDes, TestObject::getIdBytes);
 
-    	// Add test object
+        // Add test object
         TestObject obj1 = new TestObject("1", "value1");
         byte[] key1 = compactMap.add(obj1);
 
@@ -47,8 +47,8 @@ public class CompactMap2Test {
 
     @Test
     public void testAddAndGetUsingQuery() {
-    	TestSerDes serDes = new TestSerDes();
-    	CompactMap2<TestObject> compactMap = new CompactMap2<>(serDes, TestObject::getIdBytes);
+        TestSerDes serDes = new TestSerDes();
+        CompactMap2<TestObject> compactMap = new CompactMap2<>(serDes, TestObject::getIdBytes);
 
         // Add test object
         TestObject obj1 = new TestObject("1", "value1");
@@ -69,8 +69,8 @@ public class CompactMap2Test {
 
     @Test
     public void testCompaction() {
-    	TestSerDes serDes = new TestSerDes();
-    	CompactMap2<TestObject> compactMap = new CompactMap2<>(serDes, TestObject::getIdBytes);
+        TestSerDes serDes = new TestSerDes();
+        CompactMap2<TestObject> compactMap = new CompactMap2<>(serDes, TestObject::getIdBytes);
 
         // Add multiple objects
         List<TestObject> objects = new ArrayList<>();
@@ -95,15 +95,15 @@ public class CompactMap2Test {
     // about 116 seconds on my machine
     @Test
     public void test20x() throws InterruptedException {
-		for (int i = 0; i < 20; i++) {
-			testConcurrentAccess();
-		}
+        for (int i = 0; i < 20; i++) {
+            testConcurrentAccess();
+        }
     }
 
     @Test
     public void testConcurrentAccess() throws InterruptedException {
-    	TestSerDes serDes = new TestSerDes();
-    	CompactMap2<TestObject> compactMap = new CompactMap2<>(32, 4 * 1024 * 1024, serDes, TestObject::getIdBytes);
+        TestSerDes serDes = new TestSerDes();
+        CompactMap2<TestObject> compactMap = new CompactMap2<>(32, 4 * 1024 * 1024, serDes, TestObject::getIdBytes);
 
         int threadCount = 20;
         int objectsPerThread = 100_000;
@@ -122,15 +122,15 @@ public class CompactMap2Test {
 
                         TestObject retrieved = compactMap.get(obj);
                         if (retrieved == null) {
-                        	System.err.println("Object should be retrievable after add");
-                        	System.exit(-1);
+                            System.err.println("Object should be retrievable after add");
+                            System.exit(-1);
                         }
 
                         assertNotNull("Object should be retrievable after add", retrieved);
 
                         if (!retrieved.equals(obj)) {
-                        	System.err.println("Object should be equal to added");
-                        	System.exit(-1);
+                            System.err.println("Object should be equal to added");
+                            System.exit(-1);
                         }
 
                         assertEquals(obj, retrieved);

@@ -56,260 +56,260 @@ import mt.fireworks.associations.cache.TimeUtils;
  */
 public class CompactMap2<T> {
 
-	final private ByteList[] segments;
-	final private ReentrantLock[] segmentLocks;
-	final private int segmentAllocationSize;
+    final private ByteList[] segments;
+    final private ReentrantLock[] segmentLocks;
+    final private int segmentAllocationSize;
 
-	final private SerDes<T> serdes;
-	final private Function<T, byte[]> keyer;
-	final private MutableObjectLongMap<byte[]> index;
+    final private SerDes<T> serdes;
+    final private Function<T, byte[]> keyer;
+    final private MutableObjectLongMap<byte[]> index;
 
-	final private CompactMap2Metrics metrics = new CompactMap2Metrics();
+    final private CompactMap2Metrics metrics = new CompactMap2Metrics();
 
-	private volatile int rwBarrier = 0;
+    private volatile int rwBarrier = 0;
 
-	public CompactMap2(SerDes<T> serdes, Function<T, byte[]> keyer) {
-		this(8, 1024 * 1024, serdes, keyer);
-	}
+    public CompactMap2(SerDes<T> serdes, Function<T, byte[]> keyer) {
+        this(8, 1024 * 1024, serdes, keyer);
+    }
 
-	public CompactMap2(int segCount, int segAllocationSize, SerDes<T> serdes, Function<T, byte[]> keyer) {
-		this.segmentAllocationSize = segAllocationSize;
-		this.segments = new ByteList[segCount + 1];
-		for (int i = 0; i < segCount; i++)
-			segments[i] = new ByteList(segAllocationSize);
+    public CompactMap2(int segCount, int segAllocationSize, SerDes<T> serdes, Function<T, byte[]> keyer) {
+        this.segmentAllocationSize = segAllocationSize;
+        this.segments = new ByteList[segCount + 1];
+        for (int i = 0; i < segCount; i++)
+            segments[i] = new ByteList(segAllocationSize);
 
-		this.segmentLocks = new ReentrantLock[segCount + 1];
-		for (int i = 0; i < this.segmentLocks.length; i++)
-			segmentLocks[i] = new ReentrantLock();
+        this.segmentLocks = new ReentrantLock[segCount + 1];
+        for (int i = 0; i < this.segmentLocks.length; i++)
+            segmentLocks[i] = new ReentrantLock();
 
-		this.serdes = serdes;
-		this.keyer = keyer;
-		this.index = ObjectLongHashingStrategyMaps.mutable
+        this.serdes = serdes;
+        this.keyer = keyer;
+        this.index = ObjectLongHashingStrategyMaps.mutable
                 .of(new BytesHashingStrategy())
                 .asSynchronized();
-	}
+    }
 
 
-	/**
-	 * Add object to map. Return key of object in map.
-	 * Key is calculated by applying keyer on passed value.
-	 */
-	public byte[] add(final T value) {
-		final byte[] key = keyer.apply(value);
-		final byte[] data = serdes.marshall(value);
+    /**
+     * Add object to map. Return key of object in map.
+     * Key is calculated by applying keyer on passed value.
+     */
+    public byte[] add(final T value) {
+        final byte[] key = keyer.apply(value);
+        final byte[] data = serdes.marshall(value);
 
-		final int segIndex = lockWriteSegment();
-		@Cleanup("unlock")
-		final ReentrantLock segmentLock = segmentLocks[segIndex];
-		final ByteList segment = segments[segIndex];
-		final long objPos = segment.add(data);
-		final long pointer = pointer(segIndex, objPos);
-		index.put(key, pointer);
+        final int segIndex = lockWriteSegment();
+        @Cleanup("unlock")
+        final ReentrantLock segmentLock = segmentLocks[segIndex];
+        final ByteList segment = segments[segIndex];
+        final long objPos = segment.add(data);
+        final long pointer = pointer(segIndex, objPos);
+        index.put(key, pointer);
 
-		rwBarrier++; // volatile write = release
+        rwBarrier++; // volatile write = release
 
-		metrics.totalAddCount.incrementAndGet();
-		metrics.totalAddSize.addAndGet(data.length);
+        metrics.totalAddCount.incrementAndGet();
+        metrics.totalAddSize.addAndGet(data.length);
 
-		return key;
-	}
-
-
-	final private AtomicInteger _segmentIndexCounter = new AtomicInteger(0);
-
-	/**
-	 * Pick a segment to write to, lock it and return its index. This method is used
-	 * to ensure that writes are distributed across segments and that only one
-	 * thread can write to a segment at a time.
-	 */
-	int lockWriteSegment() {
-		while (true) {
-			int idx = _segmentIndexCounter.getAndUpdate(operand -> (operand + 1) % segments.length);
-			ByteList seg = segments[idx];
-			if (seg == null) continue;
-			ReentrantLock lock = segmentLocks[idx];
-			boolean locked = lock.tryLock();
-			if (locked) return idx;
-		}
-	}
-
-	/** Returns number of stored objects in this map */
-	public int size() {
-		return index.size();
-	}
+        return key;
+    }
 
 
-	/** Query map for a associated object */
-	public T get(T query) {
-		metrics.totalGetQueryCount.incrementAndGet();
-		byte[] key = keyer.apply(query);
-		T res = peekInner(key, (objPos, bucket, pos, len) -> serdes.unmarshall(bucket, pos, len));
-		return res;
-	}
+    final private AtomicInteger _segmentIndexCounter = new AtomicInteger(0);
 
-	/** Query map by key. */
-	public T get(byte[] key) {
-		metrics.totalGetKeyCount.incrementAndGet();
-		T res = peekInner(key, (objPos, bucket, pos, len) -> serdes.unmarshall(bucket, pos, len));
-		return res;
-	}
+    /**
+     * Pick a segment to write to, lock it and return its index. This method is used
+     * to ensure that writes are distributed across segments and that only one
+     * thread can write to a segment at a time.
+     */
+    int lockWriteSegment() {
+        while (true) {
+            int idx = _segmentIndexCounter.getAndUpdate(operand -> (operand + 1) % segments.length);
+            ByteList seg = segments[idx];
+            if (seg == null) continue;
+            ReentrantLock lock = segmentLocks[idx];
+            boolean locked = lock.tryLock();
+            if (locked) return idx;
+        }
+    }
 
-	/** Peek into map for a value */
-	public T peek(byte[] key, Peeker<T> peeker) {
-		metrics.totalPeekCount.incrementAndGet();
-		return peekInner(key, peeker);
-	}
-
-
-	T peekInner(byte[] key, Peeker<T> peeker) {
-		final int acquired = rwBarrier; // volatile read = acquire
-
-		final long pointer = index.getIfAbsent(key, -1);
-		if (pointer == -1) return null; // not found
-
-		final int segementIndex = segementIndex(pointer);
-		final long objPos = objPos(pointer);
-
-		final ByteList segment = segments[segementIndex];
-		if (segment == null) return null;
-
-		final T res = segment.peek(objPos, peeker);
-		return res;
-	}
+    /** Returns number of stored objects in this map */
+    public int size() {
+        return index.size();
+    }
 
 
-	/** @return true if map contains an associated object. */
-	public boolean contains(T query) {
-		byte[] key = keyer.apply(query);
-		return index.containsKey(key);
-	}
+    /** Query map for a associated object */
+    public T get(T query) {
+        metrics.totalGetQueryCount.incrementAndGet();
+        byte[] key = keyer.apply(query);
+        T res = peekInner(key, (objPos, bucket, pos, len) -> serdes.unmarshall(bucket, pos, len));
+        return res;
+    }
 
-	/** @return true if map contains this key */
-	public boolean contains(byte[] key) {
-		return index.containsKey(key);
-	}
+    /** Query map by key. */
+    public T get(byte[] key) {
+        metrics.totalGetKeyCount.incrementAndGet();
+        T res = peekInner(key, (objPos, bucket, pos, len) -> serdes.unmarshall(bucket, pos, len));
+        return res;
+    }
 
-
-
-	final private ReentrantLock _compactionLock = new ReentrantLock();
-
-	/**
-	 * Garbage collects the map by compacting all segments. This is a very expensive
-	 * operation which will release and again reallocate all memory for stored objects.
-	 * Only 'live' values are kept.
-	 *
-	 * <p>Operation is synchronized, to writes, so it is perfectly safe to
-	 * use compact map while reading/writing to it. However do except increased
-	 * cpu and memory usage and GC cycles during compaction.
-	 *
-	 * @return true if compaction was successful, false if it was cancelled
-	 */
-	public boolean compact() {
-		// find write to segment index
-		// find read from segment index
-		// allocate new bytelist store it under write segment
-		// foreach value in read segment
-		//   read data,
-		//   calculate pointer and key
-		//   get pointer from index
-		//   if indexPointer and segmentPointer match
-		//      write data to new segment
-		//      write segmentPointer to index
-
-		boolean locked = _compactionLock.tryLock();
-		if (!locked) return false;
-		@Cleanup("unlock") ReentrantLock unlock = _compactionLock;
-
-		metrics.lastCompactObjectsSurvived.set(0);
-		metrics.lastCompactObjectsDeleted.set(0);
+    /** Peek into map for a value */
+    public T peek(byte[] key, Peeker<T> peeker) {
+        metrics.totalPeekCount.incrementAndGet();
+        return peekInner(key, peeker);
+    }
 
 
-		int writeSegmentIndex = -1;
-		for (int idx = 0; idx < segments.length; idx++)
-			if (segments[idx] == null) writeSegmentIndex = idx;
+    T peekInner(byte[] key, Peeker<T> peeker) {
+        final int acquired = rwBarrier; // volatile read = acquire
 
-		final int initialEmptySegment = writeSegmentIndex;
+        final long pointer = index.getIfAbsent(key, -1);
+        if (pointer == -1) return null; // not found
 
-		final long start = System.nanoTime();
+        final int segementIndex = segementIndex(pointer);
+        final long objPos = objPos(pointer);
 
+        final ByteList segment = segments[segementIndex];
+        if (segment == null) return null;
 
-		for (int readSegIdx = 0; readSegIdx < segments.length; readSegIdx++) {
-			if (readSegIdx == initialEmptySegment) continue;
-			compactOneSegment(readSegIdx, writeSegmentIndex);
-			writeSegmentIndex = readSegIdx;
-		}
-
-		final long end = System.nanoTime();
-		final long dur = end - start;
-
-		metrics.totalCompactCount.incrementAndGet();
-		metrics.totalCompactDurationNs.addAndGet(dur);
-		metrics.lastCompactTimestamp.set(System.currentTimeMillis());
-		metrics.lastCompactDurationNs.set(dur);
-
-		return true;
-	}
+        final T res = segment.peek(objPos, peeker);
+        return res;
+    }
 
 
-	void compactOneSegment(final int readSegIdx, final int writeSegIdx) {
-		if (segments[writeSegIdx] != null) {
-			throw new RuntimeException("Write segment is not empty: " + writeSegIdx);
-		}
+    /** @return true if map contains an associated object. */
+    public boolean contains(T query) {
+        byte[] key = keyer.apply(query);
+        return index.containsKey(key);
+    }
 
-		final int acquired = rwBarrier; // volatile read = acquire
-
-		// locks prevent writing to the segments being compacted
-
-		@Cleanup("unlock")
-		final ReentrantLock readLock = segmentLocks[readSegIdx];
-		readLock.lock();
-
-		@Cleanup("unlock")
-		final ReentrantLock writeLock = segmentLocks[writeSegIdx];
-		writeLock.lock();
+    /** @return true if map contains this key */
+    public boolean contains(byte[] key) {
+        return index.containsKey(key);
+    }
 
 
-		final ByteList readSegment = segments[readSegIdx];
-		final ByteList writeSegment = new ByteList(segmentAllocationSize);
-		segments[writeSegIdx] = writeSegment;
 
-		readSegment.forEach((objPos, bucket, pos, len) -> {
-			final T obj = serdes.unmarshall(bucket, pos, len);
-			final byte[] key = keyer.apply(obj);
+    final private ReentrantLock _compactionLock = new ReentrantLock();
 
-			final long segPointer = pointer(readSegIdx, objPos);
-			final long oldPointer = index.getIfAbsent(key, -1);
+    /**
+     * Garbage collects the map by compacting all segments. This is a very expensive
+     * operation which will release and again reallocate all memory for stored objects.
+     * Only 'live' values are kept.
+     *
+     * <p>Operation is synchronized, to writes, so it is perfectly safe to
+     * use compact map while reading/writing to it. However do except increased
+     * cpu and memory usage and GC cycles during compaction.
+     *
+     * @return true if compaction was successful, false if it was cancelled
+     */
+    public boolean compact() {
+        // find write to segment index
+        // find read from segment index
+        // allocate new bytelist store it under write segment
+        // foreach value in read segment
+        //   read data,
+        //   calculate pointer and key
+        //   get pointer from index
+        //   if indexPointer and segmentPointer match
+        //      write data to new segment
+        //      write segmentPointer to index
 
-			if (segPointer != oldPointer) {
-				// pointer mismatch, skip this entry
-				metrics.lastCompactObjectsDeleted.incrementAndGet();
-				return null;
-			}
+        boolean locked = _compactionLock.tryLock();
+        if (!locked) return false;
+        @Cleanup("unlock") ReentrantLock unlock = _compactionLock;
 
-			final long writeObjPos = writeSegment.add(bucket, pos, len);
-			final long copyPointer = pointer(writeSegIdx, writeObjPos);
-			rwBarrier++; // volatile write = release
-
-			// if index was changed by another thread, use the updated version
-			// else point index to new segment
-			index.updateValue(key, copyPointer, currentIndexPointer ->
-				currentIndexPointer == oldPointer ? copyPointer : currentIndexPointer
-			);
-
-			metrics.lastCompactObjectsSurvived.incrementAndGet();
-			return obj;
-		});
-
-		segments[readSegIdx] = null;
-	}
-
-
-	public void tick() {
-		compact();
-	}
+        metrics.lastCompactObjectsSurvived.set(0);
+        metrics.lastCompactObjectsDeleted.set(0);
 
 
-	/** @return pointer made out segment idx and position within it */
+        int writeSegmentIndex = -1;
+        for (int idx = 0; idx < segments.length; idx++)
+            if (segments[idx] == null) writeSegmentIndex = idx;
+
+        final int initialEmptySegment = writeSegmentIndex;
+
+        final long start = System.nanoTime();
+
+
+        for (int readSegIdx = 0; readSegIdx < segments.length; readSegIdx++) {
+            if (readSegIdx == initialEmptySegment) continue;
+            compactOneSegment(readSegIdx, writeSegmentIndex);
+            writeSegmentIndex = readSegIdx;
+        }
+
+        final long end = System.nanoTime();
+        final long dur = end - start;
+
+        metrics.totalCompactCount.incrementAndGet();
+        metrics.totalCompactDurationNs.addAndGet(dur);
+        metrics.lastCompactTimestamp.set(System.currentTimeMillis());
+        metrics.lastCompactDurationNs.set(dur);
+
+        return true;
+    }
+
+
+    void compactOneSegment(final int readSegIdx, final int writeSegIdx) {
+        if (segments[writeSegIdx] != null) {
+            throw new RuntimeException("Write segment is not empty: " + writeSegIdx);
+        }
+
+        final int acquired = rwBarrier; // volatile read = acquire
+
+        // locks prevent writing to the segments being compacted
+
+        @Cleanup("unlock")
+        final ReentrantLock readLock = segmentLocks[readSegIdx];
+        readLock.lock();
+
+        @Cleanup("unlock")
+        final ReentrantLock writeLock = segmentLocks[writeSegIdx];
+        writeLock.lock();
+
+
+        final ByteList readSegment = segments[readSegIdx];
+        final ByteList writeSegment = new ByteList(segmentAllocationSize);
+        segments[writeSegIdx] = writeSegment;
+
+        readSegment.forEach((objPos, bucket, pos, len) -> {
+            final T obj = serdes.unmarshall(bucket, pos, len);
+            final byte[] key = keyer.apply(obj);
+
+            final long segPointer = pointer(readSegIdx, objPos);
+            final long oldPointer = index.getIfAbsent(key, -1);
+
+            if (segPointer != oldPointer) {
+                // pointer mismatch, skip this entry
+                metrics.lastCompactObjectsDeleted.incrementAndGet();
+                return null;
+            }
+
+            final long writeObjPos = writeSegment.add(bucket, pos, len);
+            final long copyPointer = pointer(writeSegIdx, writeObjPos);
+            rwBarrier++; // volatile write = release
+
+            // if index was changed by another thread, use the updated version
+            // else point index to new segment
+            index.updateValue(key, copyPointer, currentIndexPointer ->
+                currentIndexPointer == oldPointer ? copyPointer : currentIndexPointer
+            );
+
+            metrics.lastCompactObjectsSurvived.incrementAndGet();
+            return obj;
+        });
+
+        segments[readSegIdx] = null;
+    }
+
+
+    public void tick() {
+        compact();
+    }
+
+
+    /** @return pointer made out segment idx and position within it */
     long pointer(final int segmentIndex, final long objPos) {
         final long idxAtFirstByte = (segmentIndex & 0xFFl) << (7 * 8);
         final long sevenBytesOfPosition = objPos & 0x00FFFFFF_FFFFFFFFl;
@@ -326,101 +326,101 @@ public class CompactMap2<T> {
 
     /** @return objPosition of data within segment */
     long objPos(final long pointer) {
-    	final long off = pointer & 0x00FFFFFF_FFFFFFFFl;
-    	return off;
+        final long off = pointer & 0x00FFFFFF_FFFFFFFFl;
+        return off;
     }
 
     public String metrics() {
-    	return metrics.metrics();
+        return metrics.metrics();
     }
 
 
     @Data
-	class CompactMap2Metrics {
-    	final long creationTstamp = System.currentTimeMillis();
+    class CompactMap2Metrics {
+        final long creationTstamp = System.currentTimeMillis();
 
-    	final AtomicLong totalCompactCount = new AtomicLong();
-    	final AtomicLong totalCompactDurationNs = new AtomicLong();
-    	final AtomicLong lastCompactTimestamp = new AtomicLong();
-    	final AtomicLong lastCompactDurationNs = new AtomicLong();
-    	final AtomicLong lastCompactObjectsDeleted = new AtomicLong();
-    	final AtomicLong lastCompactObjectsSurvived = new AtomicLong();
+        final AtomicLong totalCompactCount = new AtomicLong();
+        final AtomicLong totalCompactDurationNs = new AtomicLong();
+        final AtomicLong lastCompactTimestamp = new AtomicLong();
+        final AtomicLong lastCompactDurationNs = new AtomicLong();
+        final AtomicLong lastCompactObjectsDeleted = new AtomicLong();
+        final AtomicLong lastCompactObjectsSurvived = new AtomicLong();
 
-    	final AtomicLong totalGetQueryCount = new AtomicLong();
-    	final AtomicLong totalGetKeyCount = new AtomicLong();
-    	final AtomicLong totalPeekCount = new AtomicLong();
+        final AtomicLong totalGetQueryCount = new AtomicLong();
+        final AtomicLong totalGetKeyCount = new AtomicLong();
+        final AtomicLong totalPeekCount = new AtomicLong();
 
-    	final AtomicLong totalAddCount = new AtomicLong();
-    	final AtomicLong totalAddSize = new AtomicLong();
+        final AtomicLong totalAddCount = new AtomicLong();
+        final AtomicLong totalAddSize = new AtomicLong();
 
-    	public String metrics() {
-    		// ispiši statistike veličine
+        public String metrics() {
+            // ispiši statistike veličine
 
-    		boolean locked = _compactionLock.tryLock();
-    		if (!locked) return "Can't generate metrics. Compaction in progress";
-    		@Cleanup("unlock") ReentrantLock unlock = _compactionLock;
-
-
-    		String tstamp = TimeUtils.readableTstamp(creationTstamp);
-
-    		long totalUsedSize = 0, totalAllocatedSize = 0;
-    		for (int idx = 0; idx < CompactMap2.this.segments.length; idx++) {
-    			ByteList seg = CompactMap2.this.segments[idx];
-    			if (seg == null) continue;
-    			totalUsedSize += seg.getUsedSize();
-    			totalAllocatedSize += seg.getAllocatedSize();
-    		}
-
-    		StringBuilder sb = new StringBuilder();
-    		sb.append(" Creation date: ").append(tstamp).append("\n");
-    		sb.append("    Index size: ").append(CompactMap2.this.index.size()).append("\n");
-    		sb.append("Allocated size: ").append(totalAllocatedSize).append(" bytes\n");
-    		sb.append("     Used size: ").append(totalUsedSize).append(" bytes\n");
-    		sb.append(" Segment count: ").append(CompactMap2.this.segments.length).append("\n");
-
-    		for (int idx = 0; idx < CompactMap2.this.segments.length; idx++) {
-    			ByteList seg = CompactMap2.this.segments[idx];
-    			if (seg == null) {
-    				sb.append("          ").append(idx + 1).append(": not in use\n");
-    				continue;
-    			}
-    			long usedSize = seg.getUsedSize();
-    			long allocatedSize = seg.getAllocatedSize();
-    			sb.append("          ").append(idx + 1)
-    			  .append(": used size: ").append(usedSize)
-    			  .append(" bytes, allocated size: ").append(allocatedSize)
-    			  .append(" bytes\n");
-    		}
-
-    		String readableTotalCompactDuration = TimeUtils.toReadable(totalCompactDurationNs.get());
-    		String avgCompactDuration = TimeUtils.toReadable((long) ((double) totalCompactDurationNs.get() / totalCompactCount.get()));
-    		String readableLastCompactDuration = TimeUtils.toReadable(lastCompactDurationNs.get());
-    		String lastCompatTstamp = TimeUtils.readableTstamp(lastCompactTimestamp.get());
-
-    		// ispiši statistike korištenja
-    		sb.append("    add counts: ").append(totalAddCount)
-    		                             .append(", size: ").append(totalAddSize).append(" bytes\n");
-    		sb.append("    get counts: query: ").append(totalGetQueryCount.get())
-    		                                    .append(", key: ").append(totalGetKeyCount.get())
-    		                                    .append(", peek: ").append(totalPeekCount.get())
-    		                                    .append("\n");
-
-    		sb.append("    compaction: count: ").append(totalCompactCount)
-    		                                    .append(", total duration: ").append(readableTotalCompactDuration)
-    		                                    .append(", avg duration: ").append(avgCompactDuration)
-    		                                    .append("\n");
-
-    		sb.append("  last compact: ").append(lastCompatTstamp)
-    									 .append(", duration: ").append(readableLastCompactDuration)
-    									 .append(", deleted: ").append(lastCompactObjectsDeleted.get())
-    									 .append(", survived: ").append(lastCompactObjectsSurvived.get())
-    									 .append("\n");
+            boolean locked = _compactionLock.tryLock();
+            if (!locked) return "Can't generate metrics. Compaction in progress";
+            @Cleanup("unlock") ReentrantLock unlock = _compactionLock;
 
 
-    		String res = sb.toString();
-    		return res;
-    	}
+            String tstamp = TimeUtils.readableTstamp(creationTstamp);
 
-	}
+            long totalUsedSize = 0, totalAllocatedSize = 0;
+            for (int idx = 0; idx < CompactMap2.this.segments.length; idx++) {
+                ByteList seg = CompactMap2.this.segments[idx];
+                if (seg == null) continue;
+                totalUsedSize += seg.getUsedSize();
+                totalAllocatedSize += seg.getAllocatedSize();
+            }
+
+            StringBuilder sb = new StringBuilder();
+            sb.append(" Creation date: ").append(tstamp).append("\n");
+            sb.append("    Index size: ").append(CompactMap2.this.index.size()).append("\n");
+            sb.append("Allocated size: ").append(totalAllocatedSize).append(" bytes\n");
+            sb.append("     Used size: ").append(totalUsedSize).append(" bytes\n");
+            sb.append(" Segment count: ").append(CompactMap2.this.segments.length).append("\n");
+
+            for (int idx = 0; idx < CompactMap2.this.segments.length; idx++) {
+                ByteList seg = CompactMap2.this.segments[idx];
+                if (seg == null) {
+                    sb.append("          ").append(idx + 1).append(": not in use\n");
+                    continue;
+                }
+                long usedSize = seg.getUsedSize();
+                long allocatedSize = seg.getAllocatedSize();
+                sb.append("          ").append(idx + 1)
+                  .append(": used size: ").append(usedSize)
+                  .append(" bytes, allocated size: ").append(allocatedSize)
+                  .append(" bytes\n");
+            }
+
+            String readableTotalCompactDuration = TimeUtils.toReadable(totalCompactDurationNs.get());
+            String avgCompactDuration = TimeUtils.toReadable((long) ((double) totalCompactDurationNs.get() / totalCompactCount.get()));
+            String readableLastCompactDuration = TimeUtils.toReadable(lastCompactDurationNs.get());
+            String lastCompatTstamp = TimeUtils.readableTstamp(lastCompactTimestamp.get());
+
+            // ispiši statistike korištenja
+            sb.append("    add counts: ").append(totalAddCount)
+                                         .append(", size: ").append(totalAddSize).append(" bytes\n");
+            sb.append("    get counts: query: ").append(totalGetQueryCount.get())
+                                                .append(", key: ").append(totalGetKeyCount.get())
+                                                .append(", peek: ").append(totalPeekCount.get())
+                                                .append("\n");
+
+            sb.append("    compaction: count: ").append(totalCompactCount)
+                                                .append(", total duration: ").append(readableTotalCompactDuration)
+                                                .append(", avg duration: ").append(avgCompactDuration)
+                                                .append("\n");
+
+            sb.append("  last compact: ").append(lastCompatTstamp)
+                                         .append(", duration: ").append(readableLastCompactDuration)
+                                         .append(", deleted: ").append(lastCompactObjectsDeleted.get())
+                                         .append(", survived: ").append(lastCompactObjectsSurvived.get())
+                                         .append("\n");
+
+
+            String res = sb.toString();
+            return res;
+        }
+
+    }
 
 }
