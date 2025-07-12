@@ -27,9 +27,9 @@ import mt.fireworks.associations.cache.TimeUtils;
  * </ul>
  *
  * <p>Objects are serialized and stored in segments, with an memory efficiency as
- * biggest priority. Map is strongly additive, meaning that it doesn't remove old objects.
- * Instead it compacts segments by removing objects that are no longer referenced.
- * It is a form of GC, but it is initiated by the user, not automatically.
+ * biggest priority. This map only grows, meaning that it doesn't remove old objects.
+ * Instead it will compact segments and remove dead objects when user invokes {@link #compact()} method.
+ * It is a form of GC, but instead being automatic it is initiated by the user.
  *
  * <h3>Basic Usage:</h3>
  * <pre>{@code
@@ -49,7 +49,7 @@ import mt.fireworks.associations.cache.TimeUtils;
  * User found = userMap.get(key);
  *
  * // Trigger compaction
- * userMap.tick();
+ * userMap.compact();
  *
  * // Get metrics
  * String stats = userMap.metrics();
@@ -201,13 +201,13 @@ public class CompactMap2<T> {
 
 
     /** @return true if map contains an associated object. */
-    public boolean contains(T query) {
+    public boolean containsKey(T query) {
         byte[] key = keyer.apply(query);
         return index.containsKey(key);
     }
 
     /** @return true if map contains this key */
-    public boolean contains(byte[] key) {
+    public boolean containsKey(byte[] key) {
         return index.containsKey(key);
     }
 
@@ -229,6 +229,17 @@ public class CompactMap2<T> {
             on.accept(res);
         });
     }
+
+
+    public void remove(T query) {
+        byte[] key = keyer.apply(query);
+        remove(key);
+    }
+
+    public void remove(byte[] key) {
+        index.removeKey(key);
+    }
+
 
 
     final private ReentrantLock _compactionLock = new ReentrantLock();
@@ -393,6 +404,27 @@ public class CompactMap2<T> {
 
         final AtomicLong totalAddCount = new AtomicLong();
         final AtomicLong totalAddSize = new AtomicLong();
+
+
+        public String json() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("{\n");
+            sb.append("  \"creationTstamp\": ").append(creationTstamp).append(",\n");
+            sb.append("  \"totalCompactCount\": ").append(totalCompactCount.get()).append(",\n");
+            sb.append("  \"totalCompactDurationNs\": ").append(totalCompactDurationNs.get()).append(",\n");
+            sb.append("  \"lastCompactTimestamp\": ").append(lastCompactTimestamp.get()).append(",\n");
+            sb.append("  \"lastCompactDurationNs\": ").append(lastCompactDurationNs.get()).append(",\n");
+            sb.append("  \"lastCompactObjectsDeleted\": ").append(lastCompactObjectsDeleted.get()).append(",\n");
+            sb.append("  \"lastCompactObjectsSurvived\": ").append(lastCompactObjectsSurvived.get()).append(",\n");
+            sb.append("  \"totalGetQueryCount\": ").append(totalGetQueryCount.get()).append(",\n");
+            sb.append("  \"totalGetKeyCount\": ").append(totalGetKeyCount.get()).append(",\n");
+            sb.append("  \"totalPeekCount\": ").append(totalPeekCount.get()).append(",\n");
+            sb.append("  \"totalAddCount\": ").append(totalAddCount.get()).append(",\n");
+            sb.append("  \"totalAddSize\": ").append(totalAddSize.get()).append("\n");
+            sb.append("}");
+            return sb.toString();
+        }
+
 
         public String metrics() {
             // ispiši statistike veličine
