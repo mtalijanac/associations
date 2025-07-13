@@ -71,13 +71,16 @@ public class CompactMap2<T> {
 
     private volatile int rwBarrier = 0;
 
+
     public CompactMap2(SerDes<T> serdes, Function<T, byte[]> keyer) {
         this(8, 1024 * 1024, serdes, keyer);
     }
 
+
     public CompactMap2(int segCount, int segAllocationSize, SerDes<T> serdes, Function<T, byte[]> keyer) {
         this(segCount, segAllocationSize, serdes, keyer, new BytesHashingStrategy());
     }
+
 
     public CompactMap2(
             int segCount, int segAllocationSize,
@@ -102,27 +105,51 @@ public class CompactMap2<T> {
 
 
     /**
+     * It will create a new CompactMap2 with a modified keyer that returns a key,
+     * with a hash prepended to it. This is usefull a performance trade-off where
+     * keys aren't really unique, but their hash is. Cost is 4 bytes per key +
+     * double key allocation as delegate keyer will copy the original key into
+     * new array.
+     */
+    public static <T> CompactMap2<T> withHashedKeys(SerDes<T> serdes, Function<T, byte[]> keyer) {
+        return withHashedKeys(8, 1024 * 1024, serdes, keyer);
+    }
+
+    public static <T> CompactMap2<T> withHashedKeys(
+            int segCount, int segAllocationSize, SerDes<T> serdes, Function<T, byte[]> keyer
+    ) {
+        BytesWithHash bytesWithHash = new BytesWithHash();
+        Function<T, byte[]> hashedKeyer = BytesWithHash.hashedKeyer(keyer);
+        CompactMap2<T> map = new CompactMap2<>(segCount, segAllocationSize, serdes, hashedKeyer, bytesWithHash);
+        return map;
+    }
+
+
+    /**
      * Add object to map. Return key of object in map.
      * Key is calculated by applying keyer on passed value.
      */
     public byte[] add(final T value) {
         final byte[] key = keyer.apply(value);
-        final byte[] data = serdes.marshall(value);
+        put (key, value);
+        return key;
+    }
 
+    public void put(final byte[] key, final T value) {
+        final byte[] data = serdes.marshall(value);
+        putBytes(key, data);
+    }
+
+    public void putBytes(final byte[] key, final byte[] marshalledT) {
         final int segIndex = lockWriteSegment();
         @Cleanup("unlock")
         final ReentrantLock segmentLock = segmentLocks[segIndex];
         final ByteList segment = segments[segIndex];
-        final long objPos = segment.add(data);
+        final long objPos = segment.add(marshalledT);
         final long pointer = pointer(segIndex, objPos);
         index.put(key, pointer);
 
         rwBarrier++; // volatile write = release
-
-        metrics.totalAddCount.incrementAndGet();
-        metrics.totalAddSize.addAndGet(data.length);
-
-        return key;
     }
 
 
